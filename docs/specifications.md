@@ -24,4 +24,4 @@ Cahier des charges
 
 - Raspberrry Pi comme centrale on board et ESP32 comme station de mesure.
 
-![Diagramme des flux du système](/assets/schema/flux_diagram_v0.png "Diagramme des flux du système")
+![Diagramme des flux du système](assets/schema/flux_diagram_v0.png "Diagramme des flux du système")

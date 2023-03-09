@@ -1,3 +1,11 @@
+---
+layout: default
+title: Synthèse
+nav_order: 3
+has_children: false
+---
+
+
 Valise multicapteurs
 =======================
 Synthèse des projets existants

@@ -188,7 +188,7 @@ Fournisseur DFROBOT.
 |Prix|US$9.9|
 
 |SEN0244|TDS|
-|----------	-----------------------|-|
+|----------------------------------|-|
 |Tension d'entrée|3.3 à 5.50V|
 |Etendue de mesure|0 à 1000ppm|
 |Précision (25°C)|+/-10% F.S.|

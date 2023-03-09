@@ -46,7 +46,7 @@ Seuls les kits ici nous intéressent car leurs sondes résistent à l'eau salée
 
 
 |Kit Gravity Analog Temperature|Sonde Température PT-1000|
-|---------------------------------|_|
+|---------------------------------|-|
 |Type de sonde|Platine Classe B, RTD|
 |Etendue de mesure|-50 à 200°C|
 |Précision|+/-(0,3 + 0,005.T)|
@@ -162,7 +162,7 @@ Le script auto.replay permet d'injecter les données sur le serveur distant.
 Fournisseur DFROBOT.
 
 |SEN0161|pH|
-|----------	-----------------------|-|
+|----------------------------------|-|
 |Tension d'entrée|5V|
 |Etendue de mesure|0 à 14|
 |Température d'utilsation|0 à 60°C|
@@ -171,7 +171,7 @@ Fournisseur DFROBOT.
 |Prix|US$29.5|
 
 |DFR0300|Conductivité|
-|----------	-----------------------|-|
+|----------------------------------|-|
 |Tension d'entrée|3.0 à 5.0V|
 |Etendue de mesure (recomandée)|0 à (15) 20mS/cm|
 |Température d'utilsation|0 à 40°C|
@@ -181,7 +181,7 @@ Fournisseur DFROBOT.
 |Prix|US$69.9|
 
 |SEN0189|Turbidité|
-|----------	-----------------------|-|
+|----------------------------------|-|
 |Tension d'entrée|5.0V|
 |Temps de réponse|<500ms|
 |Température d'utilsation|5 à 90°C|
@@ -195,7 +195,7 @@ Fournisseur DFROBOT.
 |Prix|US$11.80|
 
 |SEN0237-A|Oxygène dissous|
-|----------	-----------------------|-|
+|----------------------------------|-|
 |Tension d'entrée|3.3 à 5.5V|
 |Etendue de mesure|0 à 20mg/L|
 |Temps de réponse (25°C)|98% en 90s|
@@ -205,7 +205,7 @@ Fournisseur DFROBOT.
 |Prix|US$169|
 
 |SEN0165|ORP|
-|----------	-----------------------|-|
+|----------------------------------|-|
 |Tension d'entrée|3.0 à 5.5V|
 |Température d'utilisation|-55 à 125°C|
 |Précision (-10 à 85°C)|+/-0.5°C|

@@ -1,7 +1,7 @@
 Valise Multicapteurs
---------------------
+====================
 Cahier des charges
-==================
+------------------
 
 ### Fonctionnalités :
 

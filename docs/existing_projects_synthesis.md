@@ -3,7 +3,7 @@ Valise multicapteurs
 Synthèse des projets existants
 ---------------------------------
 
-### SensOcean
+### [SensOcean](https://github.com/astrolabe-expeditions/SensOcean)
 
 #### Fonctionnement
 SensOcean est un boîtier autonome de mesure de température et salinité de l'eau de mer ainsi que de la température et pression ambiante. Il fonctionne par cycles de mesures dont la période de déclanchement peut être configurée. Le reste du temps, le boîtier est en veille. Après chaque cycle de mesures, les données sont affichées sur un écran et enregistrées sur une carte SD. Il fonctionne sur batterie et se recharge seul grâce à un panneau solaire.
@@ -55,7 +55,7 @@ Seuls les kits ici nous intéressent car leurs sondes résistent à l'eau salée
 |Longueur de câble|1m|
 |Prix|29.99€|
 
-### SETIER Datalogger
+### [SETIER Datalogger](https://gitlab.irstea.fr/reversaal/setier_datalogger)
 
 #### Fonctionnement
 Son focntionnement est proche de celui de *SensOcean*. Le datalogger effectue des cycles de mesures à une fréquence configurable (choix limités). Il présente par contre une plus grande variété de sondes. Il permet également de déclencher et visulaiser des mesures sur une page HTML, de télécharger les données mesurées et de rentrer les coefficients de calibration via son point d'accès WiFi. Il est alimenté sur secteur.
@@ -126,7 +126,7 @@ Fournisseurs :
 |Prix|155€|
 
 
-### OceanIsOpen
+### [OceanIsOpen](https://gitlab.irstea.fr/reversaal/setier_datalogger)
 
 #### Fonctionnement
 Le projet OceanIsOpen est le plus complet des trois. En plus d'une station de mesure, il compte aussi un système de stockage et mise à disposition des données sophistiqué.

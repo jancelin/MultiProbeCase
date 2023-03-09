@@ -1,3 +1,10 @@
+---
+layout: default
+title: Spécifications
+nav_order: 2
+has_children: false
+---
+
 Valise Multicapteurs
 ====================
 Cahier des charges

@@ -1,3 +1,10 @@
+---
+layout: default
+title: Spécifications
+nav_order: 2
+has_children: false
+---
+
 Valise Multicapteurs
 ====================
 Cahier des charges
@@ -23,5 +30,5 @@ Cahier des charges
 ### Idées :
 
 - Raspberrry Pi comme centrale on board et ESP32 comme station de mesure.
-
+	
 ![Diagramme des flux du système](assets/schema/flux_diagram_v1.png "Diagramme des flux du système")

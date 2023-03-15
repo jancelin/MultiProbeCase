@@ -110,8 +110,8 @@ Cahier des charges fonctionnel
 
 | Board | Protocoles de communication |
 |-------|-----------------------------|
-| **Teensy + Module Zigbee** | Zigbee |
-| **SparkFun Thing Plus XBee3 Micro** | Zigbee |
-| **LilyGO T-Zigbee** | ES32 : WiFi, Bluetooth <br> TLSR8258 : Zigbee, BLE5 |
-| **ESP32** | Bluetooth, WiFi |
-| **Wio-E5 mini** | LoRa |
+| [**Teensy**](https://www.pjrc.com/teensy/) + [**Module Zigbee**](https://www.pjrc.com/teensy/td_libs_XBee.html) | Zigbee |
+| [**SparkFun Thing Plus XBee3 Micro**](https://www.sparkfun.com/products/15454) | Zigbee |
+| [**LilyGO T-Zigbee**](https://www.lilygo.cc/products/t-zigbee-esp32-c3-tlsr8258) | ES32 : WiFi, Bluetooth <br> TLSR8258 : Zigbee, BLE5 |
+| [**ESP32**](https://www.espressif.com/en/products/devkits) | Bluetooth, WiFi |
+| [**Wio-E5 mini**](https://wiki.seeedstudio.com/LoRa_E5_mini/) | LoRa |

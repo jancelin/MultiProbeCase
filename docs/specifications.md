@@ -33,6 +33,8 @@ Cahier des charges fonctionnel
 - Stockage local (pas d'accès internet) :
 	+ BDD locale.
 	+ Synchronisation des données locales sur le serveur central.
+- Stockage backup sur la station :
+	+ Stockage sur carte SD.
 - Visualisation des données pour utilisateurs locaux et distants.
 
 #### Commande système :
@@ -51,6 +53,12 @@ Cahier des charges fonctionnel
 - Calibration.
 	
 ### Contraintes :
+
+#### Flexibilité
+
+- Architecture système flexible :
+	+ Système autonome : Station unique et récupération des données via carte SD / WiFi. Autonomie maximale sur batterie.
+	+ Système temps réel : Station avec serveurs local et distant. Station sur batterie et serveur local sur secteur.
 
 #### Installation :
 
@@ -97,7 +105,7 @@ Cahier des charges fonctionnel
 
 ### Diagramme des flux global du système :
 	
-![Diagramme des flux du système](assets/schema/flux_diagram_v1.png "Diagramme des flux du système")
+![Diagramme des flux du système](assets/schema/flux_diagram_latest.png "Diagramme des flux du système")
 
 ### Idées :
 
@@ -108,10 +116,10 @@ Cahier des charges fonctionnel
 #### Station de mesure :
 - Boards candidates :
 
-| Board | Protocoles de communication |
-|-------|-----------------------------|
-| [**Teensy**](https://www.pjrc.com/teensy/) + [**Module Zigbee**](https://www.pjrc.com/teensy/td_libs_XBee.html) | Zigbee |
-| [**SparkFun Thing Plus XBee3 Micro**](https://www.sparkfun.com/products/15454) | Zigbee |
-| [**LilyGO T-Zigbee**](https://www.lilygo.cc/products/t-zigbee-esp32-c3-tlsr8258) | ES32 : WiFi, Bluetooth <br> TLSR8258 : Zigbee, BLE5 |
+| Board | Protocoles de communication | Interfaces |
+|-------|-----------------------------|-------|
+| [**Teensy**](https://www.pjrc.com/teensy/) + [**Module Zigbee**](https://www.pjrc.com/teensy/td_libs_XBee.html) | Zigbee | 7-8 série, 2-3 SPI, 3 I²C |
+| [**SparkFun Thing Plus XBee3 Micro**](https://www.sparkfun.com/products/15454) | Zigbee | UART, SPI, I²C |
+| [**LilyGO T-Zigbee**](https://www.lilygo.cc/products/t-zigbee-esp32-c3-tlsr8258) | ES32C3 : WiFi, Bluetooth <br><br> TLSR8258 : Zigbee, BLE5 | 2 UART, 1 I²C, 3 SPI<br><br> UART, I²C, SPI, USB|
 | [**ESP32**](https://www.espressif.com/en/products/devkits) | Bluetooth, WiFi |
-| [**Wio-E5 mini**](https://wiki.seeedstudio.com/LoRa_E5_mini/) | LoRa |
+| [**Wio-E5 mini**](https://wiki.seeedstudio.com/LoRa_E5_mini/) | LoRa | 3 UART, 1 SPI, 1 I²C |

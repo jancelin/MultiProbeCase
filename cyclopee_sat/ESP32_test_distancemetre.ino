@@ -1,37 +1,39 @@
-
 /*
+  Inspiration :
+  
+    RS485_HalfDuplex.pde - example using ModbusMaster library to communicate
+    with EPSolar LS2024B controller using a half-duplex RS485 transceiver.
 
-  RS485_HalfDuplex.pde - example using ModbusMaster library to communicate
-  with EPSolar LS2024B controller using a half-duplex RS485 transceiver.
 
-  This example is tested against an EPSolar LS2024B solar charge controller.
-  See here for protocol specs:
-  http://www.solar-elektro.cz/data/dokumenty/1733_modbus_protocol.pdf
+  Description :
+  
+    This program loads config and retreives distance measured by an 
+    URM14 DFRobots ultrasonic sensor.
 
-  Library:: ModbusMaster
-  Author:: Marius Kintel <marius at kintel dot net>
+  Board :
+    ESP32 Joy it board.
 
-  Copyright:: 2009-2016 Doc Walker
+  RS485 interface :
+    Mikroe RS485 click 2 (MAX3471)
 
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
+  Wiring :
+    RS485 interface RX      -> ESP32 D4
+    RS485 interface TX      -> ESP32 D2
+    RS485 interface DE & RE -> ESP32 D5
+    RS485 interface 3V3     -> ESP32 3V3
+    RS485 interface GND     -> ESP32 GND
+    Sensor white wire       -> RS485 interface A
+    Sensor blue wire        -> RS485 interface B
+    Sensor red wire         -> RS485 interface Vcc
+    Sensor black wire       -> RS485 interface Gnd
 
 */
 
 // Global definitions 
-// RS485 Pins
-#define RX_PIN  4
-#define TX_PIN  2
-#define DE_PIN  5 // RE = \DE => Wired to pin 5 as well
+// ESP32 Pins
+#define RX_PIN  4 // Plugged to RS485 interface TX
+#define TX_PIN  2 // Plugged to RS485 interface RX
+#define DE_PIN  5 // RE = \DE => Wired to pin D5 as well
 // Sensor id
 #define SLAVE_ID      0x11
 //Sensor registers
@@ -44,8 +46,10 @@
 #define   MEASURE_MODE_BIT          ((uint16_t)0x01 << 2) // Passive measure mode
 #define   MEASURE_TRIG_BIT          ((uint16_t)0x01 << 3) // Request mesure in passive mode
 
-#define MODBUSMASTER_LIB 1  // Using ModbusMaster library
-#define DFROBOTS_LIB     0  // Using DFRobots Modbus RTU library
+// Using ModbusMaster library
+#define MODBUSMASTER_LIB 1
+// Using DFRobots Modbus RTU library
+#define DFROBOTS_LIB     0 // Never used as considered not handy
 
 /* --------------------------- */
 
@@ -128,7 +132,7 @@ void loop()
 
 #elif DFROBOTS_LIB
 
-/* ----------------------------------------------- */
+/* ---------------------- Not working as library considered not handy ------------------------- */
 
 /*!
  * @file scanModbusID.ino
@@ -154,7 +158,7 @@ void loop()
  * @date  2021-07-16
  * @https://github.com/DFRobot/DFRobot_RTU
  */
-
+/*
 #include "DFRobot_RTU.h"
 
 DFRobot_RTU modbus(&Serial1, DE_PIN); // Modbus instance using port Serial1 and pin D5 as DE/RE pin
@@ -204,6 +208,6 @@ void loop() {
   delay(1000);
   
 }
-
+*/
 
 #endif

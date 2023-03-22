@@ -7,7 +7,7 @@
 
   Description :
   
-    This program loads config and retrieves distance measured by an 
+    This program loads config and retriemv ves distance measured by an 
     URM14 DFRobots ultrasonic sensor.
 
   Board :

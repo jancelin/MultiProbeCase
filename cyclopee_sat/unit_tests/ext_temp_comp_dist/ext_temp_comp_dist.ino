@@ -77,8 +77,8 @@
 // Sensor congig register bit values
 #define   TEMP_CPT_SEL_BIT      ((uint16_t)0x01)      // Use custom temperature compensation
 #define   TEMP_CPT_ENABLE_BIT   ((uint16_t)0x00 << 1) // Enable temperature compensation
-#define   MEASURE_MODE_BIT      ((uint16_t)0x01 << 2) // Passive measure mode
-#define   MEASURE_TRIG_BIT      ((uint16_t)0x01 << 3) // Request mesure in passive mode
+#define   MEASURE_MODE_BIT      ((uint16_t)0x00 << 2) // Passive(1)/auto(0) measure mode
+//#define   MEASURE_TRIG_BIT      ((uint16_t)0x01 << 3) // Request mesure in passive mode. Unused in auto mode
 
 /* Debug */
 // Uncomment to see debug output on Serail port
@@ -208,10 +208,12 @@ void loop()
   if (mb_error != ModbusMaster::ku8MBSuccess)
     Serial.println("Modbus : Could update external temperature on URM14 sensor...");
   // Set trigger bit to request one measurement
+  /*
   urm14_control_bits |= MEASURE_TRIG_BIT;//Set trig bit
   mb_error = node.writeSingleRegister(URM14_CONTROL_REG, urm14_control_bits); //Writes the setting value to the control register
   if (mb_error != ModbusMaster::ku8MBSuccess)
     Serial.println("Modbus : Could set trigger bit on URM14 sensor...");
+  */
   // Readng distance input register at 0x05
   // Should use readInputRegisters() but somehow doesn't work
   // Trhow ku8MBIllegalDataAddress error (0x02)

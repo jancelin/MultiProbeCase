@@ -5,9 +5,8 @@
 *     Example RS485_HalfDuplex.pde
 *
 * @brief:
-*    Identical to ESP32_test_distancemetre but pins change.
-*    This program loads config and retrieves dist_mmance measured by an 
-*    URM14 DFRobots ultrasonic sensor over Modbus communication.
+*    This program loads config and retrieves distance measured by an 
+*    URM14 DFRobots ultrasonic sensor over Modbus data  bus.
 *
 * @board :
 *    Teensy 3.5 or ESP32
@@ -23,8 +22,6 @@
 *    RS485 interface GND     -> Teensy GND  |  ESP32 GND
 *    Sensor white wire       -> RS485 interface A
 *    Sensor blue wire        -> RS485 interface B
-*    Sensor red wire         -> RS485 interface Vcc
-*    Sensor black wire       -> RS485 interface Gnd
 *
 * @baudrates :
 *    Serial (USB Debug) : 115200

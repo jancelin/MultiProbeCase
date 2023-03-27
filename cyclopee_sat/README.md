@@ -31,5 +31,30 @@ Le satellite est en cours de développement, pour l'instant seuls les capteurs d
 - Alimentation (URM14) 7-15V;
 - Alimentation (Board) 5 or 3.3V.
 
+## Branchements
+
+|Teensy|ESP32|Interface RS485|
+|------|-----|---------------|
+|TX4|D2|RX|
+|RX4|D4|TX|
+|30|D5|DE & RE|
+|3V3|3V3|3V3|
+|GND|GND|GND|
+
+Le capteur URM14 doit être alimenté entre 7 et 15V !
+
+|URM14|Interface RS485|Alimentation 7-15V|
+|---------------|-----|------------------|
+|Fil Blanc|A||
+|Fil Bleu|B|
+|Fil marron||Borne +|
+|Fil noir||Borne -|
+
+|Teensy|ESP32|DS18B20|
+|------|-----|-------|
+|3V3|3V3|Fil Orange|
+|GND|GND|Fil Blanc|
+|30|D18|Fil Jaune|
+
 ## Tests unitaires
 Le dossier `unit_tests` de ce répertoire propose des exemples de programmes permettant de tester le matériel, notamment le capteur ultrasonore, la sonde de température et la carte SD.

@@ -1,8 +1,8 @@
 /* ------------------------------------------------------
  *
  * @insipration:
- *     ModbusMaster library half-duplex example.
- *     DallasTemperature library Simple example.
+ *     temperature_test.ino
+ *     distance_test.ino
  * 
  * @brief:  This program reads the externaly temperature (DS18B20)
  *          compensated distance measured by an URM14 DFRobot

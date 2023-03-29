@@ -1,7 +1,8 @@
 ---
 layout: default
+parent: Tests unitaires
 title: Test de lecture de la température
-nav_order: 1
+nav_order: 2
 has_children: False
 ---
 

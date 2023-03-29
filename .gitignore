@@ -1,2 +1,5 @@
-# Compiled markdown files
+_site
+.sass-cache
+.jekyll-metadata
 *.html
+!404.html

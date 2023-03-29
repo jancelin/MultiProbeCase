@@ -7,7 +7,7 @@ has_children: False
 ---
 
 Test de compensation de la distance avec une température externe
-============================================date====================
+================================================================
 
 ## En bref
 Ce programme permet de tester la compensation de la distance mesurée par un capteur ultrasonore URM14 avec une température externe provenant d'une sonde DS18B20.

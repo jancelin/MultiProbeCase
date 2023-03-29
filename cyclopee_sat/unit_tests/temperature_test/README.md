@@ -1,7 +1,7 @@
 ---
 layout: default
 parent: Tests unitaires
-grand_parent: Tests unitaires
+grand_parent: Satellite Cyclopée
 title: Test de lecture de la température
 nav_order: 1
 has_children: False

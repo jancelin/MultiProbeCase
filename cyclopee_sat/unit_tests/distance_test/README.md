@@ -1,7 +1,7 @@
 ---
 layout: default
 parent: Tests unitaires
-grand_parent: Tests unitaires
+grand_parent: Satellite Cyclopée
 title: Test de lecture de la distance
 nav_order: 2
 has_children: False

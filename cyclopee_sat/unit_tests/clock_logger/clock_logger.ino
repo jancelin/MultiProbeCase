@@ -1,14 +1,35 @@
 /* --------------------------
  * @inspiration:
- *    SD library :
- *    Example ReadWrite.ino
+ *    ext_temp_cop_test
+ *    SD_test
  *   
  * @brief:
- *    This program opens, writes and reads what was written in
- *    a file on an SD card plugged in the built in SD card slot.
+ *    This program logs distance and temperature readings into a log file on the SD card.
+ *    Log file segmentation and new day file creation are handled.
  *   
- * @board:
+ * @board :
  *    Teensy 3.5
+ *
+ * @RS485 interface :
+ *    Mikroe RS485 click 2 (MAX3471)
+ *
+ * @wiring:
+ *      Teensy TX4  -> RS485 RX
+ *      Teensy RX4  -> RS485 TX 
+ *      Teensy 30   -> RS485 DE 
+ *      Teensy 3V3  -> RS485 3V3
+ *      Teensy GND  -> RS485 GND
+ *      URM14 Blue  -> RS485 B
+ *      URM14 White -> RS485 A
+ *      URM14 Brown -> 12V                    
+ *      URM14 Black -> 0V
+ *      DS18B20 Red -> Teensy 3V3
+ *      DS18B20 Black -> Teensy GND
+ *      DS18B20 Yellow -> Teensy 21
+ *      
+ * @ports:
+ *      Serial (115200 baud)
+ *      Serial4 (9600 baud configured in URM14)
  * --------------------------
  */
 /* ###########################
@@ -68,12 +89,15 @@ enum ReadStatus : uint8_t {
 
 /* Debug */
 // Serial debug
+// Set to 1 to see debug on Serial port
 #if 0
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}//;Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] ");}
 #else
 #define SERIAL_DBG(...) {}
 #endif
 // File dump
+// Set to 1 to dump open log file to Serial port
+// Probably better to set Serial debug to 0
 #define FILE_DUMP 1
 
 /* ###################

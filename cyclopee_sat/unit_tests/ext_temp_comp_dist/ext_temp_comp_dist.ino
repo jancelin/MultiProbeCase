@@ -12,7 +12,7 @@
  * @board :
  *    Teensy 3.5
  *
- *  @RS485 interface :
+ * @RS485 interface :
  *    Mikroe RS485 click 2 (MAX3471)
  *
  * @wiring:

@@ -24,6 +24,7 @@
  
 File file;
 char c;
+int i;
 
 void setup() {
 
@@ -39,7 +40,7 @@ void setup() {
     while(1);
   }
   else
-    Serial.println("Done, pursuing...");
+    Serial.println("Done.");
     
   /* Create/Try to open 'test.txt' file for writing */ 
   Serial.print("Openning file 'test.txt' for writing... ");
@@ -49,13 +50,13 @@ void setup() {
    while(1);
   }
   else
-    Serial.println("Open, pursuing...");
+    Serial.println("Open.");
     
   /* Writing to file */
   Serial.print("Writing to 'test.txt'... ");
   if (file)
     file.println("You made it here, congrats!");
-  Serial.println("Done, pursuing...");
+  Serial.println("Done.");
   
   /* Closing and reopening file for reading */
   Serial.print("Reopening 'test.txt' for reading... ");
@@ -66,7 +67,7 @@ void setup() {
    while(1);
   }
   else
-    Serial.println("Done, pursuing...");
+    Serial.println("Done.");
     
   /* Read file */
   Serial.println("Reading 'test.txt'...");
@@ -88,7 +89,5 @@ void setup() {
 }
 
 void loop() {
-
   // Not used here
-  
 } 

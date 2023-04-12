@@ -10,56 +10,62 @@ Satellite Cyclopée
 ==================
 
 ## Description
-Le satellite Cyclopée est destiné a être embarqué à bord de vehicules terrestres ou acquatiques pour réaliser des mesures GNSS. 
-Il permet d'enregistrer les données GNSS brutes fournies par un récpeteur GNSS ZED-F9P sur une carte SD pour post traitement.
-Il permet également d'enregistrer sa position GNSS associée à la hauteur mesurée, compensée par rapport à la température ambiante, entre lui-même et le sol / la surface de l'eau.
+Le satellite Cyclopée a été développé pour les chercheurs du laboratoire LIENSs à La Rochelle pour réaliser des mesures de niveau marin à bas coût.<br>
+C'est un dispositif permettant de réaliser des mesures de niveau realtives (hauteur d'eau) ou absolues (niveau marin). Il embarque un distancemètre ultrasonore permettant de mesurer la distance le séparant d'une surface (sol, eau), un capteur de température externe au distancemètre et un récepteur GNSS donnant l'heure et sa position. Le récepteur GNSS peut être quelconque du moment qu'il transmet les trames NMEA `$GPGGA` et `$GPRMC` <br>
+Ce dispositif horodate, géoréférence et stocke localement (carte SD) les mesures de distance à la surface étudiée. Si associé à une passerelle, il peut également lui transmettre ses mesures pour stockage en base de données. Après post traitement des données, il est possible de remonter à l'altitude de la surface étudiée.
 
 ![Diagramme des flux](assets/schemas/flux_diagram_latest.png)
 
 ## Cahier des charges
-Pour dresser le cahier des charges de ce satellite nous avons raisonné en termes de scénari d'utilisation. Les scénari relevés conernent principalement des intervalles de meusre intensifs sur des périodes de déploiement assez courtes ou des fréquences plus douces mais des périodes de déploiement plus longues :
+Pour dresser le cahier des charges, nous avons réuni les chercheurs du LIENSs afin de relever les cas d'utilisation et d'en extraire des contraintes techniques auxquelles devra répondre le système. Les scénari relevés concernent principalement des fréquences de meusre élévées sur des périodes de déploiement assez courtes, ou en présence d'alimentation externe; et des fréquences plus douces mais sur des périodes de déploiement plus longues :
 
 |Scénario|Fréquence d'acquisition|Autonomie|Précision|Mesurandes secondaires|Remarques|
 |--------|-----------------------|---------|---------|--------------------------|---------|
 |Mesure continue|10Hz|1 mois à bord d'un navire (alimentation externe)|1cm (1mm?)|Température<br>Pression atmosphérique (0,1hPa)||
 |Mesure de référence|?|Alimentation externe|1mm||Toit du LIENSs<br>Quantification des dérives|
-|Mesure de niveau d'eau en marais|~15min|?|<1cm||
+|Mesure relative de niveau d'eau en marais|~15min|?|<1cm||
 |Mesure de marées/vagues (bouée?)|Burst toutes les 10-15min|10-20 jours|1cm (1mm?)|||
-|Transatlantique|1Hz ou ~30min|Le + possible<br>Recharge solaire|1m|||
+|Transatlantique|1Hz ou ~30min|Le + possible<br>Recharge solaire|~1m|||
 
 La réalisation de deux versions de Cyclopée a donc été envisagée. Une destinée aux mesures intensives et l'autre aux utilisations plus douces. Elle possèderont les caratéristiques communes suivantes :
 
 - Facilité de déploiement;
+- GNSS :
+	+ Récupérer l'heure GNSS.
+	+ Récupérer la position GNSS (altitude, longitude, latitude).
+- Mesures de distance :
+	+ Mesurer à intervalles réguliers.
 - Logs de données :
+	+ Horodater les mesures avec l'heure GNSS.
+	+ Géoréférencer les mesures avec la position GNSS.
 	+ Stockage interne des logs de données;
-	+ Segmentation des fichiers de log;
+	+ Segmentation des fichiers de log (en prévention de l'arrêt involontaire du système);
+	+ Logs au format `.csv`.
 - Autonomie :
 	+ Alimentation externe & sur batterie;
 	+ Possibilité de recharge solaire;
 - Monitoring :
-	+ Consultation des données depuis la passerelle;
-	+ Envoi des données à un serveur central via la passerelle;
+	+ Envoi des données à la passerelle;
 - Mesurandes secondaires :
 	+ Pouvoir accueillir une station pression/température.
 
-La version 
+Versions à décrire...
 
-
-
-Le satellite est en cours de développement, pour l'instant seuls les capteurs de distance et de température ont été testés et le montage suivant de mesure de distance compensée a été réalisé :
+## Avancement
+Le satellite est en cours de développement, pour l'instant un logger de distance utilisant l'horloge interne du Teensy à été réalisé :
 
 ![Photo du montage actuel](unit_tests/assets/set_up_img/ext_temp_comp_dist.jpg)
 
 ## Matériel
 - Teensy 3.5 (ou ESP32 Joy It);
 - Antenne GNSS multi-bandes IP66;
-- Récpeteur GNSS Ublox ZED-F9P;
+- Récpeteur GNSS transmettant les trames NMEA `$GPGGA` et `$GPRMC`;
 - Mikroe RS485 click 2;
 - Capteur ultrasonore DFRobot URM14;
 - Sonde DallasTemperature DS18B20;
 - Résistance pullup 4.7kOhms;
 - Alimentation (URM14) 7-15V;
-- Alimentation (Board) 5 or 3.3V.
+- Alimentation (Board) 5 ou 3.3V.
 
 ## Branchements
 
@@ -87,4 +93,4 @@ Le capteur URM14 doit être alimenté entre 7 et 15V !
 |30|D18|Fil Jaune|
 
 ## Tests unitaires
-Le dossier `unit_tests` de ce répertoire propose des exemples de programmes permettant de tester le matériel, notamment le capteur ultrasonore, la sonde de température et la carte SD.
+Le dossier `unit_tests` de ce répertoire propose des exemples de programmes permettant de tester le matériel, notamment le capteur ultrasonore, la sonde de température, le lecteur SD et un récepteur GNSS.

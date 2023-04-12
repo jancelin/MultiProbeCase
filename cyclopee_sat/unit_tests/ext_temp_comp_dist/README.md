@@ -29,7 +29,7 @@ Ce programme permet de tester la compensation de la distance mesurée par un cap
 ## Inspiration
 Ce programme est inspiré des tests unitaires précédents `temperature_test` et `distance_test`.
 
-## Montage
+## Montages
 Deux montages utilisant un Teensy 3.5 et une carte ESP32 Joy-It ont été testés.
 
 ### Ports

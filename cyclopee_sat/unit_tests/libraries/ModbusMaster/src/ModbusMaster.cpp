@@ -690,7 +690,6 @@ uint8_t ModbusMaster::ModbusMasterTransaction(uint8_t u8MBFunction)
       u8ModbusADU[u8ModbusADUSize++] = lowByte(_u16TransmitBuffer[1]);
       break;
   }
-  
   // append CRC
   u16CRC = 0xFFFF;
   for (i = 0; i < u8ModbusADUSize; i++)

@@ -177,6 +177,7 @@ void setup() {
 
   /* Set time */
   setTime(HOURS, MINUTES, SECONDS, DAY, MONTH, YEAR);
+  
   /* Pin setup */
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(DE_PIN, OUTPUT);
@@ -527,6 +528,7 @@ void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegC
 */
 void csv_log_string(String& log_str, const long& timestamp, const uint16_t& distance_mm, const float& temp_C)  {
 
+  SERIAL_DBG("---> csv_log_string()\n")
   // Inserting time into log string
   timestamp_to_string(timestamp, log_str, true);
   log_str.concat(',');
@@ -535,13 +537,14 @@ void csv_log_string(String& log_str, const long& timestamp, const uint16_t& dist
 
     log_str.concat("NaN,mm,NaN,°C,0x0");
     log_str.concat(NO_SENSOR);
-
+    SERIAL_DBG("URM14 and DS18B20 disconnected...\n")
   }
   else if (temp_C == DEVICE_DISCONNECTED_C) {
 
     log_str.concat(distance_mm / 10.0);
     log_str.concat(",NaN,0x0");
     log_str.concat(NO_DS18B20);
+    SERIAL_DBG("DS18B20 disconnected...\n")
   }
   else if (distance_mm == URM14_DISCONNECTED) {
 
@@ -549,6 +552,7 @@ void csv_log_string(String& log_str, const long& timestamp, const uint16_t& dist
     log_str.concat(temp_C);
     log_str.concat(",0x0");
     log_str.concat(NO_URM14);
+    SERIAL_DBG("URM14 disconnected...\n")
   }
   else {
 
@@ -582,7 +586,7 @@ bool logToSD(File& file, const long& timestamp, const uint16_t& distance_mm, con
 }
 
 /*
-   @brief: dumps file's content on Serial port
+   @brief: dumps file content on Serial port
    @params:
       file : file object
       dirName : dir name in which is located the file

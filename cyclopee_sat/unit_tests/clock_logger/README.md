@@ -3,7 +3,7 @@ layout: default
 parent: Tests unitaires
 grand_parent: Satellite Cyclopée
 title: Logger utilisant l'horloge interne
-nav_order: 6
+nav_order: 5
 has_children: False
 ---
 

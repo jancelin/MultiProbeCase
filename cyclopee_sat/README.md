@@ -52,6 +52,7 @@ La réalisation d'une première version du satllelite à partir d'un Teensy 3.5 
 	+ Envoi des données à la passerelle;
 - Mesurandes secondaires :
 	+ Pouvoir accueillir une station pression/température.
+- Résister à l'environnement marin.
 
 ## Matériel
 - Teensy 3.5 (ou ESP32 Joy It);

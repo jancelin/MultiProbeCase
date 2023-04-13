@@ -40,9 +40,9 @@
 #define YEAR      2023
 #define MONTH     04
 #define DAY       06
-#define HOURS     00
-#define MINUTES   00
-#define SECONDS   00
+#define HOURS     23
+#define MINUTES   59
+#define SECONDS   45
 
 /* Sensor acquisition interval */
 // Check sensor reading interrupt duration before setting the value

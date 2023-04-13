@@ -32,7 +32,7 @@ Ce programme est inspiré des tests unitaires précédents `temperature_test` et
 ## Montages
 Deux montages utilisant un Teensy 3.5 et une carte ESP32 Joy-It ont été testés.
 
-### Ports
+## Ports
 Pour ces deux montages, le port de communication `Serial` est utilisé pour le debug via USB (moniteur série de l'IDE Arduino) à 115200 baud. 
 
 Pour faciliter le montage, les ports de communication sur les bus de données sont différents :
@@ -40,7 +40,7 @@ Pour faciliter le montage, les ports de communication sur les bus de données so
 - Le Teensy utilisera le port `Serial4` pour communiquer sur le bus de données Modbus à la vitesse de communication du capteur URM14.<br>Il utilisera l'entrée digitale **30** pour communiquer en OneWire avec la sonde DS18B20.
 - L'ESP32 utilisera le port `Serial1` pour communiquer sur le bus de données Modbus à la vitesse de communication du capteur URM14. **D2** (TX) et **D4** (RX) sont les pins définies dans le programme pour ce port.<br>Il utilisera l'entrée digitale **D18** pour communiquer en OneWire avec la sonde DS18B20.
 
-### Branchements
+## Branchements
 
 |Teensy|ESP32|Interface RS485|
 |------|-----|---------------|

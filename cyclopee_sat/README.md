@@ -27,7 +27,7 @@ Pour dresser le cahier des charges, nous avons réuni les chercheurs du LIENSs a
 |Mesure de marées/vagues (bouée?)|Burst toutes les 10-15min|10-20 jours|1cm (1mm?)|||
 |Transatlantique|1Hz ou ~30min|Le + possible<br>Recharge solaire|~1m|||
 
-La réalisation d'une première version du satllelite à partir d'un Teensy 3.5 est en cours. Elle vise à déterminer les vérous technologiques et tentera d'implémenter les fonctionnalités suivantes communes suivantes :
+La réalisation d'une première version du satllelite à partir d'un Teensy 3.5 est en cours. Elle vise à déterminer les vérous technologiques et tentera d'implémenter les fonctionnalités suivantes :
 
 - Facilité de déploiement;
 - Mesures de distance/tempérture :
@@ -71,7 +71,7 @@ Le satellite est en cours de développement, pour l'instant un logger de distanc
 
 ## Verrous technologiques identifiés
 
-Les principales difficultés rencontées jusqu'ici concernent la fréquence d'acquisition. Atteindre les 10Hz avec des capteurs low cost n'est pas si simple car ils peuvent avoir besoin de temps convertir leur mesure en valeur numérique.C C'est le cas du DS18B20 qui avec une résolution de 9 bits (0.5°C) nécéssite une temps de conversion de 93.75ms soit quasiment 0.1s (10Hz). Nous n'avons pas trouvé de solution pour éviter ce temps de converstion.<br>
+Les principales difficultés rencontées jusqu'ici concernent la fréquence d'acquisition. Atteindre les 10Hz avec des capteurs low cost n'est pas si simple car ils peuvent avoir besoin de temps convertir leur mesure en valeur numérique.C'est le cas du DS18B20 qui même avec une résolution minimale de 9 bits (0.5°C) nécéssite une temps de conversion de 93.75ms soit quasiment 0.1s (10Hz). Nous n'avons pas trouvé de solution pour éviter ce temps de convertion.<br>
 A noter que pour horodater et géoréférencer les mesures acquises à 10Hz, le récepteur GNNS doit également pouvoir générer des données à cette fréquence.
 
 ## Branchements

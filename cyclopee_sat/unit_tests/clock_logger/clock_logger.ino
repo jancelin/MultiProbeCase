@@ -46,9 +46,14 @@
 
 /* Sensor acquisition interval */
 // Check sensor reading interrupt duration before setting the value
-#define READ_INTERVAL  400000 // Unit: µs
+// 71s maximum
+#define READ_INTERVAL  (uint32_t) 1/*s*/ * 1000000/*µs/s*/
+/* Logging segmentation interval */
+#define LOG_SEG_INTERVAL  (uint32_t) 120/*s*/ * 1000/*ms/s*/
 
 /* Teensy pins */
+// Logging LED
+#define LOG_LED       13
 // Modbus
 #define DE_PIN        30 // RE = ~DE => Wired to pin 30 as well
 // OneWire
@@ -79,19 +84,10 @@
 /* Maximum buffer size */
 #define MAX_BUFFER_SIZE  100
 
-/* Enumerations */
-// Read status
-enum ReadStatus : uint8_t {
-  OPERATIONAL = 0x00,
-  NO_DS18B20,
-  NO_URM14,
-  NO_SENSOR
-};
-
 /* Debug */
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}//;Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] ");}
 #else
 #define SERIAL_DBG(...) {}
@@ -99,7 +95,7 @@ enum ReadStatus : uint8_t {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -120,8 +116,8 @@ enum ReadStatus : uint8_t {
 // Sd card setup
 void setupSDCard();
 // Log file setup
-void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegCountdown);
-bool logToSD(File& file, const uint16_t& dist_mm, const float& temp_C, const long& timestamp);
+void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegCountdown, bool& errorFlag);
+bool logToSD(File& file, const long& timestamp, const uint16_t& dist_mm, const float& temp_C);
 void dumpFileToSerial(File& file);
 // Modbus communication with URM14
 void preTrans()  {  digitalWrite(DE_PIN, HIGH); }
@@ -165,7 +161,12 @@ uint16_t urm14_controlBits = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENAB
 /* Timer interrputs */
 IntervalTimer sensorRead_timer;
 
-/* Timers */
+/* LED timers */
+Metro logLEDCountdown = Metro(1500);
+Metro noLogLEDCountdown = Metro(600);
+Metro errorLEDCountdown = Metro(150);
+
+/* Other timers */
 // Metro object to manage log segmentation time
 Metro logSegCountdown = Metro(30000);
 // Metro object to dump log file every 1s
@@ -181,15 +182,19 @@ void setup() {
   setTime(HOURS, MINUTES, SECONDS, DAY, MONTH, YEAR);
   
   /* Pin setup */
+  pinMode(LOG_LED, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(DE_PIN, OUTPUT);
   digitalWrite(DE_PIN, LOW);
+
+  // Turn LED on during setup
+  digitalWrite(LOG_LED, HIGH);
   
   /* Serial ports */
   // USB debug Serial port
   Serial.begin(115200);
   // GPS Serial port
-  Serial2.begin(115200);
+  Serial5.begin(115200);
 
   SERIAL_DBG("#### SETUP ####\n\n")
   
@@ -210,13 +215,18 @@ void setup() {
   sensorRead_timer.priority(250);
   
   SERIAL_DBG("\n\n")
+
+  // Turn LED off after setup
+  digitalWrite(LOG_LED, LOW);
 }
 
 /* Global variables for loop() */
+// System status error flag
+bool errorFlag = false;
 // Interrupt safe buffers to store values to log
 RingBuf <long, MAX_BUFFER_SIZE> time_buf;
 RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf;
-RingBuf <uint16_t, MAX_BUFFER_SIZE> dist_buf;
+RingBuf <uint16_t, MAX_BUFFER_SIZE>   dist_buf;
 
 long time_ms;
 float extTemp_C;
@@ -253,17 +263,17 @@ void loop() {
     }
     else
       SERIAL_DBG("No log file open.\n")
-      SERIAL_DBG("\n###\n\n")
+    SERIAL_DBG("\n###\n")
 
-      /* Handling log file management */
-      handleLogFile(logFile, logDir, logFileName, logSegCountdown);
+    /* Handling log file management */
+    handleLogFile(logFile, logDir, logFileName, logSegCountdown, errorFlag);
 
     /* Logging into file */
     if (logFile && !time_buf.isEmpty()) {
       time_buf.pop(time_ms);
       extTemp_buf.pop(extTemp_C);
       dist_buf.pop(dist_mm);
-      if ( !logToSD(logFile, time_ms, dist_mm, extTemp_C) )
+      if ( !logToSD(logFile, time_ms, dist_mm, extTemp_C, errorFlag) )
         SERIAL_DBG("Logging failed...\n")
     }
     /* Dumping log file to Serial */
@@ -277,7 +287,7 @@ void loop() {
       time_buf.pop(time_ms);
       extTemp_buf.pop(extTemp_C);
       dist_buf.pop(dist_mm);
-      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, dist_mm, extTemp_C) )
+      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, dist_mm, extTemp_C, errorFlag) )
         SERIAL_DBG("Logging failed...\n")
       else
         logFile.close();
@@ -285,10 +295,11 @@ void loop() {
     else
       SERIAL_DBG("Logging disabled...\n")
   }
-  // Update enLog state according to button state
-  watchButton(enLog);
+  SERIAL_DBG("\n\n")
 
-  SERIAL_DBG("\n")
+  // Update enLog state according to button state
+  handleDigitalIO(enLog);
+
 
   //Serial.println(millis() - t);
 }
@@ -316,7 +327,7 @@ void readSensors()  {
       
       // Safe interrupt GNSS data push into buffers
       time_buf.lockedPush(millis());
-      
+
 // DS18B20 convertion takes time (depends on sensor resolution config)
       // Read DS18B20 temperature
       sensors.requestTemperatures();
@@ -334,13 +345,6 @@ void readSensors()  {
           dist_buf.push(URM14_DISCONNECTED);
       }
 
-      // Trigger mode : Set trigger bit to request one measurement
-      if (MEASURE_MODE_BIT) {
-        mbError = urm14.writeSingleRegister(URM14_CONTROL_REG, urm14_controlBits);
-        // Check for Modbus errors
-        if (mbError != ModbusMaster::ku8MBSuccess)
-          dist_buf.push(URM14_DISCONNECTED);
-      }
       // Reading distance input register at 0x05
       // Should use readInputRegisters() but somehow doesn't work
       // Throws ku8MBIllegalDataAddress error (0x02)
@@ -454,7 +458,7 @@ void new_logDir(String& dirName)  {
 }
 
 /*
- * @brief: create new log file 'dirName/fileName' if it does not already exist
+ * @brief: create and open a new log file 'dirName/fileName' if it does not already exist
  * @params:
  *    file: File object
  *    dirName: directory name in which file will be created
@@ -492,44 +496,55 @@ bool new_logFile(File& file, const String& dirName, String& fileName)  {
  *    fileName : log file name
  *    logSegCountdown : timer for log segmentation
  */
-void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegCountdown)  {
+void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegCountdown, bool& errorFlag)  {
 
-  String currDate;
-  dateToString(currDate);
-  // If no log file open or new day
-  if ( !file || dirName != currDate )  {
-    file.close();
-    dirName = currDate;
-    timestamp_to_string(millis(), fileName, false);
-    fileName.replace(':', '_');
-    fileName.concat(".csv");
-    logSegCountdown.reset();
-  }
-  // Create new log segment
-  else if (logSegCountdown.check()) {
-    file.close();
-    timestamp_to_string(millis(), fileName, false);
-    fileName.replace(':', '_');
-    fileName.concat(".csv");
-  }
+   SERIAL_DBG("---> handleLogFile()\n")
+
+  if (SD.mediaPresent())  {
+    
+    String currDate;
+    dateToString(currDate);
+    // If no log file open or new day
+    if ( !file || dirName != currDate )  {
+      file.close();
+      dirName = currDate;
+      timestamp_to_string(millis(), fileName, false);
+      fileName.replace(':', '_');
+      fileName.concat(".csv");
+      logSegCountdown.reset();
+    }
+    // Create new log segment
+    else if (logSegCountdown.check()) {
+      file.close();
+      timestamp_to_string(millis(), fileName, false);
+      fileName.replace(':', '_');
+      fileName.concat(".csv");
+      logSegCountdown.reset();
+    }
+    
+    SERIAL_DBG("Creating new log dir '")
+    SERIAL_DBG(dirName)
+    SERIAL_DBG("'...\n")
+    // Create new log dir if dirName changed
+    new_logDir(dirName);
   
-  SERIAL_DBG("---> handleLogFile()\n")
-  SERIAL_DBG("Creating new log dir '")
-  SERIAL_DBG(dirName)
-  SERIAL_DBG("'...\n")
-  // Create new log dir if dirName changed
-  new_logDir(dirName);
-
-  SERIAL_DBG("Done.\n")
-  SERIAL_DBG("Creating and opening new log file '")
-  SERIAL_DBG(dirName)
-  SERIAL_DBG('/')
-  SERIAL_DBG(fileName)
-  SERIAL_DBG('\n')
-  // Create new log file if fileName changed
-  if (new_logFile(file, dirName, fileName))  {
-    logSegCountdown.reset();
-    SERIAL_DBG("Done.\n\n")
+    SERIAL_DBG("Done.\n")
+    SERIAL_DBG("Creating and opening new log file '")
+    SERIAL_DBG(dirName)
+    SERIAL_DBG('/')
+    SERIAL_DBG(fileName)
+    SERIAL_DBG('\n')
+    // Create new log file if fileName changed
+    if (new_logFile(file, dirName, fileName))  {
+      logSegCountdown.reset();
+      SERIAL_DBG("Done.\n")
+    }
+    errorFlag = false;
+  }
+  else  {
+    SERIAL_DBG("No SD card detected...\n")
+    errorFlag = true;
+    file.close();
   }
 }
 
@@ -541,42 +556,33 @@ void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegC
       dist_mm : distance in mm to log
       temp_C : temperature in °C to log
 */
-void csv_log_string(String& log_str, const long& timestamp, const uint16_t& dist_mm, const float& temp_C)  {
+void csv_log_string(String& log_str, const long& timestamp, const uint16_t& dist_mm, const float& temp_C, bool& errorFlag)  {
 
-  // Inserting time into log string
+  SERIAL_DBG("\n---> csv_log_string()\n") 
+  
+  // Inserting timestamp into log string
   timestamp_to_string(timestamp, log_str, true);
   log_str.concat(',');
-  
-  SERIAL_DBG("\n---> csv_log_string()\n")
-  // Inserting distance, temerature and system errors into log string
-  if (temp_C == DEVICE_DISCONNECTED_C && dist_mm == URM14_DISCONNECTED) {
-
-    SERIAL_DBG("No sensor response, check wiring...\n")
-    log_str.concat("NaN,mm,NaN,°C,0x0");
-    log_str.concat(NO_SENSOR);
+  // Inserting distance into log string
+  if (dist_mm != URM14_DISCONNECTED)  {
+    log_str.concat(dist_mm/10.0);
+    errorFlag |= false;
   }
-  else if (temp_C == DEVICE_DISCONNECTED_C) {
-
-    SERIAL_DBG("No DS18B20 response, check wiring...\n")
-    log_str.concat(dist_mm / 10.0);
-    log_str.concat(",NaN,0x0");
-    log_str.concat(NO_DS18B20);
-  }
-  else if (dist_mm == URM14_DISCONNECTED) {
-
+  else  {
     SERIAL_DBG("No URM14 response, check wiring...\n")
-    log_str.concat("NaN,");
-    log_str.concat(temp_C);
-    log_str.concat(",0x0");
-    log_str.concat(NO_URM14);
+    log_str.concat("Nan");
+    errorFlag |= true;
   }
-  else {
-    SERIAL_DBG("Sensor responses ok.\n")
-    log_str.concat(dist_mm / 10.0);
-    log_str.concat(',');
-    log_str.concat(temp_C);
-    log_str.concat(",0x0");
-    log_str.concat(OPERATIONAL);
+  log_str.concat(',');
+  // Inserting external temperature into log string
+  if (extTemp_C != DEVICE_DISCONNECTED_C) {
+    log_str.concat(extTemp_C);
+    errorFlag |= false;
+  }
+  else  {
+    SERIAL_DBG("No DS18B20 response, check wiring...\n")
+    log_str.concat("Nan");
+    errorFlag |= true;
   }
 }
 
@@ -588,11 +594,10 @@ void csv_log_string(String& log_str, const long& timestamp, const uint16_t& dist
       ditstance_mm: distance to log
       temp_C: external temperature to log
 */
-bool logToSD(File& file, const long& timestamp, const uint16_t& dist_mm, const float& temp_C) {
+bool logToSD(File& file, const long& timestamp, const uint16_t& dist_mm, const float& temp_C, bool& errorFlag) {
 
   String log_str;
-
-  csv_log_string(log_str, timestamp, dist_mm, temp_C);
+  csv_log_string(log_str, timestamp, dist_mm, temp_C, errorFlag);
   // Check if log file is open
   if (!file)
     return false;
@@ -695,14 +700,26 @@ void setupDS18B20(DallasTemperature& sensorNetwork) {
     SERIAL_DBG("OneWire : DS18B20 found!\n")
 }
 
-/* ##############   BUTTON  ################ */
+/* ##############   DIGITAL IO  ################ */
 /*
  * @brief: watches button state to update enLog
  * @params:
  *    enLog : boolean that stores if logging is enabled or not
  */
-void watchButton(bool& enLog)  {
+void handleDigitalIO(bool& enLog)  {
 
+  // Logging LED
+  if (!errorFlag) { 
+    if (!enLog && noLogLEDCountdown.check())
+      digitalWrite(LOG_LED, !digitalRead(LOG_LED));
+    else if (enLog && logLEDCountdown.check())
+      digitalWrite(LOG_LED, !digitalRead(LOG_LED));
+  }
+  else
+    if (errorLEDCountdown.check())
+      digitalWrite(LOG_LED, !digitalRead(LOG_LED));
+      
+  // Logging button
   if (digitalRead(BUTTON_PIN) == 0)
     enLog = true;
   else

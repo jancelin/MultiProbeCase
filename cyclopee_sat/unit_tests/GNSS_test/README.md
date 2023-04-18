@@ -11,20 +11,20 @@ Test de réception du temps GNSS
 ===============================
 
 ## En bref
-Ce programme permet de tester la réception du temps GNSS communiqué par un récepteur GNSS via des trames NMEA.
+Ce programme permet de tester la réception du temps GNSS communiqué par un récepteur GNSS via les trames NMEA `$GPGGA` et `$GPRMC`.
 
 ## Matériel
-- Teensy 3.5 ou carte ESP32;
+- Teensy 3.5;
 - Drotek DP0601 RTK GNSS (XL F9P)
 
 ## Bibliothèque
-- `TinyGPSPlus`
+- `TinyGPSPlus`.
 
 ## Inspiration
 Ce programme est inspiré des exemples présents sur le site [Arduiniana](http://arduiniana.org/libraries/tinygpsplus/).
 
 ## Ports
-Pour ces deux montages, le port de communication `Serial` est utilisé pour le debug via USB (moniteur série de l'IDE Arduino) à 115200 baud. <br>
+Pour ce montage, le port de communication `Serial` est utilisé pour le debug via USB (moniteur série de l'IDE Arduino) à 115200 baud. <br>
 Le récepteur Drotek DP0601 a été configuré pour diffuser les trames NMEA `$GPGGA` et `$GPRMC` sur son port `UART1`.<br>
 Le Teensy utilisera son port `Serial5` pour recevoir les trames NMEA du récepteur Drotek.
 

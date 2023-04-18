@@ -2,7 +2,7 @@
 layout: default
 parent: Tests unitaires
 grand_parent: Satellite Cyclopée
-title: Logger utilisant l'horloge interne
+title: Logger utilisant le temps GNSS
 nav_order: 6
 has_children: False
 ---

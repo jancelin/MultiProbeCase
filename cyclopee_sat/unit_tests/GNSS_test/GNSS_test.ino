@@ -6,8 +6,10 @@
  * @brief:  This program feeds TinyGPSPlus object with Serial5 buffer data
  *          and dumps updated GNSS time on USB (Serial) port.
  *          
- * @boards :
+ * @board:
  *    Teensy 3.5
+ * 
+ * @GNSS module:
  *    Drotek DP0601 RTK GNSS (XL F9P)  
  *
  * @wiring:

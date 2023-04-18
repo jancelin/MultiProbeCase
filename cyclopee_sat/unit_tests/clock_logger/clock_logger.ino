@@ -1,6 +1,6 @@
 /* --------------------------
  * @inspiration:
- *    ext_temp_cop_test
+ *    ext_temp_comp_test
  *    SD_test
  *   
  * @brief:
@@ -32,9 +32,9 @@
  *      Serial4 (9600 baud configured in URM14)
  * --------------------------
  */
-/* ###########################
- * #   GLOBALS DEFINITIONS   #
- * ###########################
+/* ##########################
+ * #   GLOBAL DEFINITIONS   #
+ * ##########################
 */
 /* Current date & time */
 #define YEAR      2023
@@ -79,7 +79,8 @@
 /* Maximum buffer size */
 #define MAX_BUFFER_SIZE  100
 
-/* Read status */
+/* Enumerations */
+// Read status
 enum ReadStatus : uint8_t {
   OPERATIONAL = 0x00,
   NO_DS18B20,
@@ -104,6 +105,7 @@ enum ReadStatus : uint8_t {
  * #    LIBRARIES    #
  * ###################
  */
+#include <RingBuf.h>
 #include <TimeLib.h>
 #include <SD.h>
 #include <ModbusMaster.h>
@@ -119,7 +121,7 @@ enum ReadStatus : uint8_t {
 void setupSDCard();
 // Log file setup
 void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegCountdown);
-bool logToSD(File& file, const uint16_t& distance_mm, const float& temp_C, const long& timestamp);
+bool logToSD(File& file, const uint16_t& dist_mm, const float& temp_C, const long& timestamp);
 void dumpFileToSerial(File& file);
 // Modbus communication with URM14
 void preTrans()  {  digitalWrite(DE_PIN, HIGH); }
@@ -211,12 +213,15 @@ void setup() {
 }
 
 /* Global variables for loop() */
-// Buffers to store values to log
-// Not declared volatile because only read once in loop
-uint8_t bufSize = 0;
-long time_buf[MAX_BUFFER_SIZE];
-float extTemp_C_buf [MAX_BUFFER_SIZE];
-uint16_t distance_mm_buf [MAX_BUFFER_SIZE];
+// Interrupt safe buffers to store values to log
+RingBuf <long, MAX_BUFFER_SIZE> time_buf;
+RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf;
+RingBuf <uint16_t, MAX_BUFFER_SIZE> dist_buf;
+
+long time_ms;
+float extTemp_C;
+uint16_t dist_mm;
+
 
 /*
  * @brief:
@@ -254,21 +259,31 @@ void loop() {
       handleLogFile(logFile, logDir, logFileName, logSegCountdown);
 
     /* Logging into file */
-    if (logFile && bufSize > 0)  {
-      if (logToSD(logFile, time_buf[bufSize], distance_mm_buf[bufSize], extTemp_C_buf[bufSize]))
-        bufSize--;
-      else
+    if (logFile && !time_buf.isEmpty()) {
+      time_buf.pop(time_ms);
+      extTemp_buf.pop(extTemp_C);
+      dist_buf.pop(dist_mm);
+      if ( !logToSD(logFile, time_ms, dist_mm, extTemp_C) )
         SERIAL_DBG("Logging failed...\n")
-      }
+    }
     /* Dumping log file to Serial */
     if (FILE_DUMP && fileDumpCountdown.check())
       dumpFileToSerial(logFile);
   }
   else  {
-    // If log file open then close it
-    if (logFile)
-      logFile.close();
-    SERIAL_DBG("Logging disabled...\n")
+    // If log file open then empty log buffer before closing it
+    if (logFile)  {
+      SERIAL_DBG("Writing remaining buffer values...\n")
+      time_buf.pop(time_ms);
+      extTemp_buf.pop(extTemp_C);
+      dist_buf.pop(dist_mm);
+      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, dist_mm, extTemp_C) )
+        SERIAL_DBG("Logging failed...\n")
+      else
+        logFile.close();
+    }
+    else
+      SERIAL_DBG("Logging disabled...\n")
   }
   // Update enLog state according to button state
   watchButton(enLog);
@@ -297,28 +312,26 @@ void readSensors()  {
   // If logging enabled and logFile open
   if (enLog && logFile) {
     // If buffer not full
-    if (bufSize < MAX_BUFFER_SIZE - 1) {
-
-      bufSize++;
+    if ( !time_buf.isFull() ) {
       
-      // Save acquisition time
-      time_buf[bufSize] = millis();
- 
+      // Safe interrupt GNSS data push into buffers
+      time_buf.lockedPush(millis());
+      
 // DS18B20 convertion takes time (depends on sensor resolution config)
       // Read DS18B20 temperature
       sensors.requestTemperatures();
-      extTemp_C_buf[bufSize] = sensors.getTempC(ds18b20_addr);
+      extTemp_buf.push(sensors.getTempC(ds18b20_addr));
       // Check for OneWire errors
-      if (extTemp_C_buf[bufSize] == DEVICE_DISCONNECTED_C)
+      if (extTemp_buf[extTemp_buf.size()] == DEVICE_DISCONNECTED_C)
         SERIAL_DBG("OneWire : DS18B20 disconnected...")
 // --------------
       
       // External compensation : Updade external URM14 temperature register
       if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)  {
-        mbError = urm14.writeSingleRegister(URM14_EXT_TEMP_REG, (uint16_t)(extTemp_C_buf[bufSize] * 10.0));
+        mbError = urm14.writeSingleRegister(URM14_EXT_TEMP_REG, (uint16_t)(extTemp_buf[extTemp_buf.size()] * 10.0));
         // Check for Modbus errors
         if (mbError != ModbusMaster::ku8MBSuccess)
-          distance_mm_buf[bufSize] = URM14_DISCONNECTED;
+          dist_buf.push(URM14_DISCONNECTED);
       }
 
       // Trigger mode : Set trigger bit to request one measurement
@@ -326,7 +339,7 @@ void readSensors()  {
         mbError = urm14.writeSingleRegister(URM14_CONTROL_REG, urm14_controlBits);
         // Check for Modbus errors
         if (mbError != ModbusMaster::ku8MBSuccess)
-          distance_mm_buf[bufSize] = URM14_DISCONNECTED;
+          dist_buf.push(URM14_DISCONNECTED);
       }
       // Reading distance input register at 0x05
       // Should use readInputRegisters() but somehow doesn't work
@@ -335,9 +348,9 @@ void readSensors()  {
       mbError = urm14.readHoldingRegisters(URM14_DISTANCE_REG, 1);
       // Check for Modbus errors
       if (mbError != ModbusMaster::ku8MBSuccess)
-        distance_mm_buf[bufSize] = URM14_DISCONNECTED;
+        dist_buf.push(URM14_DISCONNECTED);
       else
-        distance_mm_buf[bufSize] = urm14.getResponseBuffer(0);
+        dist_buf.push(urm14.getResponseBuffer(0));
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -441,8 +454,10 @@ void new_logDir(String& dirName)  {
 }
 
 /*
- * @brief: create new log file 'fileName' if it does not already exist
+ * @brief: create new log file 'dirName/fileName' if it does not already exist
  * @params:
+ *    file: File object
+ *    dirName: directory name in which file will be created
  *    fileName : new file name
  */
 bool new_logFile(File& file, const String& dirName, String& fileName)  {
@@ -470,7 +485,7 @@ bool new_logFile(File& file, const String& dirName, String& fileName)  {
 }
 
 /*
- * @brief: handle log file segmentation and dir/file creation every new day
+ * @brief: handle log file segmentation and dir/file creation every day
  * @params:
  *    File : log file object
  *    dirName : log dir name
@@ -523,40 +538,41 @@ void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegC
    @params:
       log_str : string to store the log
       timestamp : timestamp to log
-      distance_mm : distance in mm to log
+      dist_mm : distance in mm to log
       temp_C : temperature in °C to log
 */
-void csv_log_string(String& log_str, const long& timestamp, const uint16_t& distance_mm, const float& temp_C)  {
+void csv_log_string(String& log_str, const long& timestamp, const uint16_t& dist_mm, const float& temp_C)  {
 
-  SERIAL_DBG("---> csv_log_string()\n")
   // Inserting time into log string
   timestamp_to_string(timestamp, log_str, true);
   log_str.concat(',');
+  
+  SERIAL_DBG("\n---> csv_log_string()\n")
   // Inserting distance, temerature and system errors into log string
-  if (temp_C == DEVICE_DISCONNECTED_C && distance_mm == URM14_DISCONNECTED) {
+  if (temp_C == DEVICE_DISCONNECTED_C && dist_mm == URM14_DISCONNECTED) {
 
+    SERIAL_DBG("No sensor response, check wiring...\n")
     log_str.concat("NaN,mm,NaN,°C,0x0");
     log_str.concat(NO_SENSOR);
-    SERIAL_DBG("URM14 and DS18B20 disconnected...\n")
   }
   else if (temp_C == DEVICE_DISCONNECTED_C) {
 
-    log_str.concat(distance_mm / 10.0);
+    SERIAL_DBG("No DS18B20 response, check wiring...\n")
+    log_str.concat(dist_mm / 10.0);
     log_str.concat(",NaN,0x0");
     log_str.concat(NO_DS18B20);
-    SERIAL_DBG("DS18B20 disconnected...\n")
   }
-  else if (distance_mm == URM14_DISCONNECTED) {
+  else if (dist_mm == URM14_DISCONNECTED) {
 
+    SERIAL_DBG("No URM14 response, check wiring...\n")
     log_str.concat("NaN,");
     log_str.concat(temp_C);
     log_str.concat(",0x0");
     log_str.concat(NO_URM14);
-    SERIAL_DBG("URM14 disconnected...\n")
   }
   else {
-
-    log_str.concat(distance_mm / 10.0);
+    SERIAL_DBG("Sensor responses ok.\n")
+    log_str.concat(dist_mm / 10.0);
     log_str.concat(',');
     log_str.concat(temp_C);
     log_str.concat(",0x0");
@@ -567,15 +583,16 @@ void csv_log_string(String& log_str, const long& timestamp, const uint16_t& dist
 /*
    @brief: logs a log string into a file
    @params:
-      fileName: log file name
-      log_str : string that stores the log
-      read_status : indicates if reading from URM14 was successfull
+      file: File object used to log into log file
+      timestamp: timestamp to convert and log
+      ditstance_mm: distance to log
+      temp_C: external temperature to log
 */
-bool logToSD(File& file, const long& timestamp, const uint16_t& distance_mm, const float& temp_C) {
+bool logToSD(File& file, const long& timestamp, const uint16_t& dist_mm, const float& temp_C) {
 
   String log_str;
 
-  csv_log_string(log_str, timestamp, distance_mm, temp_C);
+  csv_log_string(log_str, timestamp, dist_mm, temp_C);
   // Check if log file is open
   if (!file)
     return false;

@@ -98,5 +98,5 @@ Le capteur URM14 doit être alimenté entre 7 et 15V !
 
 **Pour imiter un bouton poussoir, un fil électrique très court à été utilisé. Il sert simplement à relier l'entrée digitale associée au bouton (pin 0 du Teensy) à la masse (GND). Le bouton est enfoncé quand le fil relie la masse au Teensy et relaché lorsqu'il ne la relie pas.**
 
-![Montage](../assets/set_up_img/clock_logger.jpg)
+![Montage](../assets/clock_logger.jpg)
 

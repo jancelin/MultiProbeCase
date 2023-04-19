@@ -43,7 +43,7 @@ La réalisation d'une première version du satllelite à partir d'un Teensy 3.5 
 	+ Interrrompre/reprendre les logs.
 - GNSS :
 	+ Récupérer l'heure GNSS.
-	+ Récupérer la position GNSS (altitude, longitude, latitude).
+	+ Récupérer la position GNSS (longitude, latitude, altitude).
 - Pouvoir utiliser des corrections RTK.
 - Autonomie :
 	+ Alimentation externe & sur batterie;
@@ -66,40 +66,18 @@ La réalisation d'une première version du satllelite à partir d'un Teensy 3.5 
 - Alimentation (Board) 5 ou 3.3V.
 
 ## Avancement
-La réalisation d'une première version du satllelite à partir d'un Teensy 3.5 est en cours. Elle vise à déterminer les verrous technologiques.<br>
-Le satellite est en cours de développement, pour l'instant un logger de distance utilisant l'horloge interne du Teensy à été réalisé. L'intégration d'un recepteur GNSS est en cours.
+La réalisation d'une première version du satllelite à partir d'un Teensy 3.5 est en cours. Elle vise à déterminer les verrous technologiques. Pour le moment, deux loggers nus mais quasi fonctionnels ont été assemblés. Ils enregistrent tous deux les mesures localement sur une carte SD. Les codes sources sont disponibles dans les dossiers ```GNSS_logger``` et ```clock_logger```.<br>
+Le dossier ```GNSS_logger``` contient le nécéssaire pour accompagner la réalisation d'un logger utilisant le temps et la position GNSS pour horodater et géoréférencer les mesures.<br>
+Le dossier ```clock_logger``` contient le nécéssaire pour accompagner la réalisation d'un logger utilisant l'horloge interne du Teensy 3.5 pour horodater les mesures.
 
 ## Verrous technologiques identifiés
-
-Les principales difficultés rencontées jusqu'ici concernent la fréquence d'acquisition. Atteindre les 10Hz avec des capteurs low cost n'est pas si simple car ils peuvent avoir besoin de temps convertir leur mesure en valeur numérique.C'est le cas du DS18B20 qui même avec une résolution minimale de 9 bits (0.5°C) nécéssite une temps de conversion de 93.75ms soit quasiment 0.1s (10Hz). Nous n'avons pas trouvé de solution pour éviter ce temps de convertion.<br>
+Les principales difficultés rencontrées jusqu'ici concernent la fréquence d'acquisition. Atteindre les 10Hz avec des capteurs low cost n'est pas si simple car ils peuvent avoir besoin de temps convertir leur mesure en valeur numérique. C'est le cas du DS18B20 qui même avec une résolution minimale de 9 bits (0.5°C) nécéssite une temps de conversion de 93.75ms soit quasiment 0.1s (10Hz). Nous n'avons pas trouvé de solution pour éviter ce temps de convertion.<br>
 A noter que pour horodater et géoréférencer les mesures acquises à 10Hz, le récepteur GNNS doit également pouvoir générer des données à cette fréquence.
 
-## Branchements
-
-|Teensy|ESP32|Interface RS485|
-|------|-----|---------------|
-|TX4|D2|RX|
-|RX4|D4|TX|
-|30|D5|DE & RE|
-|3V3|3V3|3V3|
-|GND|GND|GND|
-
-Le capteur URM14 doit être alimenté entre 7 et 15V !
-
-|URM14|Interface RS485|Alimentation 7-15V|
-|---------------|-----|------------------|
-|Fil Blanc|A||
-|Fil Bleu|B|
-|Fil marron||Borne +|
-|Fil noir||Borne -|
-
-|Teensy|ESP32|DS18B20|
-|------|-----|-------|
-|3V3|3V3|Fil Orange|
-|GND|GND|Fil Blanc|
-|30|D18|Fil Jaune|
-
-![Photo du montage actuel](unit_tests/assets/set_up_img/ext_temp_comp_dist.jpg)
+<!--- 
+![Image du montage à horloge interne](assets/clock_logger.jpg)
+![Image du montage avec module GNSS](assets/GNSS_logger.jpg)
+--->
 
 ## Tests unitaires
-Le dossier `unit_tests` de ce répertoire propose des exemples de programmes permettant de tester le matériel, notamment le capteur ultrasonore, la sonde de température, le lecteur SD et un récepteur GNSS.
+Le dossier `unit_tests` de ce répertoire propose des exemples de programmes permettant de tester le matériel, notamment le capteur ultrasonore, la sonde de température, le lecteur SD et les récepteurs GNSS.

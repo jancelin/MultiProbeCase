@@ -11,7 +11,7 @@ Satellite Cyclopée
 
 ## Description
 Le satellite Cyclopée a été développé pour les chercheurs du laboratoire LIENSs à La Rochelle pour réaliser des mesures de niveau marin à bas coût.<br>
-C'est un dispositif permettant de réaliser des mesures de niveau realtives (hauteur d'eau) ou absolues (niveau marin). Il embarque un distancemètre ultrasonore permettant de mesurer la distance le séparant d'une surface (sol, eau), un capteur de température externe au distancemètre et un récepteur GNSS donnant l'heure et sa position. Le récepteur GNSS peut être quelconque du moment qu'il transmet les trames NMEA `$GPGGA` et `$GPRMC`.<br>
+C'est un dispositif permettant de réaliser des mesures de niveau relatives (hauteur d'eau) ou absolues (niveau marin). Il embarque un distancemètre ultrasonore permettant de mesurer la distance le séparant d'une surface (sol, eau), un capteur de température externe au distancemètre et un récepteur GNSS donnant l'heure et sa position. Le récepteur GNSS peut être quelconque du moment qu'il transmet les trames NMEA `$GPGGA` et `$GPRMC`.<br>
 Ce dispositif horodate, géoréférence et stocke localement (carte SD) les mesures de distance à la surface étudiée. Si associé à une passerelle, il peut également lui transmettre ses mesures pour stockage en base de données. Après post traitement des données, il est possible de remonter à l'altitude de la surface étudiée.
 
 ![Diagramme des flux](assets/schemas/flux_diagram_latest.png)
@@ -27,7 +27,7 @@ Pour dresser le cahier des charges, nous avons réuni les chercheurs du LIENSs a
 |Mesure de marées/vagues (bouée?)|Burst toutes les 10-15min|10-20 jours|1cm (1mm?)|||
 |Transatlantique|1Hz ou ~30min|Le + possible<br>Recharge solaire|~1m|||
 
-La réalisation d'une première version du satllelite à partir d'un Teensy 3.5 est en cours. Elle vise à déterminer les vérous technologiques et tentera d'implémenter les fonctionnalités suivantes :
+La réalisation d'une première version du satellite à partir d'un Teensy 3.5 est en cours. Elle vise à déterminer les vérous technologiques et tentera d'implémenter les fonctionnalités suivantes :
 
 - Facilité de déploiement;
 - Mesures de distance/tempérture :
@@ -71,7 +71,7 @@ Le satellite est en cours de développement, pour l'instant un logger de distanc
 
 ## Verrous technologiques identifiés
 
-Les principales difficultés rencontées jusqu'ici concernent la fréquence d'acquisition. Atteindre les 10Hz avec des capteurs low cost n'est pas si simple car ils peuvent avoir besoin de temps convertir leur mesure en valeur numérique.C'est le cas du DS18B20 qui même avec une résolution minimale de 9 bits (0.5°C) nécéssite une temps de conversion de 93.75ms soit quasiment 0.1s (10Hz). Nous n'avons pas trouvé de solution pour éviter ce temps de convertion.<br>
+Les principales difficultés rencontées jusqu'ici concernent la fréquence d'acquisition. Atteindre les 10Hz avec des capteurs low cost n'est pas si simple car ils peuvent avoir besoin de temps convertir leur mesure en valeur numérique.C'est le cas du DS18B20 qui même avec une résolution minimale de 9 bits (0.5°C) nécessite une temps de conversion de 93.75ms soit quasiment 0.1s (10Hz). Nous n'avons pas trouvé de solution pour éviter ce temps de convertion.<br>
 A noter que pour horodater et géoréférencer les mesures acquises à 10Hz, le récepteur GNNS doit également pouvoir générer des données à cette fréquence.
 
 ## Branchements

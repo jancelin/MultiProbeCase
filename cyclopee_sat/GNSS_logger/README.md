@@ -29,7 +29,7 @@ La partie log du programme s'éxécute en permanence dans la fonction `loop()`. 
 #### Mesures
 La fonction `loop()` est interrompue pour effectuer la lecture des capteurs. Ceci permet d'assurer la périodicité des mesures, même pour des fréquences élevées. Les valeurs lues sont enregistrées dans des buffers permettant de stocker les données à logger. Quand le système ne mesure pas, il vide les buffers dans le fichier de logs.
 #### Debug
-En cas de problème, ou simplement pour monitorer le fonctionnement, le système présente trois fontionnalités de debug.<br>
+En cas de problème, ou simplement pour monitorer le fonctionnement, le système présente trois modes de debug.<br>
 La première ne nécéssite pas de moniteur série puisqu'elle utilise la LED déjà présente sur le Teensy 3.5. Celle-ci clignote différemment en foncion de l'état du système :
 
 - **Eteinte** : Le système est hors tension;
@@ -41,7 +41,7 @@ La première ne nécéssite pas de moniteur série puisqu'elle utilise la LED d�
 Les deux dernières sont moins archaïques mais nécéssitent de monitorer le port série USB auquel est connecté le Teensy :
 
 - L'une renseigne simplement l'utilisateur sur l'**état du système pendant son initiaisation et son fonctionnement**.
-- L'autre **affiche le contenu du fichier de logs ouvert**.
+- L'autre **affiche le contenu du fichier de logs ouvert**. Si un des capteurs est déconnecté, `NaN` remplacera alors la valeur lue de celui-ci.
 
 
 ## Matériel
@@ -76,7 +76,7 @@ Le Teensy utilisera son port `Serial5` pour recevoir les trames NMEA du récepte
 Le capteur URM14 doit être alimenté entre 7 et 15V !
 
 |URM14|Interface RS485|Alimentation 7-15V|
-|---------------|-----|------------------|
+|-----|---------------|------------------|
 |Fil Blanc|A||
 |Fil Bleu|B|
 |Fil marron||Borne +|
@@ -108,7 +108,6 @@ Le capteur URM14 doit être alimenté entre 7 et 15V !
 |GND|Borne -|
 
 **Pour imiter un bouton poussoir, un fil électrique très court à été utilisé. Il sert simplement à relier l'entrée digitale associée au bouton (pin 0 du Teensy) à la masse (GND). Le bouton est enfoncé quand le fil relie la masse au Teensy et relaché lorsqu'il ne la relie pas.**
-
 
 ![Montage](../assets/GNSS_logger.jpg)
 

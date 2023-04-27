@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Synthèse
+title: Synthèse de projets existants
 nav_order: 3
 has_children: false
 ---
@@ -8,8 +8,8 @@ has_children: false
 
 Valise multicapteurs
 =======================
-Synthèse des projets existants
----------------------------------
+Synthèse de projets existants
+------------------------------
 
 ### [SensOcean](https://github.com/astrolabe-expeditions/SensOcean)
 

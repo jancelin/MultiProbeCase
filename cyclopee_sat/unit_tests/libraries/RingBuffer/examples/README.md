@@ -1,1 +1,0 @@
-# Examples of RingBuffer library

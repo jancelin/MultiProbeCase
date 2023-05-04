@@ -15,12 +15,12 @@
  *    Mikroe RS485 click 2 (MAX3471)
  *    
  * @GNSS :
- *    Drotek DP0601 RTK GNSS (XL F9P)
+ *    Drotek GNSS_MODULE RTK GNSS (XL F9P)
  *
  * @wiring:
- *      Teensy RX5       -> DP0601 UART1 B3 (TX)
- *      Teensy Vin (5V)  -> DP0601 UART1 B1 (5V)
- *      Teensy GND       -> DP0601 UART1 B6 (GND)
+ *      Teensy RX5       -> GNSS_MODULE UART1 B3 (TX)
+ *      Teensy Vin (5V)  -> GNSS_MODULE UART1 B1 (5V)
+ *      Teensy GND       -> GNSS_MODULE UART1 B6 (GND)
  *      Teensy TX4  -> RS485 RX
  *      Teensy RX4  -> RS485 TX 
  *      Teensy 30   -> RS485 DE 
@@ -36,7 +36,7 @@
  *      
  * @ports:
  *      Serial (115200 baud)
- *      GNSS_SERIAL (115200 baud for DP0601)
+ *      GNSS_SERIAL (115200 baud for GNSS_MODULE)
  *      URM14_SERIAL (9600 baud for URM14)
  * --------------------------
  */
@@ -112,7 +112,7 @@ enum Devices : uint8_t  {
   SD_CARD = 0,
   DS18B20,
   URM14,
-  DP0601,
+  GNSS_MODULE,
 };
 
 /* Debug */
@@ -249,7 +249,7 @@ void setup() {
   SERIAL_DBG('\n')
 
   /* GNSS set up */
-  setupGNSS(gps, connectedDevices[DP0601]);
+  setupGNSS(gps, connectedDevices[GNSS_MODULE]);
   SERIAL_DBG('\n')
   
   /* Setting up timer interrupts */
@@ -304,8 +304,8 @@ void loop() {
   SERIAL_DBG("URM14 :\t\t")
   SERIAL_DBG(connectedDevices[URM14])
   SERIAL_DBG('\n')
-  SERIAL_DBG("DP0601 :\t")
-  SERIAL_DBG(connectedDevices[DP0601])
+  SERIAL_DBG("GNSS_MODULE :\t")
+  SERIAL_DBG(connectedDevices[GNSS_MODULE])
   SERIAL_DBG("\n\n")
   
   if (enLog) {
@@ -409,7 +409,7 @@ void readSensors()  {
       else
         elv_buf.push(NO_GNSS_ALTITUDE);
 
-      //connectedDevices[DP0601] = true;
+      //connectedDevices[GNSS_MODULE] = true;
 
 // DS18B20 convertion takes time (depends on sensor resolution config)
       // Read DS18B20 temperature
@@ -482,7 +482,7 @@ void gnssRefresh() {
   while (!GNSS_SERIAL.available())  {
     // If could not update gnsss data in a while    
     if (millis() - watchdog > 700) {
-      connectedDevices[DP0601] = false;
+      connectedDevices[GNSS_MODULE] = false;
       return;
     }
   }
@@ -490,7 +490,7 @@ void gnssRefresh() {
   while (GNSS_SERIAL.available())
      gps.encode(GNSS_SERIAL.read());
      
-  connectedDevices[DP0601] = true;
+  connectedDevices[GNSS_MODULE] = true;
 
 }
 
@@ -882,7 +882,7 @@ void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnec
 void handleDigitalIO(bool& enLog, const volatile bool* connectedDevices)  {
 
   bool deviceDisconnected =  false;//!connectedDevices[SD_CARD];
-  for (uint8_t i = SD_CARD; i <= DP0601; i++) {
+  for (uint8_t i = SD_CARD; i <= GNSS_MODULE; i++) {
     deviceDisconnected |= !connectedDevices[i];
   }
   // Logging LED

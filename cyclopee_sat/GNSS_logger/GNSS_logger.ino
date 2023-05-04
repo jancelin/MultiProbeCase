@@ -142,17 +142,17 @@ enum Devices : uint8_t  {
 // Sd card setup
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
-void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gps, Metro& logSegCountdown,   volatile bool& SDConnected);
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const int32_t& alt_cm, const uint16_t& dist_mm, const float& temp_C);
+void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gps, Metro& logSegCountdown, volatile bool& SDConnected);
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C);
 void dumpFileToSerial(File& file);
 // OneWire communication with DS18B20
 void setupDS18B20(DallasTemperature& sensorNetwork, volatile bool& deviceConnected);
 // Modbus communication with URM14
 void preTrans()  {  digitalWrite(DE_PIN, HIGH); }
 void postTrans() {  digitalWrite(DE_PIN, LOW);  }
-void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sensorBaudrate, void (*preTransCbk)(), void (*postTransCbk)(),  volatile bool& deviceConnected);
+void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sensorBaudrate, void (*preTransCbk)(), void (*postTransCbk)(), volatile bool& deviceConnected);
 // GNSS setup
-void setupGNSS(TinyGPSPlus& gps,  volatile bool& deviceConnected);
+void setupGNSS(TinyGPSPlus& gps, volatile bool& deviceConnected);
 void gnssRefresh();
 // Sensor reading interrupt
 void readSensors();
@@ -189,8 +189,9 @@ ModbusMaster urm14;
 uint16_t urm14_controlBits = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENABLE_BIT | TEMP_CPT_SEL_BIT;
 
 /* GNSS */
-// TinyGPSPlus object to parse NMEA and store location and time
+// TinyGPSPlus objects to parse NMEA and store location and time
 TinyGPSPlus gps;
+TinyGPSCustom geoidElv(gps, "GNGGA", 11);
 
 /* Timer interrputs */
 IntervalTimer sensorRead_timer, gnssRefresh_timer;
@@ -260,15 +261,12 @@ void setup() {
 /**** Global variables for loop() ****/
 // Buffers to store values to log
 RingBuf <uint32_t, MAX_BUFFER_SIZE> time_buf;
-RingBuf <double, MAX_BUFFER_SIZE> lng_buf;
-RingBuf <double, MAX_BUFFER_SIZE> lat_buf;
-RingBuf <int32_t, MAX_BUFFER_SIZE> alt_buf;
+RingBuf <double, MAX_BUFFER_SIZE> lng_buf, lat_buf, elv_buf;
 RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf;
 RingBuf <uint16_t, MAX_BUFFER_SIZE> dist_buf;
 // Variables to store buffer readings
 uint32_t time_ms;
-double lng_deg, lat_deg;
-int32_t alt_cm;
+double lng_deg, lat_deg, elv_m;
 float extTemp_C;
 uint16_t dist_mm;
 
@@ -326,11 +324,11 @@ void loop() {
       time_buf.pop(time_ms);
       lng_buf.pop(lng_deg);
       lat_buf.pop(lat_deg);
-      alt_buf.pop(alt_cm);
+      elv_buf.pop(elv_m);
       extTemp_buf.pop(extTemp_C);
       dist_buf.pop(dist_mm);
       /* ----------------- */
-      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, alt_cm, dist_mm, extTemp_C) )
+      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, dist_mm, extTemp_C) )
         SERIAL_DBG("Logging failed...\n")
     }    
     /* Dumping log file to Serial */
@@ -345,11 +343,11 @@ void loop() {
       time_buf.pop(time_ms);
       lng_buf.pop(lng_deg);
       lat_buf.pop(lat_deg);
-      alt_buf.pop(alt_cm);
+      elv_buf.pop(elv_m);
       extTemp_buf.pop(extTemp_C);
       dist_buf.pop(dist_mm);
       /* --------------------- */
-      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, alt_cm, dist_mm, extTemp_C) )
+      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, dist_mm, extTemp_C) )
         SERIAL_DBG("Logging failed...\n")
       else
         logFile.close();
@@ -401,9 +399,9 @@ void readSensors()  {
       }
 
       if (gps.altitude.isUpdated())
-        alt_buf.lockedPush(gps.altitude.value());
+        elv_buf.lockedPush(gps.altitude.meters() + strtod(geoidElv.value(), NULL));
       else
-        alt_buf.push(NO_GNSS_ALTITUDE);
+        elv_buf.push(NO_GNSS_ALTITUDE);
 
       //connectedDevices[DP0601] = true;
 
@@ -700,11 +698,11 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
  *    timeVal : time value to log
  *    lng_deg : Longitude in ° to log
  *    lat_deg : Latitude in ° to log
- *    alt_cm : Longitude in cm to log
+ *    elv_m : Longitude in cm to log
  *    dist_mm : distance in mm to log
  *    temp_C : temperature in °C to log
  */
-void csv_log_string(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const int32_t& alt_cm, const uint16_t& dist_mm, const float& temp_C)  {
+void csv_log_string(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C)  {
 
   SERIAL_DBG("\n---> csv_log_string()\n") 
   
@@ -733,8 +731,8 @@ void csv_log_string(String& log_str, const uint32_t& timeVal, const double& lng_
   }
   log_str.concat(',');
   // Inserting GNSS altitude into log string
-  if (alt_cm != NO_GNSS_ALTITUDE)
-    log_str.concat(alt_cm);
+  if (elv_m != NO_GNSS_ALTITUDE)
+    log_str.concat(elv_m);
   else  {
     SERIAL_DBG("No GNSS location response, check wiring...\n")
     log_str.concat("Nan");
@@ -764,14 +762,14 @@ void csv_log_string(String& log_str, const uint32_t& timeVal, const double& lng_
  *    timeVal : time value to log
  *    lng_deg : Longitude in ° to log
  *    lat_deg : Latitude in ° to log
- *    alt_cm : Longitude in cm to log
+ *    elv_m : Longitude in cm to log
  *    dist_mm : distance in mm to log
  *    temp_C : temperature in °C to log
  */
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const int32_t& alt_cm, const uint16_t& dist_mm, const float& temp_C) {
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C) {
 
   String log_str;
-  csv_log_string(log_str, timeVal, lng_deg, lat_deg, alt_cm, dist_mm, temp_C);
+  csv_log_string(log_str, timeVal, lng_deg, lat_deg, elv_m, dist_mm, temp_C);
   // Check if log file is open
   if (!file)
     return false;

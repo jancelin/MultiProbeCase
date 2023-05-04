@@ -5,7 +5,7 @@
  * @brief:
  *    This program configures an HC-05 Bluetooth module 
  *    to operate with name Cyclopee and baudrate 115200.
- *    The listens for AT commands in loop().
+ *    Then listens for AT commands in loop().
  *   
  * @boards :
  *    Teensy 3.5
@@ -20,7 +20,7 @@
  *      
  * @ports:
  *      Serial (115200 baud)
- *      Serial3 (34800 baud for HC-05 conf mode)
+ *      Serial3 (38400 baud for HC-05 conf mode)
  * --------------------------
  */
 /* ###########################
@@ -63,7 +63,6 @@ void setup() {
     Serial.println("Bluetooth module : No module detected, check wiring...");
     Serial.println("Waiting for reboot...");
     return;
-    while(1);
   }
   Serial.println("Bluetooth module : Module detected.");
   ans = "";
@@ -105,7 +104,6 @@ void setup() {
     Serial.println("Bluetooth module : Could not set device name...");
     Serial.println("Waiting for reboot...");
     return;
-    while(1);
   }
   Serial.println("Bluetooth module : Device name set to 'Cyclopee'.");
   ans = "";
@@ -118,7 +116,6 @@ void setup() {
     Serial.println("Bluetooth module : Could not set communication baudrate...");
     Serial.println("Waiting for reboot...");
     return;
-    while(1);
   }
   Serial.println("Bluetooth module : Communication baudrate set to 115200 baud.");
   ans = "";

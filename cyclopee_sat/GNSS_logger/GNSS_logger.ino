@@ -97,6 +97,12 @@
 // Altitude value if GNSS module disconnected
 #define NO_GNSS_ALTITUDE  INT32_MAX
 
+/* Nomber of decimals for each data */
+#define LOC_DECIMALS  9
+#define ELV_DECIMALS  3
+#define TEMP_DECIMALS 3
+#define DIST_DECIMALS 1
+
 /* Maximum buffer size */
 #define MAX_BUFFER_SIZE  100
 
@@ -535,11 +541,11 @@ void setupSDCard( volatile bool& deviceConnected)  {
 void date_to_str(TinyGPSDate& gnssDate, String& str) {
   
   str = "";
-  str.concat(gnssDate.year());
-  str.concat('_');
-  str.concat(gnssDate.month());
-  str.concat('_');
-  str.concat(gnssDate.day());
+  str += gnssDate.year();
+  str += '_';
+  str += gnssDate.month();
+  str += '_';
+  str += gnssDate.day();
 }
   
 /*
@@ -552,11 +558,11 @@ void date_to_str(TinyGPSDate& gnssDate, String& str) {
 void time_to_str(TinyGPSTime& gnssTime, String& str) {
 
   str = "";
-  str.concat(gnssTime.hour());
-  str.concat('_');
-  str.concat(gnssTime.minute());
-  str.concat('_');
-  str.concat(gnssTime.second());
+  str += gnssTime.hour();
+  str += '_';
+  str += gnssTime.minute();
+  str += '_';
+  str += gnssTime.second();
 }
 
 /*
@@ -571,16 +577,13 @@ void timeValToStr(const uint32_t& timeVal, String& str) {
   uint32_t tmp = timeVal;
 
   str = "";
-  str.concat(tmp/1000000);
-  str.concat(':');
+  str += String(tmp/1000000) + ':';
   tmp %= 1000000;
-  str.concat(tmp/10000);
-  str.concat(':');
+  str += String(tmp/10000) + ':';
   tmp %= 10000;
-  str.concat(tmp/100);
-  str.concat('.');
+  str += String(tmp/100) + '.';
   tmp %= 100;
-  str.concat(tmp);
+  str += String(tmp);
 }
 
 /*
@@ -615,9 +618,7 @@ bool new_logFile(File& file, const String& dirName, String& fileName)  {
 
   String file_path = "";
 
-  file_path.concat(dirName);
-  file_path.concat('/');
-  file_path.concat(fileName);
+  file_path += dirName + '/' + fileName;
 
   if (SD.exists(file_path.c_str()))  {
     SERIAL_DBG("File '")
@@ -657,14 +658,14 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
       file.close();
       dirName = currDate;
       time_to_str(gps.time, fileName);
-      fileName.concat(".csv");
+      fileName += ".csv";
       logSegCountdown.reset();
     }
     // Create new log segment
     else if (logSegCountdown.check()) {
       file.close();
       time_to_str(gps.time, fileName);
-      fileName.concat(".csv");
+      fileName += ".csv";
       logSegCountdown.reset();
     }
     SERIAL_DBG("Creating new log dir '")
@@ -711,47 +712,47 @@ void csv_log_string(String& log_str, const uint32_t& timeVal, const double& lng_
     timeValToStr(timeVal, log_str);
   else  {
     SERIAL_DBG("No GNSS time response...\n")
-    log_str.concat("Nan");
+    log_str += "Nan";
   }
-  log_str.concat(',');
+  log_str += ',';
   // Inserting GNSS longitude into log string
   if (lng_deg != NO_GNSS_LOCATION)
-    log_str.concat(lng_deg);
+    log_str += String(lng_deg, LOC_DECIMALS);
   else  {
     SERIAL_DBG("No GNSS location response, check wiring...\n")
-    log_str.concat("Nan");
+    log_str += "Nan";
   }
-  log_str.concat(',');
+  log_str += ',';
   // Inserting GNSS latitude into log string
   if (lat_deg != NO_GNSS_LOCATION)
-    log_str.concat(lat_deg);
+    log_str += String(lat_deg, LOC_DECIMALS);
   else  {
     SERIAL_DBG("No GNSS location response, check wiring...\n")
-    log_str.concat("Nan");
+    log_str += "Nan";
   }
-  log_str.concat(',');
+  log_str += ',';
   // Inserting GNSS altitude into log string
   if (elv_m != NO_GNSS_ALTITUDE)
-    log_str.concat(elv_m);
+    log_str += String (elv_m, ELV_DECIMALS);
   else  {
     SERIAL_DBG("No GNSS location response, check wiring...\n")
-    log_str.concat("Nan");
+    log_str += "Nan";
   }
-  log_str.concat(',');
+  log_str += ',';
   // Inserting distance into log string
   if (dist_mm != URM14_DISCONNECTED)
-    log_str.concat(dist_mm/10.0);
+    log_str += String(dist_mm/10.0, DIST_DECIMALS);
   else  {
     SERIAL_DBG("No URM14 response, check wiring...\n")
-    log_str.concat("Nan");
+    log_str += "Nan";
   }
-  log_str.concat(',');
+  log_str += ',';
   // Inserting external temperature into log string
   if (extTemp_C != DEVICE_DISCONNECTED_C)
-    log_str.concat(extTemp_C);
+    log_str += String(extTemp_C, TEMP_DECIMALS);
   else  {
     SERIAL_DBG("No DS18B20 response, check wiring...\n")
-    log_str.concat("Nan");
+    log_str += "Nan";
   }
 }
 

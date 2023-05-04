@@ -29,7 +29,7 @@ La partie log du programme s'éxécute en permanence dans la fonction `loop()`. 
 #### Mesures
 La fonction `loop()` est interrompue pour effectuer la lecture des capteurs. Ceci permet d'assurer la périodicité des mesures, même pour des fréquences élevées. Les valeurs lues sont enregistrées dans des buffers permettant de stocker les données à logger. Quand le système ne mesure pas, il vide les buffers dans le fichier de logs.
 #### Debug
-En cas de problème, ou simplement pour monitorer son fonctionnement, le système présente trois fontionnalités de debug.<br>
+En cas de problème, ou simplement pour monitorer son fonctionnement, le système présente trois modes de debug.<br>
 La première ne nécéssite pas de moniteur série puisqu'elle utilise la LED déjà présente sur le Teensy 3.5. Celle-ci clignote différemment en foncion de l'état du système :
 
 - **Eteinte** : Le système est hors tension;
@@ -41,7 +41,7 @@ La première ne nécéssite pas de moniteur série puisqu'elle utilise la LED d�
 Les deux dernières sont moins archaïques mais nécéssitent de monitorer le port série USB auquel est connecté le Teensy :
 
 - L'une renseigne simplement l'utilisateur sur l'**état du système pendant son initiaisation et son fonctionnement**.
-- L'autre **affiche le contenu du fichier de logs ouvert**.
+- L'autre **affiche le contenu du fichier de logs ouvert**. Si un des capteurs est déconnecté, `NaN` remplacera alors la valeur lue de celui-ci.
 
 ## Matériel
 - Teensy 3.5;

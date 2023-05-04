@@ -15,12 +15,12 @@
  *    Mikroe RS485 click 2 (MAX3471)
  *    
  * @GNSS :
- *    Drotek DP0601 RTK GNSS (XL F9P)
+ *    Drotek GNSS_MODULE RTK GNSS (XL F9P)
  *
  * @wiring:
- *      Teensy RX5       -> DP0601 UART1 B3 (TX)
- *      Teensy Vin (5V)  -> DP0601 UART1 B1 (5V)
- *      Teensy GND       -> DP0601 UART1 B6 (GND)
+ *      Teensy RX5       -> GNSS_MODULE UART1 B3 (TX)
+ *      Teensy Vin (5V)  -> GNSS_MODULE UART1 B1 (5V)
+ *      Teensy GND       -> GNSS_MODULE UART1 B6 (GND)
  *      Teensy TX4  -> RS485 RX
  *      Teensy RX4  -> RS485 TX 
  *      Teensy 30   -> RS485 DE 
@@ -36,7 +36,7 @@
  *      
  * @ports:
  *      Serial (115200 baud)
- *      GNSS_SERIAL (115200 baud for DP0601)
+ *      GNSS_SERIAL (115200 baud for GNSS_MODULE)
  *      URM14_SERIAL (9600 baud for URM14)
  * --------------------------
  */
@@ -45,13 +45,14 @@
  * ###########################
  */
 /* Serial Ports */
-#define URM14_SERIAL  Serial4
-#define GNSS_SERIAL   Serial5
+#define BLUETOOTH_SERIAL  Serial3
+#define URM14_SERIAL      Serial4
+#define GNSS_SERIAL       Serial5
 
 /* Sensor acquisition interval */
 // Check sensor reading interrupt duration before setting the value
 // 71s maximum
-#define READ_INTERVAL 400/*ms*/ * 1000/*µs/ms*/
+#define READ_INTERVAL 2/*ms*/ * 1000000/*µs/s*/
 /* GNSS refresh interval */
 // Minimal refresh rate to get 20ms GNSS time resolution
 #define GNSS_REFRESH_INTERVAL 1/*ms*/ * 1000/*ms/µs*/
@@ -112,7 +113,8 @@ enum Devices : uint8_t  {
   SD_CARD = 0,
   DS18B20,
   URM14,
-  DP0601,
+  GNSS_MODULE,
+  BLUETOOTH
 };
 
 /* Debug */
@@ -235,6 +237,9 @@ void setup() {
   GNSS_SERIAL.begin(115200);
 
   SERIAL_DBG("#### SETUP ####\n\n")
+
+  /* Bluetooth setup */
+  setupBluetooth(connectedDevices[BLUETOOTH]);
   
   /* SD card init */
   setupSDCard(connectedDevices[SD_CARD]);
@@ -249,7 +254,7 @@ void setup() {
   SERIAL_DBG('\n')
 
   /* GNSS set up */
-  setupGNSS(gps, connectedDevices[DP0601]);
+  setupGNSS(gps, connectedDevices[GNSS_MODULE]);
   SERIAL_DBG('\n')
   
   /* Setting up timer interrupts */
@@ -304,8 +309,8 @@ void loop() {
   SERIAL_DBG("URM14 :\t\t")
   SERIAL_DBG(connectedDevices[URM14])
   SERIAL_DBG('\n')
-  SERIAL_DBG("DP0601 :\t")
-  SERIAL_DBG(connectedDevices[DP0601])
+  SERIAL_DBG("GNSS_MODULE :\t")
+  SERIAL_DBG(connectedDevices[GNSS_MODULE])
   SERIAL_DBG("\n\n")
   
   if (enLog) {
@@ -336,6 +341,7 @@ void loop() {
       /* ----------------- */
       if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, dist_mm, extTemp_C) )
         SERIAL_DBG("Logging failed...\n")
+      sendDataToBluetooth(gps.date, time_ms, lng_deg, lat_deg, elv_m, dist_mm, extTemp_C);
     }    
     /* Dumping log file to Serial */
     if (FILE_DUMP && fileDumpCountdown.check())
@@ -357,6 +363,7 @@ void loop() {
         SERIAL_DBG("Logging failed...\n")
       else
         logFile.close();
+      sendDataToBluetooth(gps.date, time_ms, lng_deg, lat_deg, elv_m, dist_mm, extTemp_C);
     }
     else
       SERIAL_DBG("Logging disabled...\n")
@@ -409,7 +416,7 @@ void readSensors()  {
       else
         elv_buf.push(NO_GNSS_ALTITUDE);
 
-      //connectedDevices[DP0601] = true;
+      //connectedDevices[GNSS_MODULE] = true;
 
 // DS18B20 convertion takes time (depends on sensor resolution config)
       // Read DS18B20 temperature
@@ -467,6 +474,42 @@ void readSensors()  {
   //Serial.println(millis() - t);
 }
 
+/* ##############   BLUETOOTH    ################ */
+
+void setupBluetooth(bool& deviceConnected)  {
+
+  BLUETOOTH_SERIAL.begin(115200);
+  deviceConnected = true;
+  
+} 
+
+void jsonStr(String& str, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C) {
+
+  String timeVal_str = "", date_str = "";
+  str = "" ;
+  timeValToStr(timeVal, timeVal_str);
+  date_to_str(gnssDate, date_str);
+  
+  str += '{';
+  str += "\"satellite\":\"Cyclopee\",";
+  str += "\"Date\":\"" + date_str.replace('_', '/') + "\",";
+  str += "\"Time\":\"" + timeVal_str + "\",";
+  str += "\"Longitude\":" + String(lng_deg, LOC_DECIMALS) + ',';
+  str += "\"Latitude\":" + String(lat_deg, LOC_DECIMALS) + ',';
+  str += "\"Altitude\":" + String(elv_m, ELV_DECIMALS) + ',';
+  str += "\"Distance\":" + String(dist_mm/10.0, DIST_DECIMALS) + ',';
+  str += "\"External temperature\":" + String(temp_C, TEMP_DECIMALS);
+  str += '}';
+}
+
+void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C)  {
+
+  String str = "";
+  jsonStr(str, gnssDate, timeVal, lng_deg, lat_deg, elv_m, dist_mm, temp_C);
+  BLUETOOTH_SERIAL.println(str);
+  
+}
+
 /* ##############   GNSS    ################ */
 
 void gnssRefresh() {
@@ -482,7 +525,7 @@ void gnssRefresh() {
   while (!GNSS_SERIAL.available())  {
     // If could not update gnsss data in a while    
     if (millis() - watchdog > 700) {
-      connectedDevices[DP0601] = false;
+      connectedDevices[GNSS_MODULE] = false;
       return;
     }
   }
@@ -490,7 +533,7 @@ void gnssRefresh() {
   while (GNSS_SERIAL.available())
      gps.encode(GNSS_SERIAL.read());
      
-  connectedDevices[DP0601] = true;
+  connectedDevices[GNSS_MODULE] = true;
 
 }
 
@@ -882,7 +925,7 @@ void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnec
 void handleDigitalIO(bool& enLog, const volatile bool* connectedDevices)  {
 
   bool deviceDisconnected =  false;//!connectedDevices[SD_CARD];
-  for (uint8_t i = SD_CARD; i <= DP0601; i++) {
+  for (uint8_t i = SD_CARD; i <= GNSS_MODULE; i++) {
     deviceDisconnected |= !connectedDevices[i];
   }
   // Logging LED

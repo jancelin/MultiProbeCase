@@ -51,7 +51,7 @@
 /* Sensor acquisition interval */
 // Check sensor reading interrupt duration before setting the value
 // 71s maximum
-#define READ_INTERVAL 400/*ms*/ * 1000/*µs/ms*/
+#define READ_INTERVAL 1000/*ms*/ * 1000/*µs/ms*/
 /* GNSS refresh interval */
 // Minimal refresh rate to get 20ms GNSS time resolution
 #define GNSS_REFRESH_INTERVAL 1/*ms*/ * 1000/*ms/µs*/
@@ -90,14 +90,18 @@
 #define DS18B20_ID   0
 
 /* GNSS Module */
+// GNSS commuiation baudrate
+#define GNSS_BAUDRATE 115200//bauds
 // Time value if GNSS module disconnected
 #define NO_GNSS_TIME      24606099 // HH:MM:SS.CC
 // Longitude/latitude value if GNSS module disconnected
-#define NO_GNSS_LOCATION  91 //°
+#define NO_GNSS_LOCATION  91//°
 // Altitude value if GNSS module disconnected
 #define NO_GNSS_ALTITUDE  INT32_MAX
+// NMEA messages inteval
+#define GNSS_NMEA_INTERVAL  200//ms
 
-/* Nomber of decimals for each data */
+/* Number of decimals for each data */
 #define LOC_DECIMALS  9
 #define ELV_DECIMALS  3
 #define TEMP_DECIMALS 3
@@ -171,7 +175,7 @@ void handleDigitalIO(bool& enLog, const volatile bool* connectedDevices);
  */
 /**** Globals ****/
 /* Array to store devices connection state */
- bool connectedDevices[4] = {false, false, false, false};
+volatile bool connectedDevices[4] = {false, false, false, false};
 /* Logging */
 // Log file
 String logDir = "";
@@ -222,18 +226,13 @@ void setup() {
   /* Pin setup */
   pinMode(LOG_LED, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
-  pinMode(DE_PIN, OUTPUT);
-  digitalWrite(DE_PIN, LOW);
   
   // Turn LED on during setup
   digitalWrite(LOG_LED, HIGH);
-  
-  /* Serial ports */
+
   // USB debug Serial port
   Serial.begin(115200);
-  // GPS Serial port
-  GNSS_SERIAL.begin(115200);
-
+  
   SERIAL_DBG("#### SETUP ####\n\n")
   
   /* SD card init */
@@ -256,8 +255,8 @@ void setup() {
   sensorRead_timer.begin(readSensors, READ_INTERVAL);
   sensorRead_timer.priority(200);
   gnssRefresh_timer.begin(gnssRefresh, GNSS_REFRESH_INTERVAL);
-  gnssRefresh_timer.priority(128);
-
+  gnssRefresh_timer.priority(190);
+  
   SERIAL_DBG("\n\n")
 
   // Turn LED off after setup
@@ -304,7 +303,7 @@ void loop() {
   SERIAL_DBG("URM14 :\t\t")
   SERIAL_DBG(connectedDevices[URM14])
   SERIAL_DBG('\n')
-  SERIAL_DBG("GNSS_MODULE :\t")
+  SERIAL_DBG("GNSS MODULE :\t")
   SERIAL_DBG(connectedDevices[GNSS_MODULE])
   SERIAL_DBG("\n\n")
   
@@ -345,14 +344,14 @@ void loop() {
     // If log file open then empty log buffer before closing it
     if (logFile)  {
       SERIAL_DBG("Writing remaining buffer values...\n")
-      /* Create function for this */
+      // Create function for this
       time_buf.pop(time_ms);
       lng_buf.pop(lng_deg);
       lat_buf.pop(lat_deg);
       elv_buf.pop(elv_m);
       extTemp_buf.pop(extTemp_C);
       dist_buf.pop(dist_mm);
-      /* --------------------- */
+      // ---------------------
       if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, dist_mm, extTemp_C) )
         SERIAL_DBG("Logging failed...\n")
       else
@@ -363,9 +362,8 @@ void loop() {
   }
   SERIAL_DBG("\n\n")
 
-  // Update enLog state according to button state
   handleDigitalIO(enLog, connectedDevices);
-
+  
   //Serial.println(millis() - t);
 }
 
@@ -409,8 +407,6 @@ void readSensors()  {
       else
         elv_buf.push(NO_GNSS_ALTITUDE);
 
-      //connectedDevices[GNSS_MODULE] = true;
-
 // DS18B20 convertion takes time (depends on sensor resolution config)
       // Read DS18B20 temperature
       sensors.requestTemperatures();
@@ -448,7 +444,7 @@ void readSensors()  {
       }
       // Readng distance input register at 0x05
       // Should use readInputRegisters() but somehow doesn't work
-      // Trhow ku8MBIllegalDataAddress error (0x02)
+      // Trhows ku8MBIllegalDataAddress error (0x02)
       // ToDo : understand error (might be manufacturer who did not follow Modbus standard)
       mbError = urm14.readHoldingRegisters(URM14_DISTANCE_REG, 1);
       // Check for Modbus errors
@@ -468,33 +464,37 @@ void readSensors()  {
 }
 
 /* ##############   GNSS    ################ */
-
-void gnssRefresh() {
 /*
-   //if (GNSS_SERIAL.available()) {   
-     while (GNSS_SERIAL.available())
-        gps.encode(GNSS_SERIAL.read());
-   //}
-*/
+ * @brief: interrupts loop() to refresh TinyGPSPlus object with GNSS data
+ */
+void gnssRefresh() {
 
-  uint8_t watchdog = millis();
-  GNSS_SERIAL.flush();
-  while (!GNSS_SERIAL.available())  {
-    // If could not update gnsss data in a while    
-    if (millis() - watchdog > 700) {
+  static long watchdog = millis();
+  static uint32_t nbCharsProcessed = 0;
+
+  if (millis() - watchdog > GNSS_NMEA_INTERVAL)  {
+    if (gps.charsProcessed() - nbCharsProcessed < 10)
       connectedDevices[GNSS_MODULE] = false;
-      return;
-    }
+    else
+      connectedDevices[GNSS_MODULE] = true;
+    watchdog = millis();
+    nbCharsProcessed = gps.charsProcessed();
   }
-  // Read data
+  
   while (GNSS_SERIAL.available())
      gps.encode(GNSS_SERIAL.read());
-     
-  connectedDevices[GNSS_MODULE] = true;
-
 }
 
+/*
+ * @brief: Sets up communication with GNSS module and gets date an time.
+ * @params:
+ *    gps: TinyGPSPlus object to update with date and time.
+ *    deviceConnected: boolean to store if GNSS module is connected.
+ */
 void setupGNSS(TinyGPSPlus& gps, volatile bool& deviceConnected) {
+
+  // GNSS module Serial port
+  GNSS_SERIAL.begin(GNSS_BAUDRATE);
 
   SERIAL_DBG("Waiting for GNSS signal...\n")
   while (!GNSS_SERIAL.available())  {
@@ -824,6 +824,10 @@ void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sens
   // Modbus communication errors
   uint8_t mbError;
 
+  // RS485 DE pin setup
+  pinMode(DE_PIN, OUTPUT);
+  digitalWrite(DE_PIN, LOW);
+
   // Set Modbus communication
   URM14_SERIAL.begin(sensorBaudrate);
   // Modbus slave id 0x11 on serial port URM14_SERIAL
@@ -881,23 +885,21 @@ void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnec
  */
 void handleDigitalIO(bool& enLog, const volatile bool* connectedDevices)  {
 
-  bool deviceDisconnected =  false;//!connectedDevices[SD_CARD];
+  bool deviceDisconnected = false;
   for (uint8_t i = SD_CARD; i <= GNSS_MODULE; i++) {
     deviceDisconnected |= !connectedDevices[i];
   }
-  // Logging LED
-  if (enLog) {
-    if (deviceDisconnected && errorLEDCountdown.check())
-      digitalWrite(LOG_LED, !digitalRead(LOG_LED));
-    else if (logLEDCountdown.check())
-      digitalWrite(LOG_LED, !digitalRead(LOG_LED));
-  }
-  else if (noLogLEDCountdown.check())
-      digitalWrite(LOG_LED, !digitalRead(LOG_LED));
-      
   // Logging button
-  if (digitalRead(BUTTON_PIN) == 0)
+  if (digitalRead(BUTTON_PIN) == LOW)
     enLog = true;
   else
     enLog = false;
+  //Serial.println(deviceDisconnected);
+  // Logging LED
+  if (enLog && logLEDCountdown.check())
+      digitalWrite(LOG_LED, !digitalRead(LOG_LED));
+  else if (!enLog && noLogLEDCountdown.check())
+      digitalWrite(LOG_LED, !digitalRead(LOG_LED));
+  else if (deviceDisconnected && errorLEDCountdown.check())
+      digitalWrite(LOG_LED, !digitalRead(LOG_LED));
 }

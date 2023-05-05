@@ -57,6 +57,8 @@
 #define GNSS_REFRESH_INTERVAL 1/*ms*/ * 1000/*ms/µs*/
 /* Logging segmentation interval */
 #define LOG_SEG_INTERVAL  30/*s*/ * 1000/*ms/s*/
+/* Digital I.O. refresh interval */
+#define IO_REFRESH_INTERVAL 50/*ms*/ * 1000/*µs/ms*/
 
 /* Teensy pins */
 // Logging LED
@@ -167,7 +169,7 @@ void gnssRefresh();
 // Sensor reading interrupt
 void readSensors();
 // Button update
-void handleDigitalIO(bool& enLog, const volatile bool* connectedDevices);
+void handleDigitalIO();
 
 /* ##################
  * #    PROGRAM     #
@@ -182,7 +184,7 @@ String logDir = "";
 String logFileName = "";
 File logFile;
 // Log state (enabled/disabled)
-bool enLog = false;
+volatile bool enLog = false;
 
 /* DS18B20 */
 // OneWire bus
@@ -204,7 +206,7 @@ TinyGPSPlus gps;
 TinyGPSCustom geoidElv(gps, "GNGGA", 11);
 
 /* Timer interrputs */
-IntervalTimer sensorRead_timer, gnssRefresh_timer;
+IntervalTimer sensorRead_timer, gnssRefresh_timer, ioRefresh_timer;
 
 /* LED timers */
 Metro logLEDCountdown = Metro(1500);
@@ -256,6 +258,8 @@ void setup() {
   sensorRead_timer.priority(200);
   gnssRefresh_timer.begin(gnssRefresh, GNSS_REFRESH_INTERVAL);
   gnssRefresh_timer.priority(190);
+  ioRefresh_timer.begin(handleDigitalIO, IO_REFRESH_INTERVAL);
+  ioRefresh_timer.priority(180);
   
   SERIAL_DBG("\n\n")
 
@@ -361,8 +365,6 @@ void loop() {
       SERIAL_DBG("Logging disabled...\n")
   }
   SERIAL_DBG("\n\n")
-
-  handleDigitalIO(enLog, connectedDevices);
   
   //Serial.println(millis() - t);
 }
@@ -883,7 +885,7 @@ void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnec
  *    enLog : boolean that stores if logging is enabled or not
  *    connectedDevices : boolean array to store the connection state of devices
  */
-void handleDigitalIO(bool& enLog, const volatile bool* connectedDevices)  {
+void handleDigitalIO()  {
 
   bool deviceDisconnected = false;
   for (uint8_t i = SD_CARD; i <= GNSS_MODULE; i++) {

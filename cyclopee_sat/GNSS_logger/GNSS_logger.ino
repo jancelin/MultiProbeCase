@@ -5,7 +5,7 @@
  *   
  * @brief:
  *    This program logs distance and temperature readings into a log file on the SD card 
- *    using a mix of GNSS time and Teensy clock.
+ *    using a mix of GNSS time and Teensy clock. GNSS signal quality is logged as well.
  *    Log file segmentation and new day file creation are handled.
  *   
  * @board :
@@ -15,7 +15,7 @@
  *    Mikroe RS485 click 2 (MAX3471)
  *    
  * @GNSS :
- *    Drotek GNSS_MODULE RTK GNSS (XL F9P)
+ *    Drotek DP0601 RTK GNSS (XL F9P)
  *
  * @wiring:
  *      Teensy RX5       -> GNSS_MODULE UART1 B3 (TX)
@@ -36,44 +36,45 @@
  *      
  * @ports:
  *      Serial (115200 baud)
- *      GNSS_SERIAL (115200 baud for GNSS_MODULE)
- *      URM14_SERIAL (9600 baud for URM14)
+ *      GNSS_SERIAL (115200 baud for GNSS module)
+ *      URM14_SERIAL (115200 baud for URM14)
  * --------------------------
  */
 /* ###########################
  * #   GLOBALS DEFINITIONS   #
  * ###########################
  */
-/* Serial Ports */
+/************** SERIAL PORTS *****************/
 #define URM14_SERIAL  Serial4
 #define GNSS_SERIAL   Serial5
 
-/* Sensor acquisition interval */
+/************** TIMER INTERRUPTS INTERVALS *****************/
+// Sensor acquisition interval
 // Check sensor reading interrupt duration before setting the value
 // 71s maximum
-#define READ_INTERVAL 1000/*ms*/ * 1000/*µs/ms*/
-/* GNSS refresh interval */
+#define READ_INTERVAL 400/*ms*/ * 1000/*µs/ms*/
+// GNSS refresh interval
 // Minimal refresh rate to get 20ms GNSS time resolution
 #define GNSS_REFRESH_INTERVAL 1/*ms*/ * 1000/*ms/µs*/
-/* Logging segmentation interval */
+// Logging segmentation interval
 #define LOG_SEG_INTERVAL  30/*s*/ * 1000/*ms/s*/
-/* Digital I.O. refresh interval */
+// Digital I.O. refresh interval
 #define IO_REFRESH_INTERVAL 50/*ms*/ * 1000/*µs/ms*/
 
-/* Teensy pins */
+/************** TEENSY PINS *****************/
 // Logging LED
 #define LOG_LED       13
-// Modbus
+// Modbus DE & RE pins
 #define DE_PIN        30 // RE = ~DE => Wired to pin 30 as well
 // OneWire
 #define ONE_WIRE_BUS  21 // Teensy temperature data wire pin
 // Disable logging button
 #define BUTTON_PIN    2
 
-/*  URM14 sensor */
+/************** URM14 SENSOR *****************/
 // Sensor baudrate
 #define URM14_BAUDRATE 115200
-// Sensor id
+// Sensor ID
 #define URM14_ID  (uint16_t)0x11
 // Sensor registers
 #define URM14_ID_REG        (uint16_t)0x02
@@ -88,10 +89,11 @@
 // URM14 read value when sensor disconnected
 #define URM14_DISCONNECTED  UINT16_MAX
 
-/* Dallas temperature sensor */
+/************** DS18B20 SENSOR *****************/
+// Sensor ID
 #define DS18B20_ID   0
 
-/* GNSS Module */
+/************** GNSS module *****************/
 // GNSS commuiation baudrate
 #define GNSS_BAUDRATE 115200//bauds
 // Time value if GNSS module disconnected
@@ -103,16 +105,22 @@
 // NMEA messages inteval
 #define GNSS_NMEA_INTERVAL  200//ms
 
-/* Number of decimals for each data */
+/************** DATA NUMBER OF DECIMALS *****************/
+// Location
 #define LOC_DECIMALS  9
+// Elevation
 #define ELV_DECIMALS  3
+// Temperature
 #define TEMP_DECIMALS 3
+// Distance
 #define DIST_DECIMALS 1
 
-/* Maximum buffer size */
+/************** BUFFERS *****************/
+// Maximum buffer size
 #define MAX_BUFFER_SIZE  100
 
-/* Connected devices  enum */
+/************** ENUMS *****************/
+// Connected devices
 enum Devices : uint8_t  {
 
   SD_CARD = 0,
@@ -121,11 +129,11 @@ enum Devices : uint8_t  {
   GNSS_MODULE,
 };
 
-/* Debug */
+/************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
 #if 0
-#define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}//;Serial.print("["); Serial.print(__FUNCTION__); Serial.print("(): "); Serial.print(__LINE__); Serial.print(" ] ");}
+#define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
 #endif
@@ -154,7 +162,7 @@ enum Devices : uint8_t  {
 // Sd card setup
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
-void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gps, Metro& logSegCountdown, volatile bool& SDConnected);
+void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gps, Metro& logSegCountdown, volatile bool& deviceConnected);
 bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C);
 void dumpFileToSerial(File& file);
 // OneWire communication with DS18B20
@@ -168,17 +176,18 @@ void setupGNSS(TinyGPSPlus& gps, volatile bool& deviceConnected);
 void gnssRefresh();
 // Sensor reading interrupt
 void readSensors();
-// Button update
+// Digital IO update interrupt
 void handleDigitalIO();
 
 /* ##################
  * #    PROGRAM     #
  * ##################
  */
-/**** Globals ****/
-/* Array to store devices connection state */
+/************** GLOBALS *****************/
+// Array to store devices connection state
 volatile bool connectedDevices[4] = {false, false, false, false};
-/* Logging */
+
+// LOGGING
 // Log file
 String logDir = "";
 String logFileName = "";
@@ -186,7 +195,7 @@ File logFile;
 // Log state (enabled/disabled)
 volatile bool enLog = false;
 
-/* DS18B20 */
+// DS18B20
 // OneWire bus
 OneWire oneWire(ONE_WIRE_BUS);
 // Dallas sensor bus
@@ -194,42 +203,42 @@ DallasTemperature sensors(&oneWire);
 // DS18B20 address
 byte ds18b20_addr[8];
 
-/* URM14 */
+// URM14
 // ModbusMaster sensor object for URM14
 ModbusMaster urm14;
 // URM14 config
 uint16_t urm14_controlBits = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENABLE_BIT | TEMP_CPT_SEL_BIT;
 
-/* GNSS */
+// GNSS MODULE
 // TinyGPSPlus objects to parse NMEA and store location and time
 TinyGPSPlus gps;
 TinyGPSCustom geoidElv(gps, "GNGGA", 11);
 
-/* Timer interrputs */
+// Timer interrputs
 IntervalTimer sensorRead_timer, gnssRefresh_timer, ioRefresh_timer;
 
-/* LED timers */
+// LED timers
 Metro logLEDCountdown = Metro(1500);
 Metro noLogLEDCountdown = Metro(600);
 Metro errorLEDCountdown = Metro(150);
 
-/* Ohter timers */
-// Metro object to manage log segmentation time
+// Metro timers
+// Timer to manage log segmentation time
 Metro logSegCountdown = Metro(LOG_SEG_INTERVAL);
-// Metro object to dump log file every 1s
+// Timer to dump log file every 1s
 Metro fileDumpCountdown = Metro(1000);
 
 /*
-   @brief:
-      Sets up SD card, GNSS DP06001, URM14 and DS18B20 sensors
-*/
+ *  @brief:
+ *    Sets up SD card, GNSS module, URM14 and DS18B20 sensors.
+ */
 void setup() {
 
-  /* Pin setup */
+  // Pin setup
   pinMode(LOG_LED, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   
-  // Turn LED on during setup
+  // Turn logging LED on during setup
   digitalWrite(LOG_LED, HIGH);
 
   // USB debug Serial port
@@ -237,23 +246,19 @@ void setup() {
   
   SERIAL_DBG("#### SETUP ####\n\n")
   
-  /* SD card init */
+  // SD card init
   setupSDCard(connectedDevices[SD_CARD]);
   SERIAL_DBG('\n')
-  
-  /* Setting up DS18B20 */
+  // Setting up DS18B20
   setupDS18B20(sensors, connectedDevices[DS18B20]);
   SERIAL_DBG('\n')
-
-  /* Setting up URM14 */
+  // Setting up URM14
   setupURM14(urm14, URM14_ID, URM14_BAUDRATE, preTrans, postTrans, connectedDevices[URM14]);
   SERIAL_DBG('\n')
-
-  /* GNSS set up */
+  // GNSS set up
   setupGNSS(gps, connectedDevices[GNSS_MODULE]);
   SERIAL_DBG('\n')
-  
-  /* Setting up timer interrupts */
+  // Setting up timer interrupts
   sensorRead_timer.begin(readSensors, READ_INTERVAL);
   sensorRead_timer.priority(200);
   gnssRefresh_timer.begin(gnssRefresh, GNSS_REFRESH_INTERVAL);
@@ -263,16 +268,17 @@ void setup() {
   
   SERIAL_DBG("\n\n")
 
-  // Turn LED off after setup
+  // Turn log LED off after setup
   digitalWrite(LOG_LED, LOW);
 }
 
-/**** Global variables for loop() ****/
+/************** LOOP() GLOBAL VARS *****************/
 // Buffers to store values to log
 RingBuf <uint32_t, MAX_BUFFER_SIZE> time_buf;
 RingBuf <double, MAX_BUFFER_SIZE> lng_buf, lat_buf, elv_buf;
 RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf;
 RingBuf <uint16_t, MAX_BUFFER_SIZE> dist_buf;
+
 // Variables to store buffer readings
 uint32_t time_ms;
 double lng_deg, lat_deg, elv_m;
@@ -281,22 +287,24 @@ uint16_t dist_mm;
 
 /*
  * @brief:
+ *    Prints devices connection state.
  *    If logging enabled (enLog) :
  *      - Prints open log file name;
  *      - Handles the log file (segementation, new day);
  *      - Logs data;
  *      - Dumps log file to Serial (if FILE_DUMP).
  *    Else :
+ *      - Empty buffers into log file;
  *      - Closes log file if open;
  *      - Prints "Logging disabled...".
- *    Reads button to update enLog.
  */
 void loop() {
+  // Loop execution time
   //long t = millis();
 
   SERIAL_DBG("#### LOOP FUNCTION ####\n\n")
 
-  /* If logging enabled */
+  // Print conected devices state
   SERIAL_DBG("### DEVICES CONNECTED\n\n")
   SERIAL_DBG("SD CARD :\t")
   SERIAL_DBG(connectedDevices[SD_CARD])
@@ -310,8 +318,10 @@ void loop() {
   SERIAL_DBG("GNSS MODULE :\t")
   SERIAL_DBG(connectedDevices[GNSS_MODULE])
   SERIAL_DBG("\n\n")
-  
+
+  // If logging enabled
   if (enLog) {
+    // Print log file info
     SERIAL_DBG("### LOG FILE\n\n")
     if (logFile) {
       SERIAL_DBG("File : ")
@@ -322,30 +332,30 @@ void loop() {
     }
     else
       SERIAL_DBG("No log file open.\n")
-      SERIAL_DBG("\n###\n")
+    SERIAL_DBG("\n###\n")
 
-      /* Handling log file management */
-      handleLogFile(logFile, logDir, logFileName, gps, logSegCountdown, connectedDevices[SD_CARD]);
+    // Handling log file management
+    handleLogFile(logFile, logDir, logFileName, gps, logSegCountdown, connectedDevices[SD_CARD]);
 
-    /* Logging into file */
+    // Logging into file
     if (logFile && !time_buf.isEmpty()) {
-      /* Create function for this */
+      // Create function for this
       time_buf.pop(time_ms);
       lng_buf.pop(lng_deg);
       lat_buf.pop(lat_deg);
       elv_buf.pop(elv_m);
       extTemp_buf.pop(extTemp_C);
       dist_buf.pop(dist_mm);
-      /* ----------------- */
+      // -----------------
       if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, dist_mm, extTemp_C) )
         SERIAL_DBG("Logging failed...\n")
     }    
-    /* Dumping log file to Serial */
+    // Dumping log file to Serial
     if (FILE_DUMP && fileDumpCountdown.check())
       dumpFileToSerial(logFile);
   }
   else  {
-    // If log file open then empty log buffer before closing it
+    // If log file open then empty buffers into it before closing
     if (logFile)  {
       SERIAL_DBG("Writing remaining buffer values...\n")
       // Create function for this
@@ -365,7 +375,8 @@ void loop() {
       SERIAL_DBG("Logging disabled...\n")
   }
   SERIAL_DBG("\n\n")
-  
+
+  // Loop execution time
   //Serial.println(millis() - t);
 }
 
@@ -375,14 +386,16 @@ void loop() {
  */
 /* ##############   TIMER INTERRUPT    ################ */
 /*
- * @brief: interrupts loop() to read sensors
- * @exec time : long and depends on DS18B20 resolution config
+ * @brief: 
+ *    Interrupts loop() to read sensors.
+ * @exec time:
+ *     Long and mostly depends on DS18B20 resolution config.
  */
 void readSensors()  {
-  // Interrupt duration
+  // Interrupt execution time
   //long t = millis();
   
-  // Modbus communication errors
+  // Store Modbus communication errors
   uint8_t mbError;
   
   // If logging enabled and logFile open
@@ -422,7 +435,7 @@ void readSensors()  {
         connectedDevices[DS18B20] = true;
 // --------------
 
-      // External compensation : Updade external URM14 temperature register
+      // External compensation: Updade external URM14 temperature register
       if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)  {
         mbError = urm14.writeSingleRegister(URM14_EXT_TEMP_REG, (uint16_t)(extTemp_buf[extTemp_buf.size()] * 10.0));
         // Check for Modbus errors
@@ -434,7 +447,7 @@ void readSensors()  {
           connectedDevices[URM14] = true;
       }
 
-      // Trigger mode : Set trigger bit to request one measurement
+      // Trigger mode: Set trigger bit to request one measurement
       if (MEASURE_MODE_BIT) {
         mbError = urm14.writeSingleRegister(URM14_CONTROL_REG, urm14_controlBits); //Writes the setting value to the control register
         if (mbError != ModbusMaster::ku8MBSuccess)  {
@@ -462,51 +475,39 @@ void readSensors()  {
     else
       SERIAL_DBG("Buffer is full!\n")
   }
+
+  // Interrupt execution time
   //Serial.println(millis() - t);
 }
 
 /* ##############   GNSS    ################ */
 /*
- * @brief: interrupts loop() to refresh TinyGPSPlus object with GNSS data
- */
-void gnssRefresh() {
-
-  static long watchdog = millis();
-  static uint32_t nbCharsProcessed = 0;
-
-  if (millis() - watchdog > GNSS_NMEA_INTERVAL)  {
-    if (gps.charsProcessed() - nbCharsProcessed < 10)
-      connectedDevices[GNSS_MODULE] = false;
-    else
-      connectedDevices[GNSS_MODULE] = true;
-    watchdog = millis();
-    nbCharsProcessed = gps.charsProcessed();
-  }
-  
-  while (GNSS_SERIAL.available())
-     gps.encode(GNSS_SERIAL.read());
-}
-
-/*
- * @brief: Sets up communication with GNSS module and gets date an time.
+ * @brief: 
+ *    Sets up communication with GNSS module and gets date an time.
+ *    Waits 7s for GNSS signal.
+ *    Acquires date and time.
  * @params:
  *    gps: TinyGPSPlus object to update with date and time.
- *    deviceConnected: boolean to store if GNSS module is connected.
+ *    deviceConnected: Boolean to store if GNSS module is connected.
  */
 void setupGNSS(TinyGPSPlus& gps, volatile bool& deviceConnected) {
+
+  // Store start time to detect timeout
+  long startTime = millis();
 
   // GNSS module Serial port
   GNSS_SERIAL.begin(GNSS_BAUDRATE);
 
+  // Wait 7s for GNSS signal before timeout
   SERIAL_DBG("Waiting for GNSS signal...\n")
   while (!GNSS_SERIAL.available())  {
-    if (millis() > 7000)  {
+    if (millis() - startTime > 7000)  {
       SERIAL_DBG("No signal, check GNSS receiver wiring.\n")
       SERIAL_DBG("Waiting for reboot...\n")
       while (1);
     }
   }
-  
+  // Acquiring GNSS date and time
   SERIAL_DBG("Acquiring GNSS date and time...\n")
   while (gps.date.value() == 0 && gps.time.value() == 0)
     gnssRefresh();
@@ -515,9 +516,42 @@ void setupGNSS(TinyGPSPlus& gps, volatile bool& deviceConnected) {
   SERIAL_DBG("Done.\n")
 }
 
+/*
+ * @brief:  
+ *    Interrupts loop() to refresh TinyGPSPlus object with NMEA data.
+ *    Checks if GNSS module still connected by checking the number of caraters received during NMEA intervals
+ */
+void gnssRefresh() {
+
+  // Static varible to store current NMEA interval start time
+  static long intervalStart = millis();
+  // Static variable to store the number of characters received until previous NMEA interval
+  static uint32_t nbCharsProcessed = 0;
+
+  // If NMEA interval is over
+  if (millis() - intervalStart > GNSS_NMEA_INTERVAL)  {
+    // If not enough characters were received
+    if (gps.charsProcessed() - nbCharsProcessed < 10)
+      connectedDevices[GNSS_MODULE] = false;
+    else
+      connectedDevices[GNSS_MODULE] = true;
+    // Update NMEA interval start time to the beginning of the new current NMEA interval.
+    intervalStart = millis();
+    // Store the total number of characters read until the previously current interval.
+    nbCharsProcessed = gps.charsProcessed();
+  }
+  // Feed TinyGPSPlus object with NMEA data
+  while (GNSS_SERIAL.available())
+     gps.encode(GNSS_SERIAL.read());
+}
+
+
 /* ##############   SD CARD    ################ */
 /*
-   @brief: sets up sd card
+   @brief: 
+      Sets up sd card.
+   @params:
+      deviceConnected: Boolean to store device connection state.
 */
 void setupSDCard( volatile bool& deviceConnected)  {
 
@@ -535,10 +569,10 @@ void setupSDCard( volatile bool& deviceConnected)  {
 /* ##############   FILE MANAGEMENT    ################ */
 /*
  * @brief:
- *    convert and write TinyGPSDate date obj into a string.      
+ *    Convert and write TinyGPSDate date obj into a string.      
  * @params:
- *    gnssDate : TinyGPSDate obj to convert and write
- *    str : String to write date into
+ *    gnssDate : TinyGPSDate obj to convert and write.
+ *    str : String to write date into.
  */
 void date_to_str(TinyGPSDate& gnssDate, String& str) {
   
@@ -552,10 +586,10 @@ void date_to_str(TinyGPSDate& gnssDate, String& str) {
   
 /*
  * @brief:
- *    convert and write TinyGPSTime time obj into a string.      
+ *    Convert and write TinyGPSTime time obj into a string.      
  * @params:
- *    gnssTime : TinyGPSTime obj to convert and write
- *    str : String to write time into
+ *    gnssTime : TinyGPSTime obj to convert and write.
+ *    str : String to write time into.
  */
 void time_to_str(TinyGPSTime& gnssTime, String& str) {
 
@@ -569,10 +603,10 @@ void time_to_str(TinyGPSTime& gnssTime, String& str) {
 
 /*
  * @brief:
- *    convert and write time value from TinyGPSPlus obj into a string.    
+ *    Convert and write time value from TinyGPSPlus obj into a string.    
  * @params:
- *    timeVal : time value to convert and write
- *    str : String to write time into
+ *    timeVal : Time value to convert and write.
+ *    str : String to write time into.
  */
 void timeValToStr(const uint32_t& timeVal, String& str) {
 
@@ -589,9 +623,10 @@ void timeValToStr(const uint32_t& timeVal, String& str) {
 }
 
 /*
- * @brief: create new log dir 'dirName' if it does not already exist
+ * @brief: 
+ *    Create new log dir 'dirName' if does not already exist.
  * @params:
- *    dirName : new dir name
+ *    dirName : New dir name.
  */
 void new_logDir(String& dirName)  {
 
@@ -610,11 +645,12 @@ void new_logDir(String& dirName)  {
 }
 
 /*
- * @brief: create and open a new log file 'dirName/fileName' if it does not already exist
+ * @brief: 
+ *    Create and open a new log file 'dirName/fileName' if does not already exist
  * @params:
- *    file: File object
- *    dirName: directory name in which file will be created
- *    fileName : new file name
+ *    file: File object.
+ *    dirName: Directory name in which file will be created.
+ *    fileName : New file name.
  */
 bool new_logFile(File& file, const String& dirName, String& fileName)  {
 
@@ -640,15 +676,16 @@ bool new_logFile(File& file, const String& dirName, String& fileName)  {
 }
 
 /*
- * @brief: handle log file segmentation and dir/file creation every day
+ * @brief: 
+ *    Handle log file segmentation and dir/file creation every day.
  * @params:
- *    File : log file object
- *    dirName : log dir name
- *    fileName : log file name
- *    gps : TinyGPSPlus obj to get current date from
- *    logSegCountdown : timer for log segmentation
+ *    File : Log file object.
+ *    dirName : Log dir name.
+ *    fileName : Log file name.
+ *    gps : TinyGPSPlus obj to get current date from.
+ *    logSegCountdown : Timer for log segmentation.
  */
-void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gps, Metro& logSegCountdown, volatile bool& SDConnected)  {
+void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gps, Metro& logSegCountdown, volatile bool& deviceConnected)  {
 
   SERIAL_DBG("---> handleLogFile()\n")
 
@@ -672,8 +709,8 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
     SERIAL_DBG(dirName)
     SERIAL_DBG("'...\n")
     new_logDir(dirName);
-  
     SERIAL_DBG("Done.\n")
+    
     SERIAL_DBG("Creating and opening new log file '")
     SERIAL_DBG(dirName)
     SERIAL_DBG('/')
@@ -683,25 +720,26 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
       logSegCountdown.reset();
       SERIAL_DBG("Done.\n")
     }
-    SDConnected = true;
+    deviceConnected = true;
   }
   else  {
     SERIAL_DBG("No SD card detected...\n")
-    SDConnected = false;
+    deviceConnected = false;
     file.close();
   }
 }
 
 /*
- * @brief: generates a string to log into SD card
+ * @brief: 
+ *    Generates a string to log into SD card.
  * @params:
- *    log_str : string to store the log
- *    timeVal : time value to log
- *    lng_deg : Longitude in ° to log
- *    lat_deg : Latitude in ° to log
- *    elv_m : Longitude in cm to log
- *    dist_mm : distance in mm to log
- *    temp_C : temperature in °C to log
+ *    log_str : String to store the log.
+ *    timeVal : Time value to log.
+ *    lng_deg : Longitude in ° to log.
+ *    lat_deg : Latitude in ° to log.
+ *    elv_m : Longitude in cm to log.
+ *    dist_mm : Distance in mm to log.
+ *    temp_C : Temperature in °C to log.
  */
 void csv_log_string(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C)  {
 
@@ -757,15 +795,16 @@ void csv_log_string(String& log_str, const uint32_t& timeVal, const double& lng_
 }
 
 /*
- * @brief: logs a log string into a file
+ * @brief: 
+ *    Logs a log string into a file.
  * @params:
- *    fileName: log file name
- *    timeVal : time value to log
- *    lng_deg : Longitude in ° to log
- *    lat_deg : Latitude in ° to log
- *    elv_m : Longitude in cm to log
- *    dist_mm : distance in mm to log
- *    temp_C : temperature in °C to log
+ *    fileName: Log file name.
+ *    timeVal : Time value to log.
+ *    lng_deg : Longitude in ° to log.
+ *    lat_deg : Latitude in ° to log.
+ *    elv_m : Longitude in cm to log.
+ *    dist_mm : Distance in mm to log.
+ *    temp_C : Temperature in °C to log.
  */
 bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C) {
 
@@ -781,9 +820,10 @@ bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const d
 }
 
 /*
- *  @brief: dumps file content on Serial port
+ *  @brief: 
+ *      Dumps file content on Serial port.
  * @params:
- *    file : file object
+ *    file : File object.
  */
 void dumpFileToSerial(File& file) {
   char c;
@@ -808,14 +848,15 @@ void dumpFileToSerial(File& file) {
 
 /* ##############   URM14  ################ */
 /*
- * @brief: Sets up the URM14 ultrasoic sensor
+ * @brief: 
+ *    Sets up the URM14 ultrasoic sensor
  * @params:
- *    sensor: ModbusMaster instance that represents the senter on the bus
- *    sensorID: sensor id on the bus
- *    sensorBaudrate: baudrate to communication with the sensor
- *    preTransCbk: callback called before modbus tansmission to set RS485 interface in transmission mode.
- *    postTransCbk: callback called after modbus tansmission to set RS485 interface back in reception mode.
- *    deviceConnected: bool to store if URM14 is connected or not
+ *    sensor: ModbusMaster instance that represents the senter on the bus.
+ *    sensorID: Sensor id on the bus.
+ *    sensorBaudrate: Baudrate to communication with the sensor.
+ *    preTransCbk: Callback called before modbus tansmission to set RS485 interface in transmission mode.
+ *    postTransCbk: Callback called after modbus tansmission to set RS485 interface back in reception mode.
+ *    deviceConnected: Bool to store if URM14 is connected or not.
  */
 void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sensorBaudrate, void (*preTransCbk)(), void (*postTransCbk)(),  volatile bool& deviceConnected)  {
 
@@ -850,10 +891,11 @@ void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sens
 
 /* ##############   DS18B20   ################ */
 /*
- * @brief: Sets up the DS18B20 temperature sensor
+ * @brief: 
+ *    Sets up the DS18B20 temperature sensor.
  * @params:
- *    sensorNetwork: DallasTemperature instance that represents a DallasTemperature sensor network
- *    deviceConnected: bool to store if DS18B20 is connected or not 
+ *    sensorNetwork: DallasTemperature instance that represents a DallasTemperature sensor network.
+ *    deviceConnected: Bool to store if DS18B20 is connected or not.
  */
 void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnected) {
 
@@ -878,13 +920,15 @@ void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnec
 
 /* ##############   DIGITAL IO  ################ */
 /*
- * @brief: watches button state to update enLog
+ * @brief: 
+ *    Watches button state to update enLog.
  * @params:
- *    enLog : boolean that stores if logging is enabled or not
- *    connectedDevices : boolean array to store the connection state of devices
+ *    enLog : Boolean that stores if logging is enabled or not.
+ *    connectedDevices : Boolean array to store the connection state of devices.
  */
 void handleDigitalIO()  {
 
+  // Check for disconnected devices
   bool deviceDisconnected = false;
   for (uint8_t i = SD_CARD; i <= GNSS_MODULE; i++) {
     deviceDisconnected |= !connectedDevices[i];
@@ -894,8 +938,8 @@ void handleDigitalIO()  {
     enLog = true;
   else
     enLog = false;
-  //Serial.println(deviceDisconnected);
-  // Logging LED
+    
+  // Update logging LED
   if (enLog && logLEDCountdown.check()) {
       digitalWrite(LOG_LED, !digitalRead(LOG_LED));
       logLEDCountdown.reset();

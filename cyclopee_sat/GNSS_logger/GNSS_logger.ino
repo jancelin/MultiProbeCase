@@ -661,14 +661,12 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
       dirName = currDate;
       time_to_str(gps.time, fileName);
       fileName += ".csv";
-      logSegCountdown.reset();
     }
     // Create new log segment
     else if (logSegCountdown.check()) {
       file.close();
       time_to_str(gps.time, fileName);
       fileName += ".csv";
-      logSegCountdown.reset();
     }
     SERIAL_DBG("Creating new log dir '")
     SERIAL_DBG(dirName)
@@ -898,10 +896,16 @@ void handleDigitalIO()  {
     enLog = false;
   //Serial.println(deviceDisconnected);
   // Logging LED
-  if (enLog && logLEDCountdown.check())
+  if (enLog && logLEDCountdown.check()) {
       digitalWrite(LOG_LED, !digitalRead(LOG_LED));
-  else if (!enLog && noLogLEDCountdown.check())
+      logLEDCountdown.reset();
+  }
+  else if (!enLog && noLogLEDCountdown.check()) {
       digitalWrite(LOG_LED, !digitalRead(LOG_LED));
-  else if (deviceDisconnected && errorLEDCountdown.check())
+      noLogLEDCountdown.reset();
+  }
+  else if (deviceDisconnected && errorLEDCountdown.check()) {
       digitalWrite(LOG_LED, !digitalRead(LOG_LED));
+      errorLEDCountdown.reset();
+  }
 }

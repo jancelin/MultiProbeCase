@@ -110,6 +110,8 @@
 #define LOC_DECIMALS  9
 // Elevation
 #define ELV_DECIMALS  3
+// PDOP
+#define PDOP_DECIMALS 1
 // Temperature
 #define TEMP_DECIMALS 3
 // Distance
@@ -162,7 +164,7 @@ enum Devices : uint8_t  {
 // Sd card setup
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
-void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gps, Metro& logSegCountdown, volatile bool& deviceConnected);
+void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gnss, Metro& logSegCountdown, volatile bool& deviceConnected);
 bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C);
 void dumpFileToSerial(File& file);
 // OneWire communication with DS18B20
@@ -172,7 +174,7 @@ void preTrans()  {  digitalWrite(DE_PIN, HIGH); }
 void postTrans() {  digitalWrite(DE_PIN, LOW);  }
 void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sensorBaudrate, void (*preTransCbk)(), void (*postTransCbk)(), volatile bool& deviceConnected);
 // GNSS setup
-void setupGNSS(TinyGPSPlus& gps, volatile bool& deviceConnected);
+void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected);
 void gnssRefresh();
 // Sensor reading interrupt
 void readSensors();
@@ -211,8 +213,10 @@ uint16_t urm14_controlBits = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENAB
 
 // GNSS MODULE
 // TinyGPSPlus objects to parse NMEA and store location and time
-TinyGPSPlus gps;
-TinyGPSCustom geoidElv(gps, "GNGGA", 11);
+TinyGPSPlus gnss;
+TinyGPSCustom gnssGeoidElv(gnss, "GNGGA", 11);
+TinyGPSCustom gnssFixMode(gnss, "GNGGA", 6);
+TinyGPSCustom gnssPDOP(gnss, "GNGSA", 15);
 
 // Timer interrputs
 IntervalTimer sensorRead_timer, gnssRefresh_timer, ioRefresh_timer;
@@ -256,7 +260,7 @@ void setup() {
   setupURM14(urm14, URM14_ID, URM14_BAUDRATE, preTrans, postTrans, connectedDevices[URM14]);
   SERIAL_DBG('\n')
   // GNSS set up
-  setupGNSS(gps, connectedDevices[GNSS_MODULE]);
+  setupGNSS(gnss, connectedDevices[GNSS_MODULE]);
   SERIAL_DBG('\n')
   // Setting up timer interrupts
   sensorRead_timer.begin(readSensors, READ_INTERVAL);
@@ -276,12 +280,16 @@ void setup() {
 // Buffers to store values to log
 RingBuf <uint32_t, MAX_BUFFER_SIZE> time_buf;
 RingBuf <double, MAX_BUFFER_SIZE> lng_buf, lat_buf, elv_buf;
+RingBuf <const char*, MAX_BUFFER_SIZE> fixMode_buf;
+RingBuf <const char*, MAX_BUFFER_SIZE> pdop_buf;
 RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf;
 RingBuf <uint16_t, MAX_BUFFER_SIZE> dist_buf;
 
 // Variables to store buffer readings
 uint32_t time_ms;
 double lng_deg, lat_deg, elv_m;
+const char* pdop;
+const char* fixMode;
 float extTemp_C;
 uint16_t dist_mm;
 
@@ -335,7 +343,7 @@ void loop() {
     SERIAL_DBG("\n###\n")
 
     // Handling log file management
-    handleLogFile(logFile, logDir, logFileName, gps, logSegCountdown, connectedDevices[SD_CARD]);
+    handleLogFile(logFile, logDir, logFileName, gnss, logSegCountdown, connectedDevices[SD_CARD]);
 
     // Logging into file
     if (logFile && !time_buf.isEmpty()) {
@@ -344,10 +352,12 @@ void loop() {
       lng_buf.pop(lng_deg);
       lat_buf.pop(lat_deg);
       elv_buf.pop(elv_m);
+      fixMode_buf.pop(fixMode);
+      pdop_buf.pop(pdop);
       extTemp_buf.pop(extTemp_C);
       dist_buf.pop(dist_mm);
       // -----------------
-      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, dist_mm, extTemp_C) )
+      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C) )
         SERIAL_DBG("Logging failed...\n")
     }    
     // Dumping log file to Serial
@@ -363,10 +373,12 @@ void loop() {
       lng_buf.pop(lng_deg);
       lat_buf.pop(lat_deg);
       elv_buf.pop(elv_m);
+      fixMode_buf.pop(fixMode);
+      pdop_buf.pop(pdop);
       extTemp_buf.pop(extTemp_C);
       dist_buf.pop(dist_mm);
       // ---------------------
-      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, dist_mm, extTemp_C) )
+      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C) )
         SERIAL_DBG("Logging failed...\n")
       else
         logFile.close();
@@ -404,23 +416,26 @@ void readSensors()  {
     if ( !time_buf.isFull() ) {
 
       // Interrupt safe GNSS data push into buffers
-      if (gps.time.isUpdated())
-        time_buf.lockedPush(gps.time.value());
+      if (gnss.time.isUpdated())
+        time_buf.lockedPush(gnss.time.value());
       else
         time_buf.push(NO_GNSS_TIME);
-      if (gps.location.isUpdated()) {
-        lng_buf.lockedPush(gps.location.lng());
-        lat_buf.lockedPush(gps.location.lat());
+      if (gnss.location.isUpdated()) {
+        lng_buf.lockedPush(gnss.location.lng());
+        lat_buf.lockedPush(gnss.location.lat());
       }
       else  {
         lng_buf.push(NO_GNSS_LOCATION);
         lat_buf.push(NO_GNSS_LOCATION);
       }
 
-      if (gps.altitude.isUpdated())
-        elv_buf.lockedPush(gps.altitude.meters() + strtod(geoidElv.value(), NULL));
+      if (gnss.altitude.isUpdated())
+        elv_buf.lockedPush(gnss.altitude.meters() + strtod(gnssGeoidElv.value(), NULL));
       else
         elv_buf.push(NO_GNSS_ALTITUDE);
+
+      pdop_buf.lockedPush(gnssPDOP.value());
+      fixMode_buf.lockedPush(gnssFixMode.value());
 
 // DS18B20 convertion takes time (depends on sensor resolution config)
       // Read DS18B20 temperature
@@ -487,10 +502,10 @@ void readSensors()  {
  *    Waits 7s for GNSS signal.
  *    Acquires date and time.
  * @params:
- *    gps: TinyGPSPlus object to update with date and time.
+ *    gnss: TinyGPSPlus object to update with date and time.
  *    deviceConnected: Boolean to store if GNSS module is connected.
  */
-void setupGNSS(TinyGPSPlus& gps, volatile bool& deviceConnected) {
+void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected) {
 
   // Store start time to detect timeout
   long startTime = millis();
@@ -509,7 +524,7 @@ void setupGNSS(TinyGPSPlus& gps, volatile bool& deviceConnected) {
   }
   // Acquiring GNSS date and time
   SERIAL_DBG("Acquiring GNSS date and time...\n")
-  while (gps.date.value() == 0 && gps.time.value() == 0)
+  while (gnss.date.value() == 0 && gnss.time.value() == 0)
     gnssRefresh();
     
   deviceConnected = true;
@@ -531,18 +546,18 @@ void gnssRefresh() {
   // If NMEA interval is over
   if (millis() - intervalStart > GNSS_NMEA_INTERVAL)  {
     // If not enough characters were received
-    if (gps.charsProcessed() - nbCharsProcessed < 10)
+    if (gnss.charsProcessed() - nbCharsProcessed < 10)
       connectedDevices[GNSS_MODULE] = false;
     else
       connectedDevices[GNSS_MODULE] = true;
     // Update NMEA interval start time to the beginning of the new current NMEA interval.
     intervalStart = millis();
     // Store the total number of characters read until the previously current interval.
-    nbCharsProcessed = gps.charsProcessed();
+    nbCharsProcessed = gnss.charsProcessed();
   }
   // Feed TinyGPSPlus object with NMEA data
   while (GNSS_SERIAL.available())
-     gps.encode(GNSS_SERIAL.read());
+     gnss.encode(GNSS_SERIAL.read());
 }
 
 
@@ -671,7 +686,7 @@ bool newLogFile(File& file, const String& dirName, String& fileName)  {
     return false;
   }
   file.print("Date:,"); file.println(dirName);
-  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Altitude (cm),Distance (mm),External temperature (°C)");
+  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Altitude (cm),Fix Mode,PDOP,Distance (mm),External temperature (°C)");
   return true;
 }
 
@@ -682,27 +697,27 @@ bool newLogFile(File& file, const String& dirName, String& fileName)  {
  *    File : Log file object.
  *    dirName : Log dir name.
  *    fileName : Log file name.
- *    gps : TinyGPSPlus obj to get current date from.
+ *    gnss : TinyGPSPlus obj to get current date from.
  *    logSegCountdown : Timer for log segmentation.
  */
-void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gps, Metro& logSegCountdown, volatile bool& deviceConnected)  {
+void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gnss, Metro& logSegCountdown, volatile bool& deviceConnected)  {
 
   SERIAL_DBG("---> handleLogFile()\n")
 
   if (SD.mediaPresent()) {
     String currDate;
-    dateToStr(gps.date, currDate);
+    dateToStr(gnss.date, currDate);
   
     if ( !file || dirName != currDate)  {
       file.close();
       dirName = currDate;
-      timeToStr(gps.time, fileName);
+      timeToStr(gnss.time, fileName);
       fileName += ".csv";
     }
     // Create new log segment
     else if (logSegCountdown.check()) {
       file.close();
-      timeToStr(gps.time, fileName);
+      timeToStr(gnss.time, fileName);
       fileName += ".csv";
     }
     SERIAL_DBG("Creating new log dir '")
@@ -741,7 +756,7 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
  *    dist_mm : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C)  {
+void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C)  {
 
   SERIAL_DBG("\n---> csv_logStr()\n") 
   
@@ -777,6 +792,12 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += "Nan";
   }
   log_str += ',';
+  // Inserting GNSS fix mode value
+  log_str += String(fixMode);
+  log_str += ',';
+  // Inserting GNSS PDOP value
+  log_str += String(pdop);
+  log_str += ',';
   // Inserting distance into log string
   if (dist_mm != URM14_DISCONNECTED)
     log_str += String(dist_mm/10.0, DIST_DECIMALS);
@@ -806,10 +827,10 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
  *    dist_mm : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C) {
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C) {
 
   String log_str;
-  csv_logStr(log_str, timeVal, lng_deg, lat_deg, elv_m, dist_mm, temp_C);
+  csv_logStr(log_str, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);
   // Check if log file is open
   if (!file)
     return false;

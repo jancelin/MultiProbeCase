@@ -1,5 +1,5 @@
 URM14:
-	- If disconnected, reading time > F acquisition -> infinite ReadSenors calls queue -> No logging anymore -> Buffers fill up.
+	- If disconnected, reading time > F acquisition -> infinite ReadSenors calls queue -> No logging anymore, buffers fill up, LED doesn't blink.
 	(PARTIALLY FIXED: Log LED gets updated by handleDigitalIO() interrupt)
 
 
@@ -15,4 +15,4 @@ LED:
 	(FIXED: : reste Metro timer after check())
 
 Logging:
-	- Loosing one measurement at each log file segmentation.
+	- Loosing several measurements at each log file segmentation.

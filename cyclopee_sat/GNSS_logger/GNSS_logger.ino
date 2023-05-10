@@ -5,7 +5,7 @@
  *   
  * @brief:
  *    This program logs distance and temperature readings into a log file on the SD card 
- *    using a mix of GNSS time and Teensy clock. GNSS signal quality is logged as well.
+ *    using GNSS time. GNSS signal quality is logged as well.
  *    Log file segmentation and new day file creation are handled.
  *   
  * @board :
@@ -36,12 +36,12 @@
  *      
  * @ports:
  *      Serial (115200 baud)
- *      GNSS_SERIAL (115200 baud for GNSS module)
- *      URM14_SERIAL (115200 baud for URM14)
+ *      Serial5 (115200 baud for GNSS module)
+ *      Serial4 (115200 baud for URM14)
  * --------------------------
  */
 /* ###########################
- * #   GLOBALS DEFINITIONS   #
+ * #   GLOBAL DEFINITIONS   #
  * ###########################
  */
 /************** SERIAL PORTS *****************/
@@ -574,7 +574,7 @@ void setupSDCard( volatile bool& deviceConnected)  {
  *    gnssDate : TinyGPSDate obj to convert and write.
  *    str : String to write date into.
  */
-void date_to_str(TinyGPSDate& gnssDate, String& str) {
+void dateToStr(TinyGPSDate& gnssDate, String& str) {
   
   str = "";
   str += gnssDate.year();
@@ -591,7 +591,7 @@ void date_to_str(TinyGPSDate& gnssDate, String& str) {
  *    gnssTime : TinyGPSTime obj to convert and write.
  *    str : String to write time into.
  */
-void time_to_str(TinyGPSTime& gnssTime, String& str) {
+void timeToStr(TinyGPSTime& gnssTime, String& str) {
 
   str = "";
   str += gnssTime.hour();
@@ -628,7 +628,7 @@ void timeValToStr(const uint32_t& timeVal, String& str) {
  * @params:
  *    dirName : New dir name.
  */
-void new_logDir(String& dirName)  {
+void newLogDir(String& dirName)  {
 
   if (SD.exists(dirName.c_str()))  {
     SERIAL_DBG("Dir '")
@@ -652,7 +652,7 @@ void new_logDir(String& dirName)  {
  *    dirName: Directory name in which file will be created.
  *    fileName : New file name.
  */
-bool new_logFile(File& file, const String& dirName, String& fileName)  {
+bool newLogFile(File& file, const String& dirName, String& fileName)  {
 
   String file_path = "";
 
@@ -691,24 +691,24 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
 
   if (SD.mediaPresent()) {
     String currDate;
-    date_to_str(gps.date, currDate);
+    dateToStr(gps.date, currDate);
   
     if ( !file || dirName != currDate)  {
       file.close();
       dirName = currDate;
-      time_to_str(gps.time, fileName);
+      timeToStr(gps.time, fileName);
       fileName += ".csv";
     }
     // Create new log segment
     else if (logSegCountdown.check()) {
       file.close();
-      time_to_str(gps.time, fileName);
+      timeToStr(gps.time, fileName);
       fileName += ".csv";
     }
     SERIAL_DBG("Creating new log dir '")
     SERIAL_DBG(dirName)
     SERIAL_DBG("'...\n")
-    new_logDir(dirName);
+    newLogDir(dirName);
     SERIAL_DBG("Done.\n")
     
     SERIAL_DBG("Creating and opening new log file '")
@@ -716,7 +716,7 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
     SERIAL_DBG('/')
     SERIAL_DBG(fileName)
     SERIAL_DBG('\n')
-    if (new_logFile(file, dirName, fileName))  {
+    if (newLogFile(file, dirName, fileName))  {
       logSegCountdown.reset();
       SERIAL_DBG("Done.\n")
     }
@@ -741,9 +741,9 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
  *    dist_mm : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-void csv_log_string(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C)  {
+void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C)  {
 
-  SERIAL_DBG("\n---> csv_log_string()\n") 
+  SERIAL_DBG("\n---> csv_logStr()\n") 
   
   // Inserting GNSS time into log string
   if (timeVal != NO_GNSS_TIME)
@@ -809,7 +809,7 @@ void csv_log_string(String& log_str, const uint32_t& timeVal, const double& lng_
 bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C) {
 
   String log_str;
-  csv_log_string(log_str, timeVal, lng_deg, lat_deg, elv_m, dist_mm, temp_C);
+  csv_logStr(log_str, timeVal, lng_deg, lat_deg, elv_m, dist_mm, temp_C);
   // Check if log file is open
   if (!file)
     return false;

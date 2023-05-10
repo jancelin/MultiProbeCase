@@ -10,9 +10,9 @@ GNSS:
 
 LED:
 	- Error blinks are not regular when handleDigitalIO() is called in loop.
-	(FIXED: reste Metro timer after check())
+	(FIXED: reset Metro timer after check())
 	- If handleDigitalIO() as IntervalTimer, super quick blinks happen in stead of error blinks and after changing log button state (the longer the system wase longing, the longer the quick blinks remain).
-	(FIXED: : reste Metro timer after check())
+	(FIXED: : reset Metro timer after check())
 
 Logging:
 	- Loosing several measurements at each log file segmentation.

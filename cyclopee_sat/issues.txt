@@ -1,0 +1,18 @@
+URM14:
+	- If disconnected, reading time > F acquisition -> infinite ReadSenors calls queue -> No logging anymore, buffers fill up, LED doesn't blink.
+	(PARTIALLY FIXED: Log LED gets updated by handleDigitalIO() interrupt)
+
+
+GNSS:
+	- 50% of module disconnections stop logging.
+	(APPARENTLY FIXED)
+
+
+LED:
+	- Error blinks are not regular when handleDigitalIO() is called in loop.
+	(FIXED: reset Metro timer after check())
+	- If handleDigitalIO() as IntervalTimer, super quick blinks happen in stead of error blinks and after changing log button state (the longer the system wase longing, the longer the quick blinks remain).
+	(FIXED: : reset Metro timer after check())
+
+Logging:
+	- Loosing several measurements at each log file segmentation.

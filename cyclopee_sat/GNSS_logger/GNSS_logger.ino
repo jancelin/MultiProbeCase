@@ -144,7 +144,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -178,6 +178,10 @@ void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sens
 // GNSS setup
 void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected);
 void gnssRefresh();
+// Bluetooth communication
+void setupBluetooth(volatile bool& deviceConnected);
+void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C);
+void readBluetoothOrders();
 // Sensor reading interrupt
 void readSensors();
 // Digital IO update interrupt
@@ -314,6 +318,8 @@ uint16_t dist_mm;
 void loop() {
   // Loop execution time
   //long t = millis();
+
+  readBluetoothOrders();
 
   SERIAL_DBG("#### LOOP FUNCTION ####\n\n")
 
@@ -508,7 +514,6 @@ void setupBluetooth(volatile bool& deviceConnected)  {
 
   BLUETOOTH_SERIAL.begin(115200);
   deviceConnected = true;
-  
 } 
 
 void json_logStr(String& str, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C) {
@@ -537,6 +542,13 @@ void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const d
   json_logStr(str, gnssDate, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);
   BLUETOOTH_SERIAL.println(str);
   
+}
+
+void readBluetoothOrders()  {
+
+  char c = BLUETOOTH_SERIAL.read();
+  if (c != (char) -1)
+    Serial.print(c);
 }
 
 /* ##############   GNSS    ################ */

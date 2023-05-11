@@ -511,7 +511,7 @@ void setupBluetooth(volatile bool& deviceConnected)  {
   
 } 
 
-void jsonStr(String& str, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C) {
+void json_logStr(String& str, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C) {
 
   String timeVal_str = "", date_str = "";
   str = "" ;
@@ -535,7 +535,7 @@ void jsonStr(String& str, TinyGPSDate& gnssDate, const uint32_t& timeVal, const 
 void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C)  {
 
   String str = "";
-  jsonStr(str, gnssDate, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);
+  json_logStr(str, gnssDate, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);
   BLUETOOTH_SERIAL.println(str);
   
 }

@@ -519,16 +519,15 @@ void json_logStr(String& str, TinyGPSDate& gnssDate, const uint32_t& timeVal, co
   dateToStr(gnssDate, date_str);
   
   str += '{';
-  str += "\"satellite\":\"Cyclopee\",";
-  str += "\"Date\":\"" + date_str.replace('_', '/') + "\",";
-  str += "\"Time\":\"" + timeVal_str + "\",";
-  str += "\"Longitude\":" + String(lng_deg, LOC_DECIMALS) + ',';
-  str += "\"Latitude\":" + String(lat_deg, LOC_DECIMALS) + ',';
-  str += "\"Elevation\":" + String(elv_m, ELV_DECIMALS) + ',';
-  str += "\"Fix Mode\":" + String(fixMode) + ',';
-  str += "\"PDOP\":" + String(pdop) + ',';
-  str += "\"Distance\":" + String(dist_mm/10.0, DIST_DECIMALS) + ',';
-  str += "\"External temperature\":" + String(temp_C, TEMP_DECIMALS);
+  str += "\"id\":\"Cyclopee\",";
+  str += "\"time\":\"" + date_str.replace('_', '/') + " " + timeVal_str + "\",";
+  str += "\"lon\":" + String(lng_deg, LOC_DECIMALS) + ',';
+  str += "\"lat\":" + String(lat_deg, LOC_DECIMALS) + ',';
+  str += "\"elv\":" + String(elv_m, ELV_DECIMALS) + ',';
+  str += "\"fix\":" + String(fixMode) + ',';
+  str += "\"pdop\":" + String(pdop) + ',';
+  str += "\"dist\":" + String(dist_mm/10.0, DIST_DECIMALS) + ',';
+  str += "\"temp\":" + String(temp_C, TEMP_DECIMALS);
   str += '}';
 }
 

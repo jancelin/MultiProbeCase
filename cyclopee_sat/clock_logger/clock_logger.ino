@@ -137,7 +137,9 @@ enum Devices : uint8_t  {
  * #   FUNCTION PROTOTYPES   #
  * ###########################
  */
-// Sd card setup
+// Error handling
+void waitForReboot(const String& msg = "");
+// Sd card setu
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
 void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegCountdown, volatile bool& deviceConnected);
@@ -428,10 +430,8 @@ void setupSDCard( volatile bool& deviceConnected)  {
 
   SERIAL_DBG("SD card setup... ")
   // Try to open SD card
-  if (!SD.begin(BUILTIN_SDCARD))  {
-    SERIAL_DBG("Failed, waiting for reboot...\n");
-    while (1);
-  }
+  if (!SD.begin(BUILTIN_SDCARD))
+    waitForReboot("Failed.");
   else
     SERIAL_DBG("Done.\n")
   deviceConnected = true;
@@ -718,14 +718,13 @@ void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sens
 
   // Writing config
   mbError = sensor.writeSingleRegister(URM14_CONTROL_REG, fileDumpCountdown); //Writes the setting value to the control register
-  if (mbError != ModbusMaster::ku8MBSuccess) {
-    SERIAL_DBG("Modbus : Config could not be written to UMR14 sensor... Check wiring.\n")
-    SERIAL_DBG("Waiting for reboot...\n")
-    while (1);
-  }
+  if (mbError != ModbusMaster::ku8MBSuccess)
+    waitForReboot("Modbus : Config could not be written to UMR14 sensor, check wiring.");
   else
     SERIAL_DBG("Modbus : UMR14 sensor found and configured!\n")
+  
   deviceConnected = true;
+  SERIAL_DBG("Done.\n")
 }
 
 /* ##############   DS18B20   ################ */
@@ -747,14 +746,14 @@ void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnec
   if (sensorNetwork.getTempC(ds18b20_addr) == DEVICE_DISCONNECTED_C)  {
     SERIAL_DBG("OneWire : No DS18B20 connected...\n")
     SERIAL_DBG("No external temperature compensation possible.\n")
-    if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT) {
-      SERIAL_DBG("Waiting for reboot...\n")
-      while (1);
-    }
+    if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)
+      waitForReboot();
   }
   else
     SERIAL_DBG("OneWire : DS18B20 found!\n")
+    
   deviceConnected = true;
+  SERIAL_DBG("Done.\n")
 }
 
 /* ##############   DIGITAL IO  ################ */
@@ -791,4 +790,13 @@ void handleDigitalIO()  {
       digitalWrite(LOG_LED, !digitalRead(LOG_LED));
       errorLEDCountdown.reset();
   }
+}
+
+/* ##############   ERROR HANDLING  ################ */
+
+void waitForReboot(const String& msg = "")  {
+
+  SERIAL_DBG(msg + '\n');
+  SERIAL_DBG("Waiting for reboot...");
+  while(1);
 }

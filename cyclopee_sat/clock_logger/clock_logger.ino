@@ -65,7 +65,7 @@
 // OneWire
 #define ONE_WIRE_BUS  21 // Teensy temperature data wire pin
 // Disable logging button
-#define BUTTON_PIN    2
+#define BUTTON_PIN    39
 
 /************** URM14 SENSOR *****************/
 // Sensor baudrate
@@ -222,10 +222,10 @@ void setup() {
   setupSDCard(connectedDevices[SD_CARD]);
   SERIAL_DBG('\n')
   // Setting up DS18B20
-  setupDS18B20(sensors, connectedDevices[DS18B20]);
+  //setupDS18B20(sensors, connectedDevices[DS18B20]);
   SERIAL_DBG('\n')
   // Setting up URM14
-  setupURM14(urm14, URM14_ID, URM14_BAUDRATE, preTrans, postTrans, connectedDevices[URM14]);
+  //setupURM14(urm14, URM14_ID, URM14_BAUDRATE, preTrans, postTrans, connectedDevices[URM14]);
   SERIAL_DBG('\n')
   // Setting up timer interrupts
   sensorRead_timer.begin(readSensors, READ_INTERVAL);
@@ -375,7 +375,7 @@ void readSensors()  {
 // --------------
 
       // External compensation: Updade external URM14 temperature register
-      if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)  {
+     /* if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)  {
         mbError = urm14.writeSingleRegister(URM14_EXT_TEMP_REG, (uint16_t)(extTemp_buf[extTemp_buf.size()] * 10.0));
         // Check for Modbus errors
         if (mbError != ModbusMaster::ku8MBSuccess)  {
@@ -410,6 +410,7 @@ void readSensors()  {
         dist_buf.push(urm14.getResponseBuffer(0));
         connectedDevices[URM14] = true;
       }
+      */
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -456,28 +457,22 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
   m = MINUTES + t / (60 * 1000);
   t %= 60 * 1000;
   s = SECONDS + t / 1000;
-  if (s >= 60) {
+  if (s >= 60)
     m++;
-    if (m >= 60)
-      h++;
-  }
+  if (m >= 60)
+    h++;
   h %= 24;
   m %= 60;
   s %= 60;
-  str = "";
-  str.concat(h);
-  str.concat(':');
-  str.concat(m);
-  str.concat(':');
-  str.concat(s);
+  str = String(h) + ':' + String(m) + ':' + String(s);
   if (add_ms) {
-    str.concat('.');
+    str += '.';
     t %= 1000;
     if (t < 10)
-      str.concat("00");
+      str += "00";
     else if (t < 100)
-      str.concat("0");
-    str.concat(t);
+      str += "0";
+    str += t;
   }
 }
 
@@ -488,13 +483,8 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
  *    str : String to write time into.
  */
 void dateToStr(String& str) {
-
-  str = "";
-  str.concat(day());
-  str.concat('_');
-  str.concat(month());
-  str.concat('_');
-  str.concat(year());
+  
+  str = String(day()) + '_' + String(month()) + '_' + String(year());
 }
 
 /*

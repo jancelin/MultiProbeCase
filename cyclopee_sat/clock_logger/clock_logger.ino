@@ -449,30 +449,27 @@ void setupSDCard( volatile bool& deviceConnected)  {
  */
 void timestampToStr(const long& timestamp , String& str, bool add_ms) {
 
-  long t = timestamp;
   uint8_t h,m,s;
-  
-  h = HOURS + t / (3600 * 1000);
-  t %= 3600 * 1000;
-  m = MINUTES + t / (60 * 1000);
-  t %= 60 * 1000;
-  s = SECONDS + t / 1000;
-  if (s >= 60)
-    m++;
-  if (m >= 60)
-    h++;
-  h %= 24;
-  m %= 60;
-  s %= 60;
+  uint16_t ms;
+
+  // Convert timestamp to different time units
+  ms = timestamp%1000;
+  s = SECONDS + timestamp/1000;
+  m = MINUTES + s/60;
+  h = HOURS + m/60;
+  // Get hours, minutes, seconds and miliseconds values from converted values
+  s%=60;
+  m%=60;
+  h%=24;
+  // Generate the time String
   str = String(h) + ':' + String(m) + ':' + String(s);
   if (add_ms) {
     str += '.';
-    t %= 1000;
-    if (t < 10)
+    if (ms < 10)
       str += "00";
-    else if (t < 100)
-      str += "0";
-    str += t;
+    else if (ms < 100)
+      str += '0';
+    str += String(ms);
   }
 }
 

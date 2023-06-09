@@ -222,11 +222,13 @@ void setup() {
   setupSDCard(connectedDevices[SD_CARD]);
   SERIAL_DBG('\n')
   // Setting up DS18B20
-  //setupDS18B20(sensors, connectedDevices[DS18B20]);
+  setupDS18B20(sensors, connectedDevices[DS18B20]);
   SERIAL_DBG('\n')
   // Setting up URM14
-  //setupURM14(urm14, URM14_ID, URM14_BAUDRATE, preTrans, postTrans, connectedDevices[URM14]);
+  setupURM14(urm14, URM14_ID, URM14_BAUDRATE, preTrans, postTrans, connectedDevices[URM14]);
   SERIAL_DBG('\n')
+  // Setting time
+  setTime(HOURS, MINUTES, SECONDS, DAY, MONTH, YEAR);
   // Setting up timer interrupts
   sensorRead_timer.begin(readSensors, READ_INTERVAL);
   sensorRead_timer.priority(200);

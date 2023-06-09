@@ -377,7 +377,7 @@ void readSensors()  {
 // --------------
 
       // External compensation: Updade external URM14 temperature register
-     /* if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)  {
+      if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)  {
         mbError = urm14.writeSingleRegister(URM14_EXT_TEMP_REG, (uint16_t)(extTemp_buf[extTemp_buf.size()] * 10.0));
         // Check for Modbus errors
         if (mbError != ModbusMaster::ku8MBSuccess)  {
@@ -412,7 +412,6 @@ void readSensors()  {
         dist_buf.push(urm14.getResponseBuffer(0));
         connectedDevices[URM14] = true;
       }
-      */
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -451,8 +450,7 @@ void setupSDCard( volatile bool& deviceConnected)  {
  */
 void timestampToStr(const long& timestamp , String& str, bool add_ms) {
 
-  uint8_t h,m,s;
-  uint16_t ms;
+  uint16_t h, m, s, ms;
 
   // Convert timestamp to different time units
   ms = timestamp%1000;

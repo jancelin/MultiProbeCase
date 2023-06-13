@@ -481,7 +481,7 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
  */
 void dateToStr(String& str) {
   
-  str = String(day()) + '_' + String(month()) + '_' + String(year());
+  str = String(year()) + '_' + String(month()) + '_' + String(day());
 }
 
 /*

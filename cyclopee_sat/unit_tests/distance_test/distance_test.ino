@@ -40,7 +40,7 @@
 
 // URM14 sensor
 // Sensor baudrate
-#define URM14_INITIAL_BAUDRATE  115200
+#define URM14_INITIAL_BAUDRATE  9600
 #define URM14_NEW_BAUDRATE      9600
 // Sensor id
 #define URM14_ID      0x11
@@ -50,7 +50,7 @@
 #define URM14_DISTANCE_REG  0x05
 #define URM14_CONTROL_REG   0x08
 // Sensor baudrate config
-#define URM14_BAUDRATE_CONFIG 0x03  // 9600 baud
+#define URM14_BAUDRATE_CONFIG 0x03
 // Sensor congig register bit values
 #define   TEMP_CPT_SEL_BIT          ((uint16_t)0x01)      // Use custom temperature compensation
 #define   TEMP_CPT_ENABLE_BIT       ((uint16_t)0x01 << 1) // Enable temperature compensation
@@ -127,7 +127,7 @@ void setup()
 #endif
 
   // Configuring URM14 baudrate
-  mb_error = node.writeSingleRegister(URM14_BAUDRATE_REG,); //Writes the setting value to the control register
+  mb_error = node.writeSingleRegister(URM14_BAUDRATE_REG, URM14_BAUDRATE_CONFIG); //Writes the setting value to the control register
   if (mb_error != ModbusMaster::ku8MBSuccess) {
     Serial.println("Modbus : Baudrate could not be written to UMR14 sensor...");
     Serial.println("Check wiring.");

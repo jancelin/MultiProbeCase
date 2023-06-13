@@ -31,7 +31,7 @@
  *      
  * @ports:
  *      Serial (115200 baud)
- *      Serial4 (9600 baud configured in URM14)
+ *      URM14_SERIAL (9600 baud configured in URM14)
  *      
  * ------------------------------------------------------
  */
@@ -50,15 +50,17 @@
   #define RX_PIN 4
   #define TX_PIN 2
   #define DE_PIN 5  // RE = ~DE => Wired to pin 30 as well
+  #define URM14_SERIAL Serial1
   // OneWire
   #define ONE_WIRE_BUS  18 // ESP32 temperature data wire pin
 #endif
   /* TEENSY pins */
   #ifdef TEENSY
   // Modbus
-  #define DE_PIN  30 // RE = ~DE => Wired to pin 30 as well
+  #define DE_PIN  2 // RE = ~DE => Wired to pin 30 as well
+  #define URM14_SERIAL Serial1
   // OneWire
-  #define ONE_WIRE_BUS  21 // Teensy temperature data wire pin
+  #define ONE_WIRE_BUS  24 // Teensy temperature data wire pin
 #endif
 
 /* Dallas temperature sensor */
@@ -66,7 +68,7 @@
 
 /*  URM14 sensor */
 // Sensor baudrate
-#define URM14_BAUDRATE 9600
+#define URM14_BAUDRATE 115200
 // Sensor id
 #define UMR14_ID  0x11
 // Sensor registers
@@ -129,7 +131,7 @@ float dist_mm, ext_temp_C;
 /*
  * @brief: Setup ports, buses and sensors
  * @Local variables:  Serial  -> USB debug (115200 baud)
- *                    Serial4 -> Modbus port (9600 baud)
+ *                    URM14_SERIAL -> Modbus port (9600 baud)
  */
 void setup()
 {
@@ -143,15 +145,15 @@ void setup()
 
 #ifdef ESP32
   // Modbus communication  (9600 baud)
-  Serial1.begin(URM14_BAUDRATE, SERIAL_8N1, RX_PIN, TX_PIN);
-  // Modbus slave id 0x11 on serial port Serial4
-  node.begin(UMR14_ID, Serial1);
+  URM14_SERIAL.begin(URM14_BAUDRATE, SERIAL_8N1, RX_PIN, TX_PIN);
+  // Modbus slave id 0x11 on serial port URM14_SERIAL
+  node.begin(UMR14_ID, URM14_SERIAL);
 #endif
 #ifdef TEENSY
   // Modbus communication  (9600 baud)
-  Serial4.begin(URM14_BAUDRATE);
-  // Modbus slave id 0x11 on serial port Serial4
-  node.begin(UMR14_ID, Serial4);
+  URM14_SERIAL.begin(URM14_BAUDRATE);
+  // Modbus slave id 0x11 on serial port URM14_SERIAL
+  node.begin(UMR14_ID, URM14_SERIAL);
 #endif
   // Set pre/post transmision callbacks in ModbusMaster object
   node.preTransmission(preTransmission);

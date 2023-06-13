@@ -30,7 +30,7 @@
 #include <DallasTemperature.h>
 
 // Pin on which is plugged DS18B20 data wire (yellow)
-#define ONE_WIRE_BUS 21
+#define ONE_WIRE_BUS 24
 
 // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 OneWire oneWire(ONE_WIRE_BUS);

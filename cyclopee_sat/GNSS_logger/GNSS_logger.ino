@@ -18,7 +18,7 @@
  *    Drotek DP0601 RTK GNSS (XL F9P)
  *
  * @wiring:
- *      Teensy RX5       -> GNSS_MODULE UART1 B3 (TX)
+ *      Teensy RX2       -> GNSS_MODULE UART1 B3 (TX)
  *      Teensy Vin (5V)  -> GNSS_MODULE UART1 B1 (5V)
  *      Teensy GND       -> GNSS_MODULE UART1 B6 (GND)
  *      Teensy TX4  -> RS485 RX
@@ -32,12 +32,12 @@
  *      URM14 Black -> 0V
  *      DS18B20 Red    -> Teensy 3V3
  *      DS18B20 Black  -> Teensy GND
- *      DS18B20 Yellow -> Teensy 21
+ *      DS18B20 Yellow -> Teensy 14
  *      
  * @ports:
  *      Serial (115200 baud)
- *      Serial4 (115200 baud for URM14)
- *      Serial5 (115200 baud for GNSS module)
+ *      URM14_SERIAL (configured baudrate for URM14)
+ *      GNSS_SERIAL (configured baudrate for GNSS module)
  * --------------------------
  */
 /* ###########################
@@ -46,7 +46,7 @@
  */
 /************** SERIAL PORTS *****************/
 #define URM14_SERIAL  Serial4
-#define GNSS_SERIAL   Serial5
+#define GNSS_SERIAL   Serial2
 
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
@@ -67,13 +67,13 @@
 // Modbus DE & RE pins
 #define DE_PIN        30 // RE = ~DE => Wired to pin 30 as well
 // OneWire
-#define ONE_WIRE_BUS  21 // Teensy temperature data wire pin
+#define ONE_WIRE_BUS  14 // Teensy temperature data wire pin
 // Disable logging button
-#define BUTTON_PIN    2
+#define BUTTON_PIN    16
 
 /************** URM14 SENSOR *****************/
 // Sensor baudrate
-#define URM14_BAUDRATE 115200
+#define URM14_BAUDRATE 9600
 // Sensor ID
 #define URM14_ID  (uint16_t)0x11
 // Sensor registers
@@ -180,6 +180,8 @@ void gnssRefresh();
 void readSensors();
 // Digital IO update interrupt
 void handleDigitalIO();
+// Handling errors
+void waitForReboot(const String& msg = "");
 
 /* ##################
  * #    PROGRAM     #

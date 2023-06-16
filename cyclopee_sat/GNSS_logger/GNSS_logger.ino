@@ -48,7 +48,7 @@
 /************** SERIAL PORTS *****************/
 #define BLUETOOTH_SERIAL  Serial3
 #define URM14_SERIAL      Serial4
-#define GNSS_SERIAL       Serial5
+#define GNSS_SERIAL       Serial2
 
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
@@ -69,9 +69,9 @@
 // Modbus DE & RE pins
 #define DE_PIN        30 // RE = ~DE => Wired to pin 30 as well
 // OneWire
-#define ONE_WIRE_BUS  21 // Teensy temperature data wire pin
+#define ONE_WIRE_BUS  14 // Teensy temperature data wire pin
 // Disable logging button
-#define BUTTON_PIN    2
+#define BUTTON_PIN    16
 
 
 /************** BLUETOOTH MODULE *****************/
@@ -88,7 +88,7 @@
 
 /************** URM14 SENSOR *****************/
 // Sensor baudrate
-#define URM14_BAUDRATE 115200
+#define URM14_BAUDRATE 9600
 // Sensor ID
 #define URM14_ID  (uint16_t)0x11
 // Sensor registers
@@ -180,8 +180,6 @@ enum Devices : uint8_t  {
  * #   FUNCTION PROTOTYPES   #
  * ###########################
  */
-// Error handling
-void waitForReboot(const String& msg = "");
 // Sd card setup
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
@@ -205,6 +203,8 @@ void readBluetoothOrders();
 void readSensors();
 // Digital IO update interrupt
 void handleDigitalIO();
+// Error handling
+void waitForReboot(const String& msg = "");
 
 /* ##################
  * #    PROGRAM     #
@@ -549,12 +549,13 @@ bool sendATCommand(const String& cmd, String* pAns = NULL) {
   // Reading data
   while (BLUETOOTH_SERIAL.available() && c != '\n') {
     c = BLUETOOTH_SERIAL.read();
-    tmp.concat(c);
+    tmp += c;
   }
   // Clearing remaining OK answer
   BLUETOOTH_SERIAL.clear();
   // Checking fo errors
-  if (tmp.length() == 0 || tmp.indexOf("EROOR") != -1) {
+  if (tmp.length() == 0 || tmp.indexOf("ERROR") != -1) {
+    tmp.remove(tmp.length()-1);
     Serial.println("An error occured when writing command '" + cmd + "' : " + ((tmp.length() == 0) ? "No response" : tmp ) + '.');
     return false;
   }
@@ -601,11 +602,13 @@ void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
 
   // Pin setup
   pinMode(BLUETOOTH_KEY, OUTPUT);
-  // Set AT mode pin high
+  // Wait for Bluetooth module to boot
+  delay(600);
+  // Set AT mode pin high for module configuration
   digitalWrite(BLUETOOTH_KEY, HIGH);
 
   // Serial port setup
-  BLUETOOTH_SERIAL.begin(BLUETOOTH_CONFIG_BAUDRATE);
+  BLUETOOTH_SERIAL.begin(BLUETOOTH_COMM_BAUDRATE);
 
   // Checking for bluetooth module presence
   if (!sendATCommand("AT"))
@@ -632,15 +635,13 @@ void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
   SERIAL_DBG(satelliteID + '\n');
   if (satelliteID.indexOf("ERROR") != -1)
     waitForReboot("Error generating satellite ID.");
-  
-  // Reboot module in Bluetooth mode
-  digitalWrite(BLUETOOTH_KEY, LOW);
-  sendATCommand("AT+RESET");
-  // Waiting for module to reboot
-  delay(1000);
-  digitalWrite(BLUETOOTH_KEY, HIGH);
 
-  // Configure Bluetooth comunication
+  // Stop module configuration
+  digitalWrite(BLUETOOTH_KEY, LOW);
+  // Reboot module in Bluetooth mode
+  sendATCommand("AT+RESET");
+
+  // Configure Bluetooth for data comunication
   BLUETOOTH_SERIAL.begin(BLUETOOTH_COMM_BAUDRATE);
   
   deviceConnected = true;

@@ -3,7 +3,7 @@
  * @insipration:
  *     http://arduiniana.org/libraries/tinygpsplus/
  * 
- * @brief:  This program feeds TinyGPSPlus object with Serial5 buffer data
+ * @brief:  This program feeds TinyGPSPlus object with GNSS_SERIAL buffer data
  *          and dumps updated GNSS time on USB (Serial) port.
  *          
  * @board:
@@ -19,7 +19,7 @@
  *      
  * @ports:
  *      Serial (115200 baud)
- *      Serial5 (115200 baud for DP0601)
+ *      GNSS_SERIAL (configured baudrate for DP0601)
  *      
  * ------------------------------------------------------
  */
@@ -37,20 +37,23 @@
  * #    PROGRAM    #
  * #################
  */
+// GNSS serial port
+#define GNSS_SERIAL Serial5
+
 // TinyGPSPlus instance to store GNSS NMEA data (datetim, position, etc.)
 TinyGPSPlus gps;
  
 void setup() {
   // Setup Serial ports for commmunication
   Serial.begin(115200);
-  Serial5.begin(115200);
+  GNSS_SERIAL.begin(115200);
 }
 
 void loop() {
-  // While Serial5 buffer is not empty
-  while (Serial5.available())
+  // While GNSS_SERIAL buffer is not empty
+  while (GNSS_SERIAL.available())
     // Read buffer
-    gps.encode(Serial5.read());
+    gps.encode(GNSS_SERIAL.read());
 
   // Dump GNSS time (UTC)
   Serial.print(gps.time.hour());

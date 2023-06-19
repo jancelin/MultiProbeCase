@@ -38,6 +38,7 @@
  *      Serial (115200 baud)
  *      URM14_SERIAL (configured baudrate for URM14)
  *      GNSS_SERIAL (configured baudrate for GNSS module)
+ *      BLUETOOTH_SERIAL (configured baudrate for Bluetooth module)
  * --------------------------
  */
 /* ###########################
@@ -45,14 +46,15 @@
  * ###########################
  */
 /************** SERIAL PORTS *****************/
-#define URM14_SERIAL  Serial4
-#define GNSS_SERIAL   Serial2
+#define BLUETOOTH_SERIAL  Serial3
+#define URM14_SERIAL      Serial4
+#define GNSS_SERIAL       Serial2
 
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
 // Check sensor reading interrupt duration before setting the value
 // 71s maximum
-#define READ_INTERVAL 400/*ms*/ * 1000/*µs/ms*/
+#define READ_INTERVAL 2000/*ms*/ * 1000/*µs/ms*/
 // GNSS refresh interval
 // Minimal refresh rate to get 20ms GNSS time resolution
 #define GNSS_REFRESH_INTERVAL 1/*ms*/ * 1000/*ms/µs*/
@@ -70,6 +72,18 @@
 #define ONE_WIRE_BUS  14 // Teensy temperature data wire pin
 // Disable logging button
 #define BUTTON_PIN    16
+
+/************** BLUETOOTH MODULE *****************/
+// Bluetooth module key (AT mode) pin
+#define BLUETOOTH_KEY 6
+// Bluetooth module config baudrate
+#define BLUETOOTH_CONFIG_BAUDRATE 38400
+// Bluetooth module communication baudrate
+#define BLUETOOTH_COMM_BAUDRATE 115200
+// BLUETOOTH INFO
+#define BLUETOOTH_NAME           "Cyclopee"
+#define BLUETOOTH_UART_CONF "115200,1,0"
+#define BLUETOOTH_NRG_MODE      ""
 
 /************** URM14 SENSOR *****************/
 // Sensor baudrate
@@ -105,6 +119,9 @@
 // NMEA messages inteval
 #define GNSS_NMEA_INTERVAL  200//ms
 
+/************** BLUETOOTH *****************/
+#define MODULE_NAME "Cyclopee"
+
 /************** DATA NUMBER OF DECIMALS *****************/
 // Location
 #define LOC_DECIMALS  9
@@ -129,12 +146,13 @@ enum Devices : uint8_t  {
   DS18B20,
   URM14,
   GNSS_MODULE,
+  BLUETOOTH
 };
 
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -142,7 +160,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -176,11 +194,15 @@ void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sens
 // GNSS setup
 void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected);
 void gnssRefresh();
+// Bluetooth communication
+void setupBluetooth(String& satelliteID, volatile bool& deviceConnected);
+void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C);
+void readBluetoothOrders();
 // Sensor reading interrupt
 void readSensors();
 // Digital IO update interrupt
 void handleDigitalIO();
-// Handling errors
+// Error handling
 void waitForReboot(const String& msg = "");
 
 /* ##################
@@ -220,6 +242,9 @@ TinyGPSCustom gnssGeoidElv(gnss, "GNGGA", 11);
 TinyGPSCustom gnssFixMode(gnss, "GNGGA", 6);
 TinyGPSCustom gnssPDOP(gnss, "GNGSA", 15);
 
+// Bluetooth
+String satelliteID;
+
 // Timer interrputs
 IntervalTimer sensorRead_timer, gnssRefresh_timer, ioRefresh_timer;
 
@@ -246,22 +271,31 @@ void setup() {
   
   // Turn logging LED on during setup
   digitalWrite(LOG_LED, HIGH);
+  delay(50);
 
   // USB debug Serial port
   Serial.begin(115200);
   
   SERIAL_DBG("#### SETUP ####\n\n")
-  
+
+  // Bluetooth setup
+  SERIAL_DBG("## BLUETOOTH\n")
+  setupBluetooth(satelliteID, connectedDevices[BLUETOOTH]);
+  SERIAL_DBG('\n')
   // SD card init
+  SERIAL_DBG("## SD CARD\n")
   setupSDCard(connectedDevices[SD_CARD]);
   SERIAL_DBG('\n')
   // Setting up DS18B20
+  SERIAL_DBG("## DS18B20\n")
   setupDS18B20(sensors, connectedDevices[DS18B20]);
   SERIAL_DBG('\n')
   // Setting up URM14
+  SERIAL_DBG("## URM14\n")
   setupURM14(urm14, URM14_ID, URM14_BAUDRATE, preTrans, postTrans, connectedDevices[URM14]);
   SERIAL_DBG('\n')
   // GNSS set up
+  SERIAL_DBG("## GNSS\n")
   setupGNSS(gnss, connectedDevices[GNSS_MODULE]);
   SERIAL_DBG('\n')
   // Setting up timer interrupts
@@ -312,6 +346,8 @@ void loop() {
   // Loop execution time
   //long t = millis();
 
+  //readBluetoothOrders();
+
   SERIAL_DBG("#### LOOP FUNCTION ####\n\n")
 
   // Print conected devices state
@@ -361,6 +397,7 @@ void loop() {
       // -----------------
       if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C) )
         SERIAL_DBG("Logging failed...\n")
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C);
     }    
     // Dumping log file to Serial
     if (FILE_DUMP && fileDumpCountdown.check())
@@ -384,11 +421,12 @@ void loop() {
         SERIAL_DBG("Logging failed...\n")
       else
         logFile.close();
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C);
     }
     else
       SERIAL_DBG("Logging disabled...\n")
   }
-  SERIAL_DBG("\n\n")
+  SERIAL_DBG("\n")
 
   // Loop execution time
   //Serial.println(millis() - t);
@@ -497,6 +535,192 @@ void readSensors()  {
   //Serial.println(millis() - t);
 }
 
+/* ##############   BLUETOOTH    ################ */
+
+bool sendATCommand(const String& cmd, String* pAns = NULL) {
+
+  char c;
+  String tmp;
+  // Writing command to module
+  BLUETOOTH_SERIAL.println(cmd);
+  // Waitng for data
+  delay(100);
+  // Reading data
+  while (BLUETOOTH_SERIAL.available() && c != '\n') {
+    c = BLUETOOTH_SERIAL.read();
+    tmp += c;
+  }
+  // Clearing remaining OK answer
+  BLUETOOTH_SERIAL.clear();
+  // Checking fo errors
+  if (tmp.length() == 0 || tmp.indexOf("ERROR") != -1) {
+    tmp.remove(tmp.length()-1);
+    Serial.println("An error occured when writing command '" + cmd + "' : " + ((tmp.length() == 0) ? "No response" : tmp ) + '.');
+    return false;
+  }
+  // Affecting tmp to answer string if provided
+  if (pAns)
+    *pAns = tmp;
+  return true;
+}
+
+bool readBTModuleConfig(String& btName, String& macAddr, String& UARTConf, String& nrgMode) {
+
+  // Reading module Bluetooth name
+  if (!sendATCommand("AT+NAME", &btName))
+    return false;
+  btName.remove(0,6); // Remove AT prefix
+  btName.remove(btName.length()-2,2); // Remove "\r\n" final chars
+  // Reading module MAC address
+  if (!sendATCommand("AT+ADDR", &macAddr))
+    return false;
+  macAddr.remove(0,6);
+  macAddr.remove(macAddr.length()-2,2);
+  // Reading module UART conf
+  if (!sendATCommand("AT+UART", &UARTConf))
+    return false;
+  UARTConf.remove(0,6);
+  UARTConf.remove(UARTConf.length()-2,2);
+
+  return true;
+}
+
+bool configureBTModule(const String& btName, const String& UARTConf, const String& nrgMode)  {
+
+  if (!sendATCommand("AT+NAME=" + btName))
+    return false;
+  if (!sendATCommand("AT+UART=" + UARTConf))
+    return false;
+ 
+  return true;
+}
+
+void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
+
+  String btName, macAddr, UARTConf, nrgMode;
+
+  // Pin setup
+  pinMode(BLUETOOTH_KEY, OUTPUT);
+  // Wait for Bluetooth module to boot
+  delay(600);
+  // Set AT mode pin high for module configuration
+  digitalWrite(BLUETOOTH_KEY, HIGH);
+
+  // Serial port setup
+  BLUETOOTH_SERIAL.begin(BLUETOOTH_COMM_BAUDRATE);
+
+  // Checking for bluetooth module presence
+  if (!sendATCommand("AT"))
+    waitForReboot("No module detected, check wiring...");
+  SERIAL_DBG("Module detected.\n");
+
+  // Configuring Bluetooth module if need be
+  SERIAL_DBG("Configuring Bluetooth module... ")
+  if (!configureBTModule(BLUETOOTH_NAME, BLUETOOTH_UART_CONF, BLUETOOTH_NRG_MODE))
+    waitForReboot("Could not configure Bluetooth module.");
+  SERIAL_DBG("Done.\n");
+  // Reading module config
+  SERIAL_DBG("Module config :\n");
+  if (!readBTModuleConfig(btName, macAddr, UARTConf, nrgMode))
+    waitForReboot("Could not read Bluetooth module config.");
+  SERIAL_DBG("BT name :\t" + btName + '\n');
+  SERIAL_DBG("MAC adress :\t" + macAddr + '\n');
+  SERIAL_DBG("UART config :\t" + UARTConf + '\n');
+  SERIAL_DBG('\n');
+
+  // Generating satellite ID
+  SERIAL_DBG("Generating satellite ID :\n");
+  satelliteID = btName + ';' + macAddr;
+  SERIAL_DBG(satelliteID + '\n');
+  if (satelliteID.indexOf("ERROR") != -1)
+    waitForReboot("Error generating satellite ID.");
+
+  // Stop module configuration
+  digitalWrite(BLUETOOTH_KEY, LOW);
+  // Reboot module in Bluetooth mode
+  sendATCommand("AT+RESET");
+
+  // Configure Bluetooth for data comunication
+  BLUETOOTH_SERIAL.begin(BLUETOOTH_COMM_BAUDRATE);
+  
+  deviceConnected = true;
+
+  SERIAL_DBG("Done.\n")
+} 
+
+void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C) {
+
+  String timeVal_str = "", date_str = "";
+  str = "" ;
+  timeValToStr(timeVal, timeVal_str);
+  dateToStr(gnssDate, date_str);
+  
+  str += '{';
+  // Inserting satellite id
+  str += "\"id\":\"" + satelliteID + "\",";
+  // Inserting date and time
+  str += "\"time\":";
+  if (timeVal != NO_GNSS_TIME)
+    str += "\"" + date_str.replace('_', '/') + " " + timeVal_str + "\"";
+  else
+    str += "null";
+  str += ',';
+  // Inserting longitude
+  str += "\"lon\":";
+  if (lng_deg != NO_GNSS_LOCATION)
+    str += String(lng_deg, LOC_DECIMALS);
+  else
+    str += "null";
+  str += ',';
+  // Inserting latitude
+  str += "\"lat\":";
+  if (lat_deg != NO_GNSS_LOCATION)
+    str += String(lat_deg, LOC_DECIMALS);
+  else
+    str += "null";
+  str += ',';
+  // Inserting elevation
+  str += "\"elv\":";
+  if (elv_m != NO_GNSS_ALTITUDE)
+    str += String(elv_m, ELV_DECIMALS);
+  else
+    str += "null";
+  str += ',';
+  // Inserting GNSS fix mode
+  str += "\"fix\":" + String(fixMode) + ',';
+  // inserting GNSS PDOP value
+  str += "\"pdop\":" + String(pdop) + ',';
+  // Inserting distance
+  str += "\"dist\":";
+  if (dist_mm != URM14_DISCONNECTED)
+    str += String(dist_mm/10.0, DIST_DECIMALS);
+  else
+    str += "null";
+  str += ',';
+  // Inserting temperature
+  str += "\"temp\":";
+  if (temp_C != DEVICE_DISCONNECTED_C)
+    str += String(temp_C, TEMP_DECIMALS);
+  else
+    str += "null";
+  str += '}';
+}
+
+void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C)  {
+
+  String str = "";
+  json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);
+  BLUETOOTH_SERIAL.println(str);
+  
+}
+
+void readBluetoothOrders()  {
+
+  char c = BLUETOOTH_SERIAL.read();
+  if (c != (char) -1)
+    Serial.print(c);
+}
+
 /* ##############   GNSS    ################ */
 /*
  * @brief: 
@@ -520,13 +744,14 @@ void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected) {
   while (!GNSS_SERIAL.available())  {
     if (millis() - startTime > 7000)
       waitForReboot("No signal, check GNSS receiver wiring.");
-    SERIAL_DBG("Done.\n")
   }
+  SERIAL_DBG("Done.\n");
   // Acquiring GNSS date and time
   SERIAL_DBG("Acquiring GNSS date and time... ")
   while (gnss.date.value() == 0 && gnss.time.value() == 0)
     gnssRefresh();
-  SERIAL_DBG("Done.\n")
+
+  SERIAL_DBG("Done.\n");
     
   deviceConnected = true;
   SERIAL_DBG("Done.\n")
@@ -569,7 +794,7 @@ void gnssRefresh() {
    @params:
       deviceConnected: Boolean to store device connection state.
 */
-void setupSDCard( volatile bool& deviceConnected)  {
+void setupSDCard(volatile bool& deviceConnected)  {
 
   SERIAL_DBG("SD card setup... ")
   // Try to open SD card

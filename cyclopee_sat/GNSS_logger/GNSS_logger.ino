@@ -545,7 +545,7 @@ bool sendATCommand(const String& cmd, String* pAns = NULL) {
   // Writing command to module
   BLUETOOTH_SERIAL.println(cmd);
   // Waitng for data
-  delay(100);
+  delay(150);
   // Reading data
   while (BLUETOOTH_SERIAL.available() && c != '\n') {
     c = BLUETOOTH_SERIAL.read();

@@ -1,6 +1,7 @@
 /* --------------------------
  * @inspiration:
- *    GNSS_logger
+ *    clock_logger
+ *    GNSS_test
  *   
  * @brief:
  *    This program logs distance and temperature readings into a log file on the SD card 
@@ -37,6 +38,7 @@
  *      Serial (115200 baud)
  *      URM14_SERIAL (configured baudrate for URM14)
  *      GNSS_SERIAL (configured baudrate for GNSS module)
+ *      BLUETOOTH_SERIAL (configured baudrate for Bluetooth module)
  * --------------------------
  */
 /* ###########################
@@ -44,13 +46,14 @@
  * ###########################
  */
 /************** SERIAL PORTS *****************/
-#define GNSS_SERIAL   Serial2
+#define BLUETOOTH_SERIAL  Serial3
+#define GNSS_SERIAL       Serial2
 
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
 // Check sensor reading interrupt duration before setting the value
 // 71s maximum
-#define READ_INTERVAL 400/*ms*/ * 1000/*µs/ms*/
+#define READ_INTERVAL 2000/*ms*/ * 1000/*µs/ms*/
 // GNSS refresh interval
 // Minimal refresh rate to get 20ms GNSS time resolution
 #define GNSS_REFRESH_INTERVAL 1/*ms*/ * 1000/*ms/µs*/
@@ -67,9 +70,25 @@
 // Disable logging button
 #define BUTTON_PIN    16
 
+/************** BLUETOOTH MODULE *****************/
+// Bluetooth module key (AT mode) pin
+#define BLUETOOTH_KEY 6
+// Bluetooth module communication baudrate
+#define BLUETOOTH_COMM_BAUDRATE 115200
+// Bluetooth info
+#define BLUETOOTH_NAME      "Cyclopee"
+#define BLUETOOTH_UART_CONF "115200,1,0"
+#define BLUETOOTH_NRG_MODE  ""
+
 /************** DS18B20 SENSOR *****************/
 // Sensor ID
 #define DS18B20_ID   0
+
+/************** GRAVITY TURBIDITY SENSOR *****************/
+// Sensor analog pin (voltage divder)
+#define TURBIDITY_PIN  33
+// Turbidity minimun value
+#define MIN_TURBIDITY 0
 
 /************** GNSS module *****************/
 // GNSS commuiation baudrate
@@ -88,10 +107,12 @@
 #define LOC_DECIMALS  9
 // Temperature
 #define TEMP_DECIMALS 3
+// Turbidity
+#define TURB_DECIMALS 1
 
 /************** BUFFERS *****************/
 // Maximum buffer size
-#define MAX_BUFFER_SIZE  100
+#define BUFFER_SIZE  100
 
 /************** ENUMS *****************/
 // Connected devices
@@ -100,6 +121,7 @@ enum Devices : uint8_t  {
   SD_CARD = 0,
   DS18B20,
   GNSS_MODULE,
+  BLUETOOTH
 };
 
 /************** DEBUG *****************/
@@ -123,10 +145,10 @@ enum Devices : uint8_t  {
 #include <TinyGPSPlus.h>
 #include <TimeLib.h>
 #include <SD.h>
-#include <ModbusMaster.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <Metro.h>
+#include "Gravity_turbidity.h"
 
 /* ###########################
  * #   FUNCTION PROTOTYPES   #
@@ -136,18 +158,22 @@ enum Devices : uint8_t  {
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
 void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gnss, Metro& logSegCountdown, volatile bool& deviceConnected);
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C);
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& temp_C, const float& turb);
 void dumpFileToSerial(File& file);
 // OneWire communication with DS18B20
 void setupDS18B20(DallasTemperature& sensorNetwork, volatile bool& deviceConnected);
 // GNSS setup
 void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected);
 void gnssRefresh();
+// Bluetooth communication
+void setupBluetooth(String& satelliteID, volatile bool& deviceConnected);
+void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& temp_C, const float& turb);
+void readBluetoothOrders();
 // Sensor reading interrupt
 void readSensors();
 // Digital IO update interrupt
 void handleDigitalIO();
-// Handling errors
+// Error handling
 void waitForReboot(const String& msg = "");
 
 /* ##################
@@ -177,9 +203,9 @@ byte ds18b20_addr[8];
 // GNSS MODULE
 // TinyGPSPlus objects to parse NMEA and store location and time
 TinyGPSPlus gnss;
-TinyGPSCustom gnssGeoidElv(gnss, "GNGGA", 11);
-TinyGPSCustom gnssFixMode(gnss, "GNGGA", 6);
-TinyGPSCustom gnssPDOP(gnss, "GNGSA", 15);
+
+// Bluetooth
+String satelliteID;
 
 // Timer interrputs
 IntervalTimer sensorRead_timer, gnssRefresh_timer, ioRefresh_timer;
@@ -212,14 +238,21 @@ void setup() {
   Serial.begin(115200);
   
   SERIAL_DBG("#### SETUP ####\n\n")
-  
+
+  // Bluetooth setup
+  SERIAL_DBG("## BLUETOOTH\n")
+  setupBluetooth(satelliteID, connectedDevices[BLUETOOTH]);
+  SERIAL_DBG('\n')
   // SD card init
+  SERIAL_DBG("## SD CARD\n")
   setupSDCard(connectedDevices[SD_CARD]);
   SERIAL_DBG('\n')
   // Setting up DS18B20
+  SERIAL_DBG("## DS18B20\n")
   setupDS18B20(sensors, connectedDevices[DS18B20]);
   SERIAL_DBG('\n')
   // GNSS set up
+  SERIAL_DBG("## GNSS\n")
   setupGNSS(gnss, connectedDevices[GNSS_MODULE]);
   SERIAL_DBG('\n')
   // Setting up timer interrupts
@@ -238,14 +271,13 @@ void setup() {
 
 /************** LOOP() GLOBAL VARS *****************/
 // Buffers to store values to log
-RingBuf <uint32_t, MAX_BUFFER_SIZE> time_buf;
-RingBuf <double, MAX_BUFFER_SIZE> lng_buf, lat_buf;
-RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf;
-
+RingBuf <uint32_t, BUFFER_SIZE> time_buf;
+RingBuf <double, BUFFER_SIZE> lng_buf, lat_buf;
+RingBuf <float, BUFFER_SIZE> temp_buf, turb_buf;
 // Variables to store buffer readings
 uint32_t time_ms;
 double lng_deg, lat_deg;
-float extTemp_C;
+float temp_C, turb;
 
 /*
  * @brief:
@@ -264,6 +296,8 @@ void loop() {
   // Loop execution time
   //long t = millis();
 
+  //readBluetoothOrders();
+
   SERIAL_DBG("#### LOOP FUNCTION ####\n\n")
 
   // Print conected devices state
@@ -273,9 +307,6 @@ void loop() {
   SERIAL_DBG('\n')
   SERIAL_DBG("DS18B20 :\t")
   SERIAL_DBG(connectedDevices[DS18B20])
-  SERIAL_DBG('\n')
-  SERIAL_DBG("URM14 :\t\t")
-  SERIAL_DBG(connectedDevices[URM14])
   SERIAL_DBG('\n')
   SERIAL_DBG("GNSS MODULE :\t")
   SERIAL_DBG(connectedDevices[GNSS_MODULE])
@@ -305,10 +336,12 @@ void loop() {
       time_buf.pop(time_ms);
       lng_buf.pop(lng_deg);
       lat_buf.pop(lat_deg);
-      extTemp_buf.pop(extTemp_C);
+      temp_buf.pop(temp_C);
+      turb_buf.pop(turb);
       // -----------------
-      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, extTemp_C) )
+      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, temp_C, turb) )
         SERIAL_DBG("Logging failed...\n")
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, temp_C, turb);
     }    
     // Dumping log file to Serial
     if (FILE_DUMP && fileDumpCountdown.check())
@@ -322,17 +355,19 @@ void loop() {
       time_buf.pop(time_ms);
       lng_buf.pop(lng_deg);
       lat_buf.pop(lat_deg);
-      extTemp_buf.pop(extTemp_C);
+      temp_buf.pop(temp_C);
+      turb_buf.pop(turb);
       // ---------------------
-      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, extTemp_C) )
+      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, temp_C, turb) )
         SERIAL_DBG("Logging failed...\n")
       else
         logFile.close();
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, temp_C, turb);
     }
     else
       SERIAL_DBG("Logging disabled...\n")
   }
-  SERIAL_DBG("\n\n")
+  SERIAL_DBG("\n")
 
   // Loop execution time
   //Serial.println(millis() - t);
@@ -374,19 +409,21 @@ void readSensors()  {
         lng_buf.push(NO_GNSS_LOCATION);
         lat_buf.push(NO_GNSS_LOCATION);
       }
-      
+
 // DS18B20 convertion takes time (depends on sensor resolution config)
       // Read DS18B20 temperature
       sensors.requestTemperatures();
-      extTemp_buf.push(sensors.getTempC(ds18b20_addr));
+      temp_buf.push(sensors.getTempC(ds18b20_addr));
       // Check for OneWire errors
-      if (extTemp_buf[extTemp_buf.size() -1] == DEVICE_DISCONNECTED_C) {
+      if (temp_buf[temp_buf.size() -1] == DEVICE_DISCONNECTED_C) {
         SERIAL_DBG("OneWire : DS18B20 disconnected...")
         connectedDevices[DS18B20] = false;
       }
       else
         connectedDevices[DS18B20] = true;
 // --------------
+      // Acquire turbidity
+      turb_buf.push(readTurbidity(TURBIDITY_PIN));
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -394,6 +431,181 @@ void readSensors()  {
 
   // Interrupt execution time
   //Serial.println(millis() - t);
+}
+
+/* ##############   BLUETOOTH    ################ */
+
+bool sendATCommand(const String& cmd, String* pAns = NULL) {
+
+  char c;
+  String tmp;
+  // Writing command to module
+  BLUETOOTH_SERIAL.println(cmd);
+  // Waitng for data
+  delay(150);
+  // Reading data
+  while (BLUETOOTH_SERIAL.available() && c != '\n') {
+    c = BLUETOOTH_SERIAL.read();
+    tmp += c;
+  }
+  // Clearing remaining OK answer
+  BLUETOOTH_SERIAL.clear();
+  // Checking fo errors
+  if (tmp.length() == 0 || tmp.indexOf("ERROR") != -1) {
+    tmp.remove(tmp.length()-1);
+    SERIAL_DBG("An error occured when writing command '" + cmd + "' : " + ((tmp.length() == 0) ? "No response" : tmp ) + ".\n");
+    return false;
+  }
+  // Affecting tmp to answer string if provided
+  if (pAns)
+    *pAns = tmp;
+  return true;
+}
+
+bool readBTModuleConfig(String& btName, String& macAddr, String& UARTConf, String& nrgMode) {
+
+  // Reading module Bluetooth name
+  if (!sendATCommand("AT+NAME", &btName))
+    return false;
+  btName.remove(0,6); // Remove AT prefix
+  btName.remove(btName.length()-2,2); // Remove "\r\n" final chars
+  // Reading module MAC address
+  if (!sendATCommand("AT+ADDR", &macAddr))
+    return false;
+  macAddr.remove(0,6);
+  macAddr.remove(macAddr.length()-2,2);
+  // Reading module UART conf
+  if (!sendATCommand("AT+UART", &UARTConf))
+    return false;
+  UARTConf.remove(0,6);
+  UARTConf.remove(UARTConf.length()-2,2);
+
+  return true;
+}
+
+bool configureBTModule(const String& btName, const String& UARTConf, const String& nrgMode)  {
+
+  if (!sendATCommand("AT+NAME=" + btName))
+    return false;
+  if (!sendATCommand("AT+UART=" + UARTConf))
+    return false;
+ 
+  return true;
+}
+
+void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
+
+  String btName, macAddr, UARTConf, nrgMode;
+
+  // Pin setup
+  pinMode(BLUETOOTH_KEY, OUTPUT);
+  // Wait for Bluetooth module to boot
+  delay(600);
+  // Set AT mode pin high for module configuration
+  digitalWrite(BLUETOOTH_KEY, HIGH);
+
+  // Serial port setup
+  BLUETOOTH_SERIAL.begin(BLUETOOTH_COMM_BAUDRATE);
+
+  // Checking for bluetooth module presence
+  if (!sendATCommand("AT"))
+    waitForReboot("No module detected, check wiring...");
+  SERIAL_DBG("Module detected.\n");
+
+  // Configuring Bluetooth module if need be
+  SERIAL_DBG("Configuring Bluetooth module... ")
+  if (!configureBTModule(BLUETOOTH_NAME, BLUETOOTH_UART_CONF, BLUETOOTH_NRG_MODE))
+    waitForReboot("Could not configure Bluetooth module.");
+  SERIAL_DBG("Done.\n");
+  // Reading module config
+  SERIAL_DBG("Module config :\n");
+  if (!readBTModuleConfig(btName, macAddr, UARTConf, nrgMode))
+    waitForReboot("Could not read Bluetooth module config.");
+  SERIAL_DBG("BT name :\t" + btName + '\n');
+  SERIAL_DBG("MAC adress :\t" + macAddr + '\n');
+  SERIAL_DBG("UART config :\t" + UARTConf + '\n');
+  SERIAL_DBG('\n');
+
+  // Generating satellite ID
+  SERIAL_DBG("Generating satellite ID :\n");
+  satelliteID = btName + ';' + macAddr;
+  SERIAL_DBG(satelliteID + '\n');
+  if (satelliteID.indexOf("ERROR") != -1)
+    waitForReboot("Error generating satellite ID.");
+
+  // Stop module configuration
+  digitalWrite(BLUETOOTH_KEY, LOW);
+  // Reboot module in Bluetooth mode
+  sendATCommand("AT+RESET");
+
+  // Configure Bluetooth for data comunication
+  BLUETOOTH_SERIAL.begin(BLUETOOTH_COMM_BAUDRATE);
+  
+  deviceConnected = true;
+
+  SERIAL_DBG("Done.\n")
+} 
+
+void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& temp_C, const float& turb) {
+
+  String timeVal_str = "", date_str = "";
+  str = "" ;
+  timeValToStr(timeVal, timeVal_str);
+  dateToStr(gnssDate, date_str);
+  
+  str += '{';
+  // Inserting satellite id
+  str += "\"id\":\"" + satelliteID + "\",";
+  // Inserting date and time
+  str += "\"time\":";
+  if (timeVal != NO_GNSS_TIME)
+    str += "\"" + date_str.replace('_', '/') + " " + timeVal_str + "\"";
+  else
+    str += "null";
+  str += ',';
+  // Inserting longitude
+  str += "\"lon\":";
+  if (lng_deg != NO_GNSS_LOCATION)
+    str += String(lng_deg, LOC_DECIMALS);
+  else
+    str += "null";
+  str += ',';
+  // Inserting latitude
+  str += "\"lat\":";
+  if (lat_deg != NO_GNSS_LOCATION)
+    str += String(lat_deg, LOC_DECIMALS);
+  else
+    str += "null";
+  str += ',';
+  // Inserting temperature
+  str += "\"temp\":";
+  if (temp_C != DEVICE_DISCONNECTED_C)
+    str += String(temp_C, TEMP_DECIMALS);
+  else
+    str += "null";
+  str += ',';
+  // Inserting turbidity
+  str += "\"turb\":";
+  if (turb > MIN_TURBIDITY)
+    str += String(turb, TURB_DECIMALS);
+  else
+    str += "null";
+  str += '}';
+}
+
+void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& temp_C, const float& turb)  {
+
+  String str = "";
+  json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, temp_C, turb);
+  BLUETOOTH_SERIAL.println(str);
+  
+}
+
+void readBluetoothOrders()  {
+
+  char c = BLUETOOTH_SERIAL.read();
+  if (c != (char) -1)
+    Serial.print(c);
 }
 
 /* ##############   GNSS    ################ */
@@ -419,13 +631,14 @@ void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected) {
   while (!GNSS_SERIAL.available())  {
     if (millis() - startTime > 7000)
       waitForReboot("No signal, check GNSS receiver wiring.");
-    SERIAL_DBG("Done.\n")
   }
+  SERIAL_DBG("Done.\n");
   // Acquiring GNSS date and time
   SERIAL_DBG("Acquiring GNSS date and time... ")
   while (gnss.date.value() == 0 && gnss.time.value() == 0)
     gnssRefresh();
-  SERIAL_DBG("Done.\n")
+
+  SERIAL_DBG("Done.\n");
     
   deviceConnected = true;
   SERIAL_DBG("Done.\n")
@@ -468,7 +681,7 @@ void gnssRefresh() {
    @params:
       deviceConnected: Boolean to store device connection state.
 */
-void setupSDCard( volatile bool& deviceConnected)  {
+void setupSDCard(volatile bool& deviceConnected)  {
 
   SERIAL_DBG("SD card setup... ")
   // Try to open SD card
@@ -584,7 +797,7 @@ bool newLogFile(File& file, const String& dirName, String& fileName)  {
     return false;
   }
   file.print("Date:,"); file.println(dirName);
-  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Altitude (cm),Fix Mode,PDOP,Distance (mm),External temperature (°C)");
+  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Temperature (°C), Turbidity (NTU)");
   return true;
 }
 
@@ -654,7 +867,7 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
  *    dist_mm : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C)  {
+void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& temp_C, const float& turb)  {
 
   SERIAL_DBG("\n---> csv_logStr()\n") 
   
@@ -682,33 +895,19 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += "Nan";
   }
   log_str += ',';
-  // Inserting GNSS altitude into log string
-  if (elv_m != NO_GNSS_ALTITUDE)
-    log_str += String (elv_m, ELV_DECIMALS);
-  else  {
-    SERIAL_DBG("No GNSS location response, check wiring...\n")
-    log_str += "Nan";
-  }
-  log_str += ',';
-  // Inserting GNSS fix mode value
-  log_str += String(fixMode);
-  log_str += ',';
-  // Inserting GNSS PDOP value
-  log_str += String(pdop);
-  log_str += ',';
-  // Inserting distance into log string
-  if (dist_mm != URM14_DISCONNECTED)
-    log_str += String(dist_mm/10.0, DIST_DECIMALS);
-  else  {
-    SERIAL_DBG("No URM14 response, check wiring...\n")
-    log_str += "Nan";
-  }
-  log_str += ',';
   // Inserting external temperature into log string
-  if (extTemp_C != DEVICE_DISCONNECTED_C)
-    log_str += String(extTemp_C, TEMP_DECIMALS);
+  if (temp_C != DEVICE_DISCONNECTED_C)
+    log_str += String(temp_C, TEMP_DECIMALS);
   else  {
-    SERIAL_DBG("No DS18B20 response, check wiring...\n")
+    SERIAL_DBG("No temperature response, check wiring...\n")
+    log_str += "Nan";
+  }
+  log_str += ',';
+  // Inserting turbidity into log string
+  if (turb > MIN_TURBIDITY)
+    log_str += String(turb, TURB_DECIMALS);
+  else  {
+    SERIAL_DBG("No turbidity response, check wiring...\n")
     log_str += "Nan";
   }
 }
@@ -721,14 +920,12 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
  *    timeVal : Time value to log.
  *    lng_deg : Longitude in ° to log.
  *    lat_deg : Latitude in ° to log.
- *    elv_m : Longitude in cm to log.
- *    dist_mm : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C) {
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, float& temp_C, const float& turb) {
 
   String log_str;
-  csv_logStr(log_str, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);
+  csv_logStr(log_str, timeVal, lng_deg, lat_deg, temp_C, turb);
   // Check if log file is open
   if (!file)
     return false;
@@ -765,48 +962,6 @@ void dumpFileToSerial(File& file) {
     SERIAL_DBG("---> dumpFileToSerial() : No file open...")  
 }
 
-/* ##############   URM14  ################ */
-/*
- * @brief: 
- *    Sets up the URM14 ultrasoic sensor
- * @params:
- *    sensor: ModbusMaster instance that represents the senter on the bus.
- *    sensorID: Sensor id on the bus.
- *    sensorBaudrate: Baudrate to communication with the sensor.
- *    preTransCbk: Callback called before modbus tansmission to set RS485 interface in transmission mode.
- *    postTransCbk: Callback called after modbus tansmission to set RS485 interface back in reception mode.
- *    deviceConnected: Bool to store if URM14 is connected or not.
- */
-void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sensorBaudrate, void (*preTransCbk)(), void (*postTransCbk)(),  volatile bool& deviceConnected)  {
-
-  // URM14 sensor binary config
-  uint16_t fileDumpCountdown = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENABLE_BIT | TEMP_CPT_SEL_BIT;
-  // Modbus communication errors
-  uint8_t mbError;
-
-  // RS485 DE pin setup
-  pinMode(DE_PIN, OUTPUT);
-  digitalWrite(DE_PIN, LOW);
-
-  // Set Modbus communication
-  URM14_SERIAL.begin(sensorBaudrate);
-  // Modbus slave id 0x11 on serial port URM14_SERIAL
-  sensor.begin(sensorID, URM14_SERIAL);
-  // Set pre/post transmision callbacks in ModbusMaster object
-  sensor.preTransmission(preTransCbk);
-  sensor.postTransmission(postTransCbk);
-
-  // Writing config
-  mbError = sensor.writeSingleRegister(URM14_CONTROL_REG, fileDumpCountdown); //Writes the setting value to the control register
-  if (mbError != ModbusMaster::ku8MBSuccess)
-    waitForReboot("Modbus : Config could not be written to UMR14 sensor, check wiring.");
-  else
-    SERIAL_DBG("Modbus : UMR14 sensor found and configured!\n")
-    
-  deviceConnected = true;
-  SERIAL_DBG("Done.\n")
-}
-
 /* ##############   DS18B20   ################ */
 /*
  * @brief: 
@@ -826,8 +981,6 @@ void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnec
   if (sensorNetwork.getTempC(ds18b20_addr) == DEVICE_DISCONNECTED_C)  {
     SERIAL_DBG("OneWire : No DS18B20 connected...\n")
     SERIAL_DBG("No external temperature compensation possible.\n")
-    if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)
-      waitForReboot();
   }
   else
     SERIAL_DBG("OneWire : DS18B20 found!\n")

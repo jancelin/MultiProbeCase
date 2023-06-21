@@ -53,7 +53,7 @@
 // Sensor acquisition interval
 // Check sensor reading interrupt duration before setting the value
 // 71s maximum
-#define READ_INTERVAL 2000/*ms*/ * 1000/*µs/ms*/
+#define READ_INTERVAL 1000/*ms*/ * 1000/*µs/ms*/
 // GNSS refresh interval
 // Minimal refresh rate to get 20ms GNSS time resolution
 #define GNSS_REFRESH_INTERVAL 1/*ms*/ * 1000/*ms/µs*/
@@ -80,19 +80,9 @@
 #define BLUETOOTH_UART_CONF "115200,1,0"
 #define BLUETOOTH_NRG_MODE  ""
 
-/************** DS18B20 SENSOR *****************/
-// Sensor ID
-#define DS18B20_ID   0
-
-/************** GRAVITY TURBIDITY SENSOR *****************/
-// Sensor analog pin (voltage divder)
-#define TURBIDITY_PIN  33
-// Turbidity minimun value
-#define MIN_TURBIDITY 0
-
 /************** GNSS module *****************/
 // GNSS commuiation baudrate
-#define GNSS_BAUDRATE 115200//bauds
+#define GNSS_BAUDRATE 9600//bauds
 // Time value if GNSS module disconnected
 #define NO_GNSS_TIME      24606099 // HH:MM:SS.CC
 // Longitude/latitude value if GNSS module disconnected
@@ -100,7 +90,7 @@
 // Altitude value if GNSS module disconnected
 #define NO_GNSS_ALTITUDE  INT32_MAX
 // NMEA messages inteval
-#define GNSS_NMEA_INTERVAL  200//ms
+#define GNSS_NMEA_INTERVAL  1000//ms
 
 /************** DATA NUMBER OF DECIMALS *****************/
 // Location
@@ -120,6 +110,7 @@ enum Devices : uint8_t  {
 
   SD_CARD = 0,
   DS18B20,
+  TURBIDITY,
   GNSS_MODULE,
   BLUETOOTH
 };
@@ -145,10 +136,7 @@ enum Devices : uint8_t  {
 #include <TinyGPSPlus.h>
 #include <TimeLib.h>
 #include <SD.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
 #include <Metro.h>
-#include "Gravity_turbidity.h"
 
 /* ###########################
  * #   FUNCTION PROTOTYPES   #
@@ -160,8 +148,6 @@ void setupSDCard(volatile bool& deviceConnected);
 void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gnss, Metro& logSegCountdown, volatile bool& deviceConnected);
 bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& temp_C, const float& turb);
 void dumpFileToSerial(File& file);
-// OneWire communication with DS18B20
-void setupDS18B20(DallasTemperature& sensorNetwork, volatile bool& deviceConnected);
 // GNSS setup
 void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected);
 void gnssRefresh();
@@ -174,7 +160,14 @@ void readSensors();
 // Digital IO update interrupt
 void handleDigitalIO();
 // Error handling
-void waitForReboot(const String& msg = "");
+void waitForReboot(const String& msg);
+
+/* ########################
+ * #    SENSOR MODULES    #
+ * ########################
+ */
+#include "DS18B20_temperature.h"
+#include "Gravity_turbidity.h"
 
 /* ##################
  * #    PROGRAM     #
@@ -182,7 +175,7 @@ void waitForReboot(const String& msg = "");
  */
 /************** GLOBALS *****************/
 // Array to store devices connection state
-volatile bool connectedDevices[4] = {false, false, false, false};
+volatile bool connectedDevices[5] = {false, false, false, false, false};
 
 // LOGGING
 // Log file
@@ -191,14 +184,6 @@ String logFileName = "";
 File logFile;
 // Log state (enabled/disabled)
 volatile bool enLog = false;
-
-// DS18B20
-// OneWire bus
-OneWire oneWire(ONE_WIRE_BUS);
-// Dallas sensor bus
-DallasTemperature sensors(&oneWire);
-// DS18B20 address
-byte ds18b20_addr[8];
 
 // GNSS MODULE
 // TinyGPSPlus objects to parse NMEA and store location and time
@@ -247,9 +232,13 @@ void setup() {
   SERIAL_DBG("## SD CARD\n")
   setupSDCard(connectedDevices[SD_CARD]);
   SERIAL_DBG('\n')
-  // Setting up DS18B20
-  SERIAL_DBG("## DS18B20\n")
-  setupDS18B20(sensors, connectedDevices[DS18B20]);
+  // Setting up temperature sensor
+  SERIAL_DBG("## Temperature sensor\n")
+  setupTempSensor(connectedDevices[DS18B20]);
+  SERIAL_DBG('\n')
+  // Setting up turbidity sensor
+  SERIAL_DBG("## Turbidity sensor\n")
+  setupTurbSensor(connectedDevices[TURBIDITY]);
   SERIAL_DBG('\n')
   // GNSS set up
   SERIAL_DBG("## GNSS\n")
@@ -308,8 +297,14 @@ void loop() {
   SERIAL_DBG("DS18B20 :\t")
   SERIAL_DBG(connectedDevices[DS18B20])
   SERIAL_DBG('\n')
+  SERIAL_DBG("TURBIDITY :\t")
+  SERIAL_DBG(connectedDevices[TURBIDITY])
+  SERIAL_DBG('\n')
   SERIAL_DBG("GNSS MODULE :\t")
   SERIAL_DBG(connectedDevices[GNSS_MODULE])
+  SERIAL_DBG('\n')
+  SERIAL_DBG("BLUETOOTH :\t")
+  SERIAL_DBG(connectedDevices[BLUETOOTH])
   SERIAL_DBG("\n\n")
 
   // If logging enabled
@@ -341,7 +336,7 @@ void loop() {
       // -----------------
       if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, temp_C, turb) )
         SERIAL_DBG("Logging failed...\n")
-      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, temp_C, turb);
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, temp_C, turb, connectedDevices[BLUETOOTH]);
     }    
     // Dumping log file to Serial
     if (FILE_DUMP && fileDumpCountdown.check())
@@ -362,7 +357,7 @@ void loop() {
         SERIAL_DBG("Logging failed...\n")
       else
         logFile.close();
-      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, temp_C, turb);
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, temp_C, turb, connectedDevices[BLUETOOTH]);
     }
     else
       SERIAL_DBG("Logging disabled...\n")
@@ -388,9 +383,6 @@ void readSensors()  {
   // Interrupt execution time
   //long t = millis();
   
-  // Store Modbus communication errors
-  uint8_t mbError;
-  
   // If logging enabled and logFile open
   if (enLog && logFile) {
     // If buffer not full
@@ -410,20 +402,10 @@ void readSensors()  {
         lat_buf.push(NO_GNSS_LOCATION);
       }
 
-// DS18B20 convertion takes time (depends on sensor resolution config)
-      // Read DS18B20 temperature
-      sensors.requestTemperatures();
-      temp_buf.push(sensors.getTempC(ds18b20_addr));
-      // Check for OneWire errors
-      if (temp_buf[temp_buf.size() -1] == DEVICE_DISCONNECTED_C) {
-        SERIAL_DBG("OneWire : DS18B20 disconnected...")
-        connectedDevices[DS18B20] = false;
-      }
-      else
-        connectedDevices[DS18B20] = true;
-// --------------
+      // Acquire temperature
+      temp_buf.push(readTemperature(connectedDevices[DS18B20]));
       // Acquire turbidity
-      turb_buf.push(readTurbidity(TURBIDITY_PIN));
+      turb_buf.push(readTurbidity(TURBIDITY_PIN, connectedDevices[TURBIDITY]));
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -437,8 +419,12 @@ void readSensors()  {
 
 bool sendATCommand(const String& cmd, String* pAns = NULL) {
 
-  char c;
+  char c = '\0';
   String tmp;
+
+  // Enable bluetooth AT mode
+  digitalWrite(BLUETOOTH_KEY, HIGH);
+  delay(50);
   // Writing command to module
   BLUETOOTH_SERIAL.println(cmd);
   // Waitng for data
@@ -448,6 +434,9 @@ bool sendATCommand(const String& cmd, String* pAns = NULL) {
     c = BLUETOOTH_SERIAL.read();
     tmp += c;
   }
+  // Disable bluetooth AT mode
+  digitalWrite(BLUETOOTH_KEY, LOW);
+  
   // Clearing remaining OK answer
   BLUETOOTH_SERIAL.clear();
   // Checking fo errors
@@ -458,24 +447,24 @@ bool sendATCommand(const String& cmd, String* pAns = NULL) {
   }
   // Affecting tmp to answer string if provided
   if (pAns)
-    *pAns = tmp;
+    *pAns = tmp; 
   return true;
 }
 
 bool readBTModuleConfig(String& btName, String& macAddr, String& UARTConf, String& nrgMode) {
 
   // Reading module Bluetooth name
-  if (!sendATCommand("AT+NAME", &btName))
+  if (!sendATCommand("AT+NAME?", &btName))
     return false;
   btName.remove(0,6); // Remove AT prefix
   btName.remove(btName.length()-2,2); // Remove "\r\n" final chars
   // Reading module MAC address
-  if (!sendATCommand("AT+ADDR", &macAddr))
+  if (!sendATCommand("AT+ADDR?", &macAddr))
     return false;
   macAddr.remove(0,6);
   macAddr.remove(macAddr.length()-2,2);
   // Reading module UART conf
-  if (!sendATCommand("AT+UART", &UARTConf))
+  if (!sendATCommand("AT+UART?", &UARTConf))
     return false;
   UARTConf.remove(0,6);
   UARTConf.remove(UARTConf.length()-2,2);
@@ -593,12 +582,13 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
   str += '}';
 }
 
-void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& temp_C, const float& turb)  {
+void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& temp_C, const float& turb, volatile bool& deviceConnected)  {
 
   String str = "";
+
   json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, temp_C, turb);
   BLUETOOTH_SERIAL.println(str);
-  
+  deviceConnected = true;
 }
 
 void readBluetoothOrders()  {
@@ -637,8 +627,6 @@ void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected) {
   SERIAL_DBG("Acquiring GNSS date and time... ")
   while (gnss.date.value() == 0 && gnss.time.value() == 0)
     gnssRefresh();
-
-  SERIAL_DBG("Done.\n");
     
   deviceConnected = true;
   SERIAL_DBG("Done.\n")
@@ -962,33 +950,6 @@ void dumpFileToSerial(File& file) {
     SERIAL_DBG("---> dumpFileToSerial() : No file open...")  
 }
 
-/* ##############   DS18B20   ################ */
-/*
- * @brief: 
- *    Sets up the DS18B20 temperature sensor.
- * @params:
- *    sensorNetwork: DallasTemperature instance that represents a DallasTemperature sensor network.
- *    deviceConnected: Bool to store if DS18B20 is connected or not.
- */
-void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnected) {
-
-  sensorNetwork.begin();
-  // Setting resolution for temperature (the lower, the quicker the sensor responds)
-  sensorNetwork.setResolution(11);
-  // Store DS18B20 OneWire adress for fast data acquitsition
-  sensorNetwork.getAddress(ds18b20_addr, DS18B20_ID);
-  // Check for OneWire errors
-  if (sensorNetwork.getTempC(ds18b20_addr) == DEVICE_DISCONNECTED_C)  {
-    SERIAL_DBG("OneWire : No DS18B20 connected...\n")
-    SERIAL_DBG("No external temperature compensation possible.\n")
-  }
-  else
-    SERIAL_DBG("OneWire : DS18B20 found!\n")
-    
-  deviceConnected = true;
-  SERIAL_DBG("Done.\n")
-}
-
 /* ##############   DIGITAL IO  ################ */
 /*
  * @brief: 
@@ -1001,7 +962,7 @@ void handleDigitalIO()  {
 
   // Check for disconnected devices
   bool deviceDisconnected = false;
-  for (uint8_t i = SD_CARD; i <= GNSS_MODULE; i++) {
+  for (uint8_t i = SD_CARD; i <= BLUETOOTH; i++) {
     deviceDisconnected |= !connectedDevices[i];
   }
   // Logging button

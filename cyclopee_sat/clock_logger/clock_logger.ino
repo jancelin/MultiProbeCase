@@ -40,11 +40,11 @@
 
 /* Current date & time */
 #define YEAR      2023
-#define MONTH     04
+#define MONTH     21
 #define DAY       06
-#define HOURS     23
-#define MINUTES   59
-#define SECONDS   45
+#define HOURS     15
+#define MINUTES   45
+#define SECONDS   00
 
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
@@ -60,7 +60,7 @@
 // Logging LED
 #define LOG_LED       13
 // Disable logging button
-#define BUTTON_PIN    16
+#define BUTTON_PIN    39
 
 /************** DATA NUMBER OF DECIMALS *****************/
 // Temperature
@@ -84,7 +84,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -125,7 +125,7 @@ void handleDigitalIO();
  * ######################
  */
 #include "DS18B20_temperature.h"
-#include "URM14_distance.h"
+#include "JSN_SR04T_distance.h"
 
 /* ##################
  * #    PROGRAM     #
@@ -159,7 +159,7 @@ Metro fileDumpCountdown = Metro(1000);
 
 /*
  *  @brief:
- *    Sets up SD card, URM14 and temperature sensors.
+ *    Sets up SD card, distance and temperature sensors.
  */
 void setup() {
 
@@ -181,7 +181,7 @@ void setup() {
   // Setting up temperature sensor
   setupTempSensor(connectedDevices[TEMPERATURE]);
   SERIAL_DBG('\n')
-  // Setting up URM14
+  // Setting up distance
   setupDistSensor(connectedDevices[DISTANCE]);
   SERIAL_DBG('\n')
   // Setting time
@@ -234,7 +234,7 @@ void loop() {
   SERIAL_DBG("TEMPERATURE :\t")
   SERIAL_DBG(connectedDevices[TEMPERATURE])
   SERIAL_DBG('\n')
-  SERIAL_DBG("URM14 :\t\t")
+  SERIAL_DBG("DISTANCE :\t")
   SERIAL_DBG(connectedDevices[DISTANCE])
   SERIAL_DBG("\n\n")
 
@@ -579,8 +579,6 @@ void dumpFileToSerial(File& file) {
   else
     SERIAL_DBG("---> dumpFileToSerial() : No file open...")  
 }
-
-/* ##############   URM14  ################ */
 
 
 /* ##############   DIGITAL IO  ################ */

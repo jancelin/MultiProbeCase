@@ -27,8 +27,10 @@
 // Voltage devider factor used to convert voltage measured by Teensy to actual sensor output voltage.
 // F = R2 / (R1 + R2)
 #define VOLT_DIV_FACTOR	2.87/*kOhms*/ / (2.87/*kOhms*/ + 1/*kOhms*/)
-// Sensor minimum turbidity value
-#define TURB_NO_VALUE	0.0/*NTU*/
+// Minimum turbidity value
+#define MIN_TURB_VALUE  0.0/*NTU*/
+// Turbidiy value if sensor is out of range or disconnected
+#define TURB_NO_VALUE	-1
 
 /*
  *********************
@@ -70,6 +72,7 @@ void setupTurbSensor(volatile bool& deviceConnected)	{
 	if (!deviceConnected)
 		waitForReboot("No Gravity turbidity sensor detected...");
 
+    deviceConnected = true;
 }
 
 /*
@@ -84,18 +87,19 @@ float readTurbidity(const unsigned int& analog_pin, volatile bool& deviceConnect
 
 	// Get measured voltage on voltage divider
 	float analogVoltage = analogRead(analog_pin) * ADC_QUANTUM;
-	
+    
 	// Compute the actual sensor voltage
 	float sensorVoltage = analogVoltage / (VOLT_DIV_FACTOR);
 	
 	// Compute turbidity value with turbidity/voltage sensor curve
 	float turb = -1120.4*sensorVoltage*sensorVoltage + 5742.3*sensorVoltage - 4352.9;
-	
+
 	// Checking if device still connected
-	if (turb < TURB_NO_VALUE)
+	if (turb < MIN_TURB_VALUE) {
+        turb = TURB_NO_VALUE;
 		deviceConnected = false;
+    }
 	else
 		deviceConnected = true;
-	
 	return turb;
 }

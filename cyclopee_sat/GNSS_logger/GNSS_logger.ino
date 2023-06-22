@@ -368,9 +368,6 @@ void readSensors()  {
   // Interrupt execution time
   //long t = millis();
   
-  // Store Modbus communication errors
-  uint8_t mbError;
-  
   // If logging enabled and logFile open
   if (enLog && logFile) {
     // If buffer not full

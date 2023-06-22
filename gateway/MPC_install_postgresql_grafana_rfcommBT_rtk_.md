@@ -80,6 +80,7 @@ CREATE INDEX idx_sensor ON cyclopee.sensor (((data->>'id')::text), time DESC);
 ```\q```
 
 ## GRAFANA
+
 ```
 sudo apt-get install -y apt-transport-https
 sudo apt-get install -y software-properties-common wget
@@ -91,11 +92,15 @@ sudo /bin/systemctl daemon-reload
 sudo /bin/systemctl enable grafana-server
 sudo /bin/systemctl start grafana-server
 ```
+
 ## RFCOMM
+
 ```
 sudo rfcomm connect 0 98:D3:B1:FD:C3:2C
 ```
+
 ## RTK
+
 ```
 sudo apt-get install -y build-essential
 git clone https://github.com/rtklibexplorer/RTKLIB.git
@@ -103,7 +108,9 @@ cd RTKLIB/
 sudo make --directory=RTKLIB/app/consapp/str2str/gcc
 sudo make --directory=RTKLIB/app/consapp/str2str/gcc install
 ```
+
 * RUN
+
 ```
 str2str -in ntrip://:@caster.centipede.fr:80/LIENSS -out serial://rfcomm0:115200:8:N:1:off
 ```

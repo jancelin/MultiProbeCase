@@ -400,9 +400,6 @@ void readSensors()  {
   // Interrupt execution time
   //long t = millis();
   
-  // Store Modbus communication errors
-  uint8_t mbError;
-  
   // If logging enabled and logFile open
   if (enLog && logFile) {
     // If buffer not full
@@ -447,7 +444,7 @@ void readSensors()  {
 
 bool sendATCommand(const String& cmd, String* pAns = NULL) {
 
-  char c;
+  char c = '\0';
   String tmp;
   // Writing command to module
   BLUETOOTH_SERIAL.println(cmd);

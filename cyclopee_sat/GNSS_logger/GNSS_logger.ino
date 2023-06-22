@@ -47,6 +47,7 @@
  */
 /************** SERIAL PORTS *****************/ 
 #define GNSS_SERIAL Serial2
+#define BLUETOOTH_SERIAL  Serial3
  
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
@@ -176,7 +177,7 @@ void waitForReboot(const String& msg);
  * ######################
  */
 #include "DS18B20_temperature.h"
-#include "JSN_SR04T_distance.h"
+#include "URM14_distance.h"
 
 /* ##################
  * #    PROGRAM     #
@@ -602,14 +603,14 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
   str += "\"pdop\":" + String(pdop) + ',';
   // Inserting distance
   str += "\"dist\":";
-  if (dist_mm != URM14_DISCONNECTED)
+  if (dist_mm != DIST_NO_VALUE)
     str += String(dist_mm/10.0, DIST_DECIMALS);
   else
     str += "null";
   str += ',';
   // Inserting temperature
   str += "\"temp\":";
-  if (temp_C != DEVICE_DISCONNECTED_C)
+  if (temp_C != TEMP_NO_VALUE)
     str += String(temp_C, TEMP_DECIMALS);
   else
     str += "null";

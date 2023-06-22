@@ -7,6 +7,22 @@
  *    temperature acquisition.
  */
 /*
+ *****************
+ *   LIBRARIES   *
+ *****************
+ */
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+/*
+ **************************
+ *   GLOBAL DEFINITIONS   *
+ **************************
+ */
+// Temperature value read if sensor is disconnected or out of range 
+#define TEMP_NO_VALUE DEVICE_DISCONNECTED_C
+
+/*
  *********************
  *   SENSOR CONFIG   *
  *********************
@@ -15,13 +31,8 @@
 #define DS18B20_ID    0
 // Sensor resolution
 #define DS18B20_RES   11/*bits*/
-
-/* *****************
- * *   LIBRARIES   *
- * *****************
- */
-#include <OneWire.h>
-#include <DallasTemperature.h>
+// Teensy temperature data wire pin
+#define TEMPERATURE_PIN  14
 
 /*
  ***********************
@@ -29,7 +40,7 @@
  ***********************
  */
 // OneWire bus
-OneWire oneWire(ONE_WIRE_BUS);
+OneWire oneWire(TEMPERATURE_PIN);
 // Dallas sensor bus
 DallasTemperature sensors(&oneWire);
 // DS18B20 address

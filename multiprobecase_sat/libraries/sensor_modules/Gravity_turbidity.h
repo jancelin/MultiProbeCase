@@ -28,7 +28,7 @@
 // F = R2 / (R1 + R2)
 #define VOLT_DIV_FACTOR	2.87/*kOhms*/ / (2.87/*kOhms*/ + 1/*kOhms*/)
 // Sensor minimum turbidity value
-#define MIN_TURBIDITY	0.0/*NTU*/
+#define TURB_NO_VALUE	0.0/*NTU*/
 
 /*
  *********************
@@ -92,7 +92,7 @@ float readTurbidity(const unsigned int& analog_pin, volatile bool& deviceConnect
 	float turb = -1120.4*sensorVoltage*sensorVoltage + 5742.3*sensorVoltage - 4352.9;
 	
 	// Checking if device still connected
-	if (turb < MIN_TURBIDITY)
+	if (turb < TURB_NO_VALUE)
 		deviceConnected = false;
 	else
 		deviceConnected = true;

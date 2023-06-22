@@ -28,7 +28,7 @@
 // F = R2 / (R1 + R2)
 #define VOLT_DIV_FACTOR	2.87/*kOhms*/ / (2.87/*kOhms*/ + 1/*kOhms*/)
 // Minimum turbidity value
-#define MIN_TURB_VALUE  0.0/*NTU*/
+#define MIN_TURB_VOLT  2.5/*V*/
 // Turbidiy value if sensor is out of range or disconnected
 #define TURB_NO_VALUE	-1
 
@@ -48,12 +48,20 @@
 // None
 
 /*
+ ************************
+ *   STATIC VARIABLES   *
+ ************************
+ */
+static float sensorVoltage = 0.0/*V*/;
+
+
+/*
  ***************************
  *   FUNCTION PROTOTYPES   *
  ***************************
  */
 void setupTurbSensor(volatile bool& deviceConnected);
-float readTurbidity(const unsigned int& analog_pin, volatile bool& deviceConnected);
+float readRawTurbidity(volatile bool& deviceConnected);
 
 /*
  ****************************
@@ -68,7 +76,7 @@ float readTurbidity(const unsigned int& analog_pin, volatile bool& deviceConnect
  */
 void setupTurbSensor(volatile bool& deviceConnected)	{
 
-	readTurbidity(TURBIDITY_PIN, deviceConnected);
+	readRawTurbidity(deviceConnected);
 	if (!deviceConnected)
 		waitForReboot("No Gravity turbidity sensor detected...");
 
@@ -77,29 +85,40 @@ void setupTurbSensor(volatile bool& deviceConnected)	{
 
 /*
  * @brief: 
- *		returns computed turbidity from measured sensor output voltage.
+ *		returns Gravity turbidity output voltage.
  * @params:
  *		deviceConnected: bool to store if sensor is connected or not.
  * @retrun:
- *		turb: computed turbidity .
+ *		turb: computed turbidity.
  */
-float readTurbidity(const unsigned int& analog_pin, volatile bool& deviceConnected)	{
+float readRawTurbidity(volatile bool& deviceConnected)	{
 
 	// Get measured voltage on voltage divider
-	float analogVoltage = analogRead(analog_pin) * ADC_QUANTUM;
+	float analogVoltage = analogRead(TURBIDITY_PIN) * ADC_QUANTUM;
     
 	// Compute the actual sensor voltage
-	float sensorVoltage = analogVoltage / (VOLT_DIV_FACTOR);
+	sensorVoltage = analogVoltage / (VOLT_DIV_FACTOR);
 	
-	// Compute turbidity value with turbidity/voltage sensor curve
-	float turb = (-1120.4*(sensorVoltage*sensorVoltage)) + (5742.3*sensorVoltage) - 4352.9;
 
 	// Checking if device still connected
-	if (turb < MIN_TURB_VALUE) {
-        turb = TURB_NO_VALUE;
+	if (sensorVoltage < MIN_TURB_VOLT)
 		deviceConnected = false;
-    }
 	else
 		deviceConnected = true;
-	return turb;
+	
+    return sensorVoltage;
+}
+
+/*
+ * @brief: 
+ *      returns turbidity computed using sensorVoltage sensor module static variable.
+ * @params:
+ *      deviceConnected: bool to store if sensor is connected or not.
+ * @retrun:
+ *      computed turbidity.
+ */
+float computeTurbidity()    {
+
+	// Compute turbidity value with turbidity/voltage sensor curve
+	return (-1120.4*(sensorVoltage*sensorVoltage)) + (5742.3*sensorVoltage) - 4352.9;
 }

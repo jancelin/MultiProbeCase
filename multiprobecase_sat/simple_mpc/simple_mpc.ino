@@ -150,14 +150,14 @@ enum Devices : uint8_t  {
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
 void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gnss, Metro& logSegCountdown, volatile bool& deviceConnected);
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb, const float& temp_C);
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_ntu, const float& temp_C);
 void dumpFileToSerial(File& file);
 // GNSS setup
 void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected);
 void gnssRefresh();
 // Bluetooth communication
 void setupBluetooth(String& satelliteID, volatile bool& deviceConnected);
-void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb, const float& temp_C);
+void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_ntu, const float& temp_C);
 void readBluetoothOrders();
 // Sensor reading interrupt
 void readSensors();
@@ -241,7 +241,7 @@ void setup() {
   SERIAL_DBG("## TEMPERATURE SENSOR\n")
   setupTempSensor(connectedDevices[TEMPERATURE]);
   SERIAL_DBG('\n')
-  // Setting up turbidity sensor
+  // Setting up turb_ntuidity sensor
   SERIAL_DBG("## TURBIDITY SENSOR\n")
   setupTurbSensor(connectedDevices[TURBIDITY]);
   SERIAL_DBG('\n')
@@ -268,13 +268,13 @@ void setup() {
 RingBuf <uint32_t, MAX_BUFFER_SIZE> time_buf;
 RingBuf <double, MAX_BUFFER_SIZE> lng_buf, lat_buf, elv_buf;
 RingBuf <const char*, MAX_BUFFER_SIZE> fixMode_buf, pdop_buf;
-RingBuf <float, MAX_BUFFER_SIZE> temp_buf, turb_buf;
+RingBuf <float, MAX_BUFFER_SIZE> temp_buf, turbV_buf, turbNTU_buf;
 
 // Variables to store buffer readings
 uint32_t time_ms;
 double lng_deg, lat_deg, elv_m;
 const char *fixMode, *pdop;
-float temp_C, turb;
+float temp_C, turb_V, turb_ntu;
 
 /*
  * @brief:
@@ -305,7 +305,7 @@ void loop() {
   SERIAL_DBG("TEMPERATURE :\t")
   SERIAL_DBG(connectedDevices[TEMPERATURE])
   SERIAL_DBG('\n')
-  SERIAL_DBG("TURBIDITY :\t")
+  SERIAL_DBG("turb_ntuIDITY :\t")
   SERIAL_DBG(connectedDevices[TURBIDITY])
   SERIAL_DBG('\n')
   SERIAL_DBG("GNSS MODULE :\t")
@@ -340,11 +340,12 @@ void loop() {
       fixMode_buf.pop(fixMode);
       pdop_buf.pop(pdop);
       temp_buf.pop(temp_C);
-      turb_buf.pop(turb);
+      turbV_buf.pop(turb_V);
+      turbNTU_buf.pop(turb_ntu);
       // -----------------
-      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, turb, temp_C) )
+      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, turb_V, turb_ntu, temp_C) )
         SERIAL_DBG("Logging failed...\n")
-      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, turb, temp_C);
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, turb_V, turb_ntu, temp_C);
     }    
     // Dumping log file to Serial
     if (FILE_DUMP && fileDumpCountdown.check())
@@ -362,13 +363,14 @@ void loop() {
       fixMode_buf.pop(fixMode);
       pdop_buf.pop(pdop);
       temp_buf.pop(temp_C);
-      turb_buf.pop(turb);
+      turbV_buf.pop(turb_V);
+      turbNTU_buf.pop(turb_ntu);
       // ---------------------
-      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, turb, temp_C) )
+      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, turb_V, turb_ntu, temp_C) )
         SERIAL_DBG("Logging failed...\n")
       else
         logFile.close();
-      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, turb, temp_C);
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, turb_V, turb_ntu, temp_C);
     }
     else
       SERIAL_DBG("Logging disabled...\n")
@@ -415,8 +417,10 @@ void readSensors()  {
 
       // Acquire temperature
       temp_buf.push(readTemperature(connectedDevices[TEMPERATURE]));
-      // Acquire distance
-      turb_buf.push(readTurbidity(TURBIDITY_PIN, connectedDevices[TURBIDITY]));
+      // Acquire raw turb_ntuidity value
+      turbV_buf.push(readRawTurbidity(connectedDevices[TURBIDITY]));
+      // Compute turb_ntuidity
+      turbNTU_buf.push(computeTurbidity());
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -539,7 +543,7 @@ void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
   SERIAL_DBG("Done.\n")
 } 
 
-void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb, const float& temp_C) {
+void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_V, const float& turb_ntu, const float& temp_C) {
 
   String timeVal_str = "", date_str = "";
   str = "" ;
@@ -570,10 +574,17 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
   else
     str += "null";
   str += ',';
-  // Inserting distance
+  // Inserting raw turbidity
+  str += "\"raw_turb\":";
+  if (turb_V >= MIN_TURB_VOLT)
+    str += String(turb_V, TURB_DECIMALS);
+  else
+    str += "null";
+  str += ',';
+  // Inserting turbidity
   str += "\"turb\":";
-  if (turb != TURB_NO_VALUE)
-    str += String(turb, TURB_DECIMALS);
+  if (turb_ntu != TURB_NO_VALUE)
+    str += String(turb_ntu, TURB_DECIMALS);
   else
     str += "null";
   str += ',';
@@ -586,10 +597,10 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
   str += '}';
 }
 
-void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb, const float& temp_C)  {
+void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_V, const float& turb_ntu, const float& temp_C)  {
 
   String str = "";
-  json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, turb, temp_C);
+  json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, turb_V, turb_ntu, temp_C);
   BLUETOOTH_SERIAL.println(str);
   
 }
@@ -789,7 +800,7 @@ bool newLogFile(File& file, const String& dirName, String& fileName)  {
     return false;
   }
   file.print("Date:,"); file.println(dirName);
-  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Altitude (cm),Fix Mode,PDOP,Distance (mm),External temperature (°C)");
+  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Raw Turbidity (V),Turbidity (NTU), Temperature (°C)");
   return true;
 }
 
@@ -856,10 +867,10 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
  *    lng_deg : Longitude in ° to log.
  *    lat_deg : Latitude in ° to log.
  *    elv_m : Longitude in cm to log.
- *    turb : Distance in mm to log.
+ *    turb_ntu : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb, const float& temp_C)  {
+void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_V, const float& turb_ntu, const float& temp_C)  {
 
   SERIAL_DBG("\n---> csv_logStr()\n") 
   
@@ -887,13 +898,19 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += "Nan";
   }
   log_str += ',';
-  // Inserting distance into log string
-  if (turb != TURB_NO_VALUE)
-    log_str += String(turb, TURB_DECIMALS);
+  // Inserting raw turbidity into log string
+  if (turb_V >= MIN_TURB_VOLT)
+    log_str += String(turb_V, TURB_DECIMALS);
   else  {
-    SERIAL_DBG("No distance response, check wiring...\n")
+    SERIAL_DBG("No turbidity response, check wiring...\n")
     log_str += "Nan";
   }
+  log_str += ',';
+  // Inserting turbidity into log string
+  if (turb_ntu != TURB_NO_VALUE)
+    log_str += String(turb_ntu, TURB_DECIMALS);
+  else
+    log_str += "Nan";
   log_str += ',';
   // Inserting external temperature into log string
   if (temp_C != TEMP_NO_VALUE)
@@ -913,13 +930,13 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
  *    lng_deg : Longitude in ° to log.
  *    lat_deg : Latitude in ° to log.
  *    elv_m : Longitude in cm to log.
- *    turb : Distance in mm to log.
+ *    turb_ntu : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb, const float& temp_C) {
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_V, const float& turb_ntu, const float& temp_C) {
 
   String log_str;
-  csv_logStr(log_str, timeVal, lng_deg, lat_deg, turb, temp_C);
+  csv_logStr(log_str, timeVal, lng_deg, lat_deg, turb_V, turb_ntu, temp_C);
   // Check if log file is open
   if (!file)
     return false;

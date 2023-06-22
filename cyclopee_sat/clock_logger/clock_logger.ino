@@ -159,7 +159,7 @@ Metro fileDumpCountdown = Metro(1000);
 
 /*
  *  @brief:
- *    Sets up SD card, URM14 and temperature sensors.
+ *    Sets up SD card, distance and temperature sensors.
  */
 void setup() {
 
@@ -181,7 +181,7 @@ void setup() {
   // Setting up temperature sensor
   setupTempSensor(connectedDevices[TEMPERATURE]);
   SERIAL_DBG('\n')
-  // Setting up URM14
+  // Setting up distance sensor
   setupDistSensor(connectedDevices[DISTANCE]);
   SERIAL_DBG('\n')
   // Setting time
@@ -234,7 +234,7 @@ void loop() {
   SERIAL_DBG("TEMPERATURE :\t")
   SERIAL_DBG(connectedDevices[TEMPERATURE])
   SERIAL_DBG('\n')
-  SERIAL_DBG("URM14 :\t\t")
+  SERIAL_DBG("DISTANCE :\t\t")
   SERIAL_DBG(connectedDevices[DISTANCE])
   SERIAL_DBG("\n\n")
 
@@ -579,8 +579,6 @@ void dumpFileToSerial(File& file) {
   else
     SERIAL_DBG("---> dumpFileToSerial() : No file open...")  
 }
-
-/* ##############   URM14  ################ */
 
 
 /* ##############   DIGITAL IO  ################ */

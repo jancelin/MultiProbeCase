@@ -586,7 +586,7 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
   str += '}';
 }
 
-void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const uint16_t& turb, const float& temp_C)  {
+void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb, const float& temp_C)  {
 
   String str = "";
   json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, turb, temp_C);

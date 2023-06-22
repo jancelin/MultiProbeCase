@@ -92,7 +92,7 @@ float readTurbidity(const unsigned int& analog_pin, volatile bool& deviceConnect
 	float sensorVoltage = analogVoltage / (VOLT_DIV_FACTOR);
 	
 	// Compute turbidity value with turbidity/voltage sensor curve
-	float turb = -1120.4*sensorVoltage*sensorVoltage + 5742.3*sensorVoltage - 4352.9;
+	float turb = (-1120.4*(sensorVoltage*sensorVoltage)) + (5742.3*sensorVoltage) - 4352.9;
 
 	// Checking if device still connected
 	if (turb < MIN_TURB_VALUE) {

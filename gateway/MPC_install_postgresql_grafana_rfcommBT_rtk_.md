@@ -92,11 +92,27 @@ sudo /bin/systemctl daemon-reload
 sudo /bin/systemctl enable grafana-server
 sudo /bin/systemctl start grafana-server
 ```
+## BLUETOOTH
+
+```
+bluetoothctl
+```
+
+* list available devices: ```devices```
+* ```scan on``` get mac
+* ```pair 90:78:B2:C7:8F:A8```
+* ```trust  90:78:B2:C7:8F:A8```
 
 ## RFCOMM
 
+* cyclopée
+* oio
+* air
+
 ```
-sudo rfcomm connect 0 98:D3:B1:FD:C3:2C
+sudo rfcomm bind 0 98:D3:B1:FD:C3:2C
+sudo rfcomm bind 1 98:D3:61:FD:6C:E4
+sudo rfcomm bind 2 98:D3:71:FE:09:0F
 ```
 
 ## RTK

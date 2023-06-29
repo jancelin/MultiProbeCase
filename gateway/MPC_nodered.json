@@ -11,9 +11,9 @@
         "id": "4ddea886c3ba7790",
         "type": "serial in",
         "z": "cba0c3b5b8568f89",
-        "name": "0",
+        "name": "0 cyclopee",
         "serial": "e8ac9bf3d52fa0f7",
-        "x": 150,
+        "x": 160,
         "y": 140,
         "wires": [
             [
@@ -99,8 +99,7 @@
         "y": 200,
         "wires": [
             [
-                "7ce810bfc08b1da0",
-                "d87bfbd0caa05eed"
+                "7ce810bfc08b1da0"
             ]
         ]
     },
@@ -108,15 +107,259 @@
         "id": "4102408347e5479f",
         "type": "serial in",
         "z": "cba0c3b5b8568f89",
-        "name": "1",
+        "name": "1 OIO",
         "serial": "52f144220523204c",
         "x": 150,
-        "y": 280,
+        "y": 200,
         "wires": [
             [
                 "cfc78bba62d9f587"
             ]
         ]
+    },
+    {
+        "id": "96b61f7257b6057d",
+        "type": "serial in",
+        "z": "cba0c3b5b8568f89",
+        "name": "2 Air",
+        "serial": "2f1090c8e3632e25",
+        "x": 150,
+        "y": 260,
+        "wires": [
+            [
+                "cfc78bba62d9f587"
+            ]
+        ]
+    },
+    {
+        "id": "026060a705062ab8",
+        "type": "exec",
+        "z": "cba0c3b5b8568f89",
+        "command": "bluetoothctl devices",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 410,
+        "y": 720,
+        "wires": [
+            [
+                "f48261ea0a9d7828",
+                "a09d6db05305d87e"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "97856f888e807f22",
+        "type": "inject",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 720,
+        "wires": [
+            [
+                "026060a705062ab8"
+            ]
+        ]
+    },
+    {
+        "id": "f48261ea0a9d7828",
+        "type": "debug",
+        "z": "cba0c3b5b8568f89",
+        "name": "debug 6",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 780,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "ce6fd77a9b7f63e6",
+        "type": "exec",
+        "z": "cba0c3b5b8568f89",
+        "command": "bluetoothctl scan on",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 400,
+        "y": 640,
+        "wires": [
+            [
+                "f48261ea0a9d7828"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "e2dee656fc9800ea",
+        "type": "inject",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 640,
+        "wires": [
+            [
+                "ce6fd77a9b7f63e6"
+            ]
+        ]
+    },
+    {
+        "id": "a09d6db05305d87e",
+        "type": "csv",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "sep": " ",
+        "hdrin": "",
+        "hdrout": "all",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 690,
+        "y": 700,
+        "wires": [
+            [
+                "f48261ea0a9d7828",
+                "7e15fd5a996e822e",
+                "b29b23cfd8948a2f",
+                "41b964acf035c322"
+            ]
+        ]
+    },
+    {
+        "id": "1b9dc9ae960871d2",
+        "type": "ui_button",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "group": "7bfc332a5957ff21",
+        "order": 1,
+        "width": "3",
+        "height": "2",
+        "passthru": false,
+        "label": "button",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "date",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 150,
+        "y": 680,
+        "wires": [
+            [
+                "026060a705062ab8"
+            ]
+        ]
+    },
+    {
+        "id": "7e15fd5a996e822e",
+        "type": "ui_table",
+        "z": "cba0c3b5b8568f89",
+        "group": "7bfc332a5957ff21",
+        "name": "BT",
+        "order": 3,
+        "width": "16",
+        "height": "12",
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 910,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "b29b23cfd8948a2f",
+        "type": "ui_text",
+        "z": "cba0c3b5b8568f89",
+        "group": "7bfc332a5957ff21",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "text",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 990,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "41b964acf035c322",
+        "type": "ui_table",
+        "z": "cba0c3b5b8568f89",
+        "group": "7bfc332a5957ff21",
+        "name": "test",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 830,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "e6c023613f929b52",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "7bfc332a5957ff21",
+        "order": 2,
+        "width": 16,
+        "height": 1
     },
     {
         "id": "e8ac9bf3d52fa0f7",
@@ -180,5 +423,42 @@
         "out": "char",
         "addchar": "",
         "responsetimeout": "10000"
+    },
+    {
+        "id": "2f1090c8e3632e25",
+        "type": "serial-port",
+        "serialport": "/dev/rfcomm2",
+        "serialbaud": "115200",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "7bfc332a5957ff21",
+        "type": "ui_group",
+        "name": "MPC",
+        "tab": "9d82af62cc9f1d3f",
+        "order": 1,
+        "disp": true,
+        "width": 16,
+        "collapse": false
+    },
+    {
+        "id": "9d82af62cc9f1d3f",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
     }
 ]

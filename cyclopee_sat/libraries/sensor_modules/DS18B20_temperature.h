@@ -32,7 +32,7 @@
 // Sensor resolution
 #define DS18B20_RES   11/*bits*/
 // Teensy temperature data wire pin
-#define TEMPERATURE_PIN  14
+#define TEMPERATURE_PIN  24
 
 /*
  ***********************

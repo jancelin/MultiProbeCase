@@ -60,7 +60,7 @@
 // Logging LED
 #define LOG_LED       13
 // Disable logging button
-#define BUTTON_PIN    16
+#define BUTTON_PIN    39
 
 /************** DATA NUMBER OF DECIMALS *****************/
 // Temperature
@@ -84,7 +84,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -92,7 +92,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -234,7 +234,7 @@ void loop() {
   SERIAL_DBG("TEMPERATURE :\t")
   SERIAL_DBG(connectedDevices[TEMPERATURE])
   SERIAL_DBG('\n')
-  SERIAL_DBG("DISTANCE :\t\t")
+  SERIAL_DBG("DISTANCE :\t")
   SERIAL_DBG(connectedDevices[DISTANCE])
   SERIAL_DBG("\n\n")
 

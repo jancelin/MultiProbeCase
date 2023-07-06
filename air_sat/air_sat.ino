@@ -114,7 +114,7 @@ void setup() {
     String ans = "";
 
     /*      GNSS From RX5       */
-    Serial1.begin(GNSS_BAUDRATE);
+    Serial5.begin(GNSS_BAUDRATE);
 }
 
 /* *********************** */
@@ -122,12 +122,21 @@ void setup() {
 /* *********************** */
 void loop() {
     // Reading RX5 for GNSS data
-    while (Serial1.available())
+    while (Serial5.available())
     {
       char c;
-      c = Serial1.read();
+      c = Serial5.read();
       gps.encode(c);
     }
+
+    // Receiving order from Bluetooth
+    if (Serial1.available() > 0) {
+        String data = Serial1.readStringUntil('\n');
+        Serial.println( " - message received : ");
+        Serial.println(data);
+        commandManager(data);
+        Serial1.println();
+    }  
 
     if (  ((millis() - previousLogTime) >= logInterval || previousLogTime == 0 ) && start_log ) 
         {
@@ -182,15 +191,52 @@ void loop() {
             previousLogTime = millis(); 
         }
     }
-
-    // Receiving order from Bluetooth
-    if (Serial.available() > 0) {
-        String data = Serial1.readStringUntil('\n');
-        Serial.println( " - message received : ");
-        Serial.println(data);
-        commandManager(data);
-    }  
 }
+
+/********************************/
+/* Management Command order     */
+/********************************/
+void commandManager(String message) {
+  DynamicJsonDocument jsonDoc(256); 
+  DeserializationError error = deserializeJson(jsonDoc, message);
+  if(error) {
+    Serial.println("parseObject() failed");
+    //return false;
+  }
+
+  if ( jsonDoc["order"] == "getConfig") {
+    Serial.println(" - getConfig received ");
+    configToJson();
+  }
+  else if (jsonDoc["order"] == "restart") {
+    Serial.println( " - RESTART in progress ");
+    //_reboot_Teensyduino_();
+  }
+  // {"order":"update_interval", "value":1000}
+  else if (jsonDoc["order"] == "update_interval" ) {
+    Serial.print(" - Interval update received = ");
+    Serial.println( jsonDoc["value"].as<long>() );
+    if (jsonDoc["value"].as<long>() > 500 ) {
+      logInterval = jsonDoc["value"].as<long>();
+    }
+    else { 
+      Serial.println("Interval < 500 limit");
+    }
+    Serial.print(" - new Interval log set : " );
+    Serial.println(logInterval);
+    Serial1.println("{\"update_intervalAnswer\":{\"newInterval\":"+(String)logInterval + "}}");
+    //logInterval = newInterval;
+  }
+  else if (jsonDoc["order"] == "startLog") {
+    Serial.println( " - StartLog receivede");
+    start_log = 1;
+  }
+  else if (jsonDoc["order"] == "stopLog") {
+    Serial.println( " - StopLog received ");
+    start_log = 0;
+  }
+}
+
 
 void printUint16Hex(uint16_t value) {
     Serial.print(value < 4096 ? "0" : "");

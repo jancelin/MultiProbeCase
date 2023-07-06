@@ -1,5 +1,6 @@
 /* LIBRARY CONFIG TO SET PARAMETER AND SENSOR DATA */
 #include <ArduinoJson.h>
+#include <StreamUtils.h>
 
 // SETUP FOR BLUETOOTH MODULE ( Adresse Mac 98:d3:71:fe:09:0f )
 #define COMM_BAUDRATE         115200
@@ -8,7 +9,6 @@
 
 #define SATELITE_NAME "AIR_SAT"
 #define VERSION "1.0"
-
 
 /********************************/
 /* Config To Serail             */
@@ -26,10 +26,18 @@ void configToJson(){
     Sensor2["CONSTRUCTOR"]="Sensirion";
     Sensor2["REF"]="https://sensirion.com/products/catalog/SCD41/";
     
+    JsonObject Sensor3=jsonConfig.createNestedObject();
+    Sensor3["SENSOR_NAME"]="GNSS";
+    Sensor3["CONSTRUCTOR"]="Drotek";
+    Sensor3["REF"]="https://sensirion.com/products/catalog/SCD41/";
+    
     jsonConfig.add(Sensor1);
     jsonConfig.add(Sensor2);
+    jsonConfig.add(Sensor3);
 
-    serializeJson(jsonConfig,Serial);
+    // Using Logging Stream to send config to Serial(s)
+    WriteLoggingStream loggedFile(Serial1, Serial);
+    serializeJson(jsonConfig, loggedFile );
     
     // String json = "{";
     // json += "\"NAME\":\""+ (String)SATELITE_NAME +"\",";
@@ -41,23 +49,3 @@ void configToJson(){
     // return json;
 }
 
-/********************************/
-/* Management Command order     */
-/********************************/
-void commandManager(String message) {
-  DynamicJsonDocument jsonDoc(256); 
-  DeserializationError error = deserializeJson(jsonDoc, message);
-  if(error) {
-    Serial.println("parseObject() failed");
-    //return false;
-  }
-
-  if ( jsonDoc["order"] == "getConfig") {
-    Serial.println(" - getConfig received ");
-    configToJson();
-  }
-  else if (jsonDoc["order"] == "restart") {
-    Serial.println( " - RESTART in progress ");
-    //_reboot_Teensyduino_();
-  }
-}

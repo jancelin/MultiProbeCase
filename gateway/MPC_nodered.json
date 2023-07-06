@@ -358,8 +358,8 @@
         "z": "cba0c3b5b8568f89",
         "name": "Air Output 2",
         "serial": "2f1090c8e3632e25",
-        "x": 410,
-        "y": 1020,
+        "x": 670,
+        "y": 1240,
         "wires": []
     },
     {
@@ -404,8 +404,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 400,
-        "y": 980,
+        "x": 660,
+        "y": 1020,
         "wires": []
     },
     {
@@ -445,40 +445,14 @@
         "topic": "",
         "payload": "{\"order\":\"update_interval\", \"value\":5000}",
         "payloadType": "json",
-        "x": 180,
-        "y": 1180,
+        "x": 200,
+        "y": 1120,
         "wires": [
             [
-                "ecfb69a1c2c19295",
-                "86a090f495df0751"
+                "f5a86730fbfe936a",
+                "1755903f4a1ce503"
             ]
         ]
-    },
-    {
-        "id": "ecfb69a1c2c19295",
-        "type": "serial out",
-        "z": "cba0c3b5b8568f89",
-        "name": "Air Output 2",
-        "serial": "2f1090c8e3632e25",
-        "x": 410,
-        "y": 1180,
-        "wires": []
-    },
-    {
-        "id": "86a090f495df0751",
-        "type": "debug",
-        "z": "cba0c3b5b8568f89",
-        "name": "debug 9",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 400,
-        "y": 1140,
-        "wires": []
     },
     {
         "id": "c6db1f834326d7d3",
@@ -488,16 +462,6 @@
         "info": "",
         "x": 160,
         "y": 900,
-        "wires": []
-    },
-    {
-        "id": "b82e854b1ea4a5e2",
-        "type": "serial out",
-        "z": "cba0c3b5b8568f89",
-        "name": "Air Output 2",
-        "serial": "2f1090c8e3632e25",
-        "x": 410,
-        "y": 1320,
         "wires": []
     },
     {
@@ -521,40 +485,14 @@
         "topic": "",
         "payload": "{\"order\":\"startLog\"}",
         "payloadType": "json",
-        "x": 160,
-        "y": 1320,
+        "x": 180,
+        "y": 1240,
         "wires": [
             [
-                "b82e854b1ea4a5e2",
-                "c17b9a5b56834ce2"
+                "f5a86730fbfe936a",
+                "1755903f4a1ce503"
             ]
         ]
-    },
-    {
-        "id": "c17b9a5b56834ce2",
-        "type": "debug",
-        "z": "cba0c3b5b8568f89",
-        "name": "debug 10",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 400,
-        "y": 1280,
-        "wires": []
-    },
-    {
-        "id": "3a1b66776f31b8db",
-        "type": "serial out",
-        "z": "cba0c3b5b8568f89",
-        "name": "Air Output 2",
-        "serial": "2f1090c8e3632e25",
-        "x": 410,
-        "y": 1440,
-        "wires": []
     },
     {
         "id": "d700eea31dc91aa4",
@@ -577,30 +515,14 @@
         "topic": "",
         "payload": "{\"order\":\"stopLog\"}",
         "payloadType": "json",
-        "x": 160,
-        "y": 1440,
+        "x": 180,
+        "y": 1360,
         "wires": [
             [
-                "3a1b66776f31b8db",
-                "4a28ef4bd2367d37"
+                "f5a86730fbfe936a",
+                "1755903f4a1ce503"
             ]
         ]
-    },
-    {
-        "id": "4a28ef4bd2367d37",
-        "type": "debug",
-        "z": "cba0c3b5b8568f89",
-        "name": "debug 11",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 400,
-        "y": 1400,
-        "wires": []
     },
     {
         "id": "e6c023613f929b52",

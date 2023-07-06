@@ -28,6 +28,14 @@ systemctl restart postgresql
 * change password
 ```
 sudo -u postgres psql
+  
+  Into postgres console : 
+  
+  postgres=# \password postgres
+  Enter new password for user "postgres": 
+  Enter it again: 
+  postgres=# \q
+
 ```
 * connect to postgres
 ```
@@ -107,7 +115,29 @@ bluetoothctl
 
 * cyclopée
 * oio
-* air
+* air - 
+
+### create /etc/systemd/system/rfcomm.service to enable 
+### the Bluetooth serial port from systemctl
+
+  sudo cat <<EOF | sudo tee /etc/systemd/system/rfcomm.service > /dev/null
+  [Unit]
+  Description=RFCOMM service
+  After=bluetooth.service
+  Requires=bluetooth.service
+
+  [Service]
+  ExecStart=/usr/bin/rfcomm bind 2 98:D3:71:FE:09:0F
+
+  [Install]
+  WantedBy=multi-user.target
+  EOF
+
+### enable the new rfcomm service
+  sudo systemctl enable rfcomm
+
+### start the rfcomm service
+  sudo systemctl restart rfcomm
 
 ```
 sudo rfcomm bind 0 98:D3:B1:FD:C3:2C

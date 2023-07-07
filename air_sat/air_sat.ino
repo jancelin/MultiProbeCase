@@ -51,16 +51,12 @@ TinyGPSPlus gps;
 //Create variable to track time
 int start_log = 1;
 unsigned long updateTime = 0;
-uint32_t logInterval = 2000;
+uint32_t logInterval = 5000;
 unsigned long previousLogTime = 0;
 
 void setup() {
-
+  
     Serial.begin(115200);
-    while (!Serial) {
-        delay(100);
-    }
-
     Wire.begin();
 
     uint16_t error;

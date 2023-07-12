@@ -120,5 +120,5 @@ float readRawTurbidity(volatile bool& deviceConnected)	{
 float computeTurbidity()    {
 
 	// Compute turbidity value with turbidity/voltage sensor curve
-	return (-1120.4*(sensorVoltage*sensorVoltage)) + (5742.3*sensorVoltage) - 4352.9;
+	return (-3169.75*(sensorVoltage)) + 11220.52;
 }

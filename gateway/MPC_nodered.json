@@ -1,0 +1,637 @@
+[
+    {
+        "id": "cba0c3b5b8568f89",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "4ddea886c3ba7790",
+        "type": "serial in",
+        "z": "cba0c3b5b8568f89",
+        "name": "0 cyclopee",
+        "serial": "e8ac9bf3d52fa0f7",
+        "x": 160,
+        "y": 140,
+        "wires": [
+            [
+                "d87bfbd0caa05eed",
+                "cfc78bba62d9f587"
+            ]
+        ]
+    },
+    {
+        "id": "15211d18d5548628",
+        "type": "comment",
+        "z": "cba0c3b5b8568f89",
+        "name": "Récupération du sensor / split data et insert dans postgresql",
+        "info": "",
+        "x": 800,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "7ce810bfc08b1da0",
+        "type": "function",
+        "z": "cba0c3b5b8568f89",
+        "name": "function_split_time_data",
+        "func": "var rehash = {};\nrehash.time = \"'\" + msg.payload.time + \"+00'\";\nrehash.data = \"'\" + JSON.stringify(msg.payload) + \"'\";\nmsg.payload = rehash\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 260,
+        "wires": [
+            [
+                "d87bfbd0caa05eed",
+                "482a965c2a11b182"
+            ]
+        ]
+    },
+    {
+        "id": "482a965c2a11b182",
+        "type": "postgresql",
+        "z": "cba0c3b5b8568f89",
+        "name": "insert to postgresql",
+        "query": "--Insert Cyclopee sensor  data\ndo $$\nbegin\n    INSERT INTO cyclopee.sensor (time,data) VALUES \n    ( \n    {{{msg.payload.time}}},  \n    {{{msg.payload.data}}}\n    );\n    COMMIT;\nend $$",
+        "postgreSQLConfig": "3660cf129311ca49",
+        "split": false,
+        "rowsPerMsg": 1,
+        "outputs": 1,
+        "x": 850,
+        "y": 320,
+        "wires": [
+            [
+                "d87bfbd0caa05eed"
+            ]
+        ]
+    },
+    {
+        "id": "d87bfbd0caa05eed",
+        "type": "debug",
+        "z": "cba0c3b5b8568f89",
+        "name": "debug 5",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 940,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "cfc78bba62d9f587",
+        "type": "json",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 330,
+        "y": 200,
+        "wires": [
+            [
+                "7ce810bfc08b1da0"
+            ]
+        ]
+    },
+    {
+        "id": "4102408347e5479f",
+        "type": "serial in",
+        "z": "cba0c3b5b8568f89",
+        "name": "1 OIO",
+        "serial": "52f144220523204c",
+        "x": 150,
+        "y": 200,
+        "wires": [
+            [
+                "cfc78bba62d9f587"
+            ]
+        ]
+    },
+    {
+        "id": "96b61f7257b6057d",
+        "type": "serial in",
+        "z": "cba0c3b5b8568f89",
+        "name": "2 Air",
+        "serial": "2f1090c8e3632e25",
+        "x": 150,
+        "y": 260,
+        "wires": [
+            [
+                "cfc78bba62d9f587",
+                "dc81c8b41454b47d"
+            ]
+        ]
+    },
+    {
+        "id": "026060a705062ab8",
+        "type": "exec",
+        "z": "cba0c3b5b8568f89",
+        "command": "bluetoothctl devices",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 410,
+        "y": 720,
+        "wires": [
+            [
+                "f48261ea0a9d7828",
+                "a09d6db05305d87e"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "97856f888e807f22",
+        "type": "inject",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 720,
+        "wires": [
+            [
+                "026060a705062ab8"
+            ]
+        ]
+    },
+    {
+        "id": "f48261ea0a9d7828",
+        "type": "debug",
+        "z": "cba0c3b5b8568f89",
+        "name": "debug 6",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 780,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "ce6fd77a9b7f63e6",
+        "type": "exec",
+        "z": "cba0c3b5b8568f89",
+        "command": "bluetoothctl scan on",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 400,
+        "y": 640,
+        "wires": [
+            [
+                "f48261ea0a9d7828"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "e2dee656fc9800ea",
+        "type": "inject",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 640,
+        "wires": [
+            [
+                "ce6fd77a9b7f63e6"
+            ]
+        ]
+    },
+    {
+        "id": "a09d6db05305d87e",
+        "type": "csv",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "sep": " ",
+        "hdrin": "",
+        "hdrout": "all",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 690,
+        "y": 700,
+        "wires": [
+            [
+                "f48261ea0a9d7828",
+                "7e15fd5a996e822e",
+                "b29b23cfd8948a2f",
+                "41b964acf035c322"
+            ]
+        ]
+    },
+    {
+        "id": "1b9dc9ae960871d2",
+        "type": "ui_button",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "group": "7bfc332a5957ff21",
+        "order": 1,
+        "width": "3",
+        "height": "2",
+        "passthru": false,
+        "label": "button",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "date",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 150,
+        "y": 680,
+        "wires": [
+            [
+                "026060a705062ab8"
+            ]
+        ]
+    },
+    {
+        "id": "7e15fd5a996e822e",
+        "type": "ui_table",
+        "z": "cba0c3b5b8568f89",
+        "group": "7bfc332a5957ff21",
+        "name": "BT",
+        "order": 3,
+        "width": "16",
+        "height": "12",
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 910,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "b29b23cfd8948a2f",
+        "type": "ui_text",
+        "z": "cba0c3b5b8568f89",
+        "group": "7bfc332a5957ff21",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "text",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "x": 990,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "41b964acf035c322",
+        "type": "ui_table",
+        "z": "cba0c3b5b8568f89",
+        "group": "7bfc332a5957ff21",
+        "name": "test",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 830,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "f5a86730fbfe936a",
+        "type": "serial out",
+        "z": "cba0c3b5b8568f89",
+        "name": "Air Output 2",
+        "serial": "2f1090c8e3632e25",
+        "x": 670,
+        "y": 1240,
+        "wires": []
+    },
+    {
+        "id": "898c58b6e672c401",
+        "type": "inject",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"order\":\"getConfig\"}",
+        "payloadType": "json",
+        "x": 210,
+        "y": 1020,
+        "wires": [
+            [
+                "f5a86730fbfe936a",
+                "1755903f4a1ce503"
+            ]
+        ]
+    },
+    {
+        "id": "1755903f4a1ce503",
+        "type": "debug",
+        "z": "cba0c3b5b8568f89",
+        "name": "debug 7",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 1020,
+        "wires": []
+    },
+    {
+        "id": "dc81c8b41454b47d",
+        "type": "debug",
+        "z": "cba0c3b5b8568f89",
+        "name": "debug 8",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 340,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "37b90aafa8e6f79e",
+        "type": "inject",
+        "z": "cba0c3b5b8568f89",
+        "name": "UpdateInterval",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"order\":\"update_interval\", \"value\":5000}",
+        "payloadType": "json",
+        "x": 200,
+        "y": 1120,
+        "wires": [
+            [
+                "f5a86730fbfe936a",
+                "1755903f4a1ce503"
+            ]
+        ]
+    },
+    {
+        "id": "c6db1f834326d7d3",
+        "type": "comment",
+        "z": "cba0c3b5b8568f89",
+        "name": "ORDER TO TEENSY",
+        "info": "",
+        "x": 160,
+        "y": 900,
+        "wires": []
+    },
+    {
+        "id": "7f2b7726fb6d9160",
+        "type": "inject",
+        "z": "cba0c3b5b8568f89",
+        "name": "StartLog",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"order\":\"startLog\"}",
+        "payloadType": "json",
+        "x": 180,
+        "y": 1240,
+        "wires": [
+            [
+                "f5a86730fbfe936a",
+                "1755903f4a1ce503"
+            ]
+        ]
+    },
+    {
+        "id": "d700eea31dc91aa4",
+        "type": "inject",
+        "z": "cba0c3b5b8568f89",
+        "name": "StopLog",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"order\":\"stopLog\"}",
+        "payloadType": "json",
+        "x": 180,
+        "y": 1360,
+        "wires": [
+            [
+                "f5a86730fbfe936a",
+                "1755903f4a1ce503"
+            ]
+        ]
+    },
+    {
+        "id": "e6c023613f929b52",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "7bfc332a5957ff21",
+        "order": 2,
+        "width": 16,
+        "height": 1
+    },
+    {
+        "id": "e8ac9bf3d52fa0f7",
+        "type": "serial-port",
+        "serialport": "/dev/rfcomm0",
+        "serialbaud": "115200",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "3660cf129311ca49",
+        "type": "postgreSQLConfig",
+        "name": "",
+        "host": "localhost",
+        "hostFieldType": "str",
+        "port": "5432",
+        "portFieldType": "num",
+        "database": "mpc",
+        "databaseFieldType": "str",
+        "ssl": "false",
+        "sslFieldType": "bool",
+        "applicationName": "",
+        "applicationNameType": "str",
+        "max": "10",
+        "maxFieldType": "num",
+        "idle": "1000",
+        "idleFieldType": "num",
+        "connectionTimeout": "10000",
+        "connectionTimeoutFieldType": "num",
+        "user": "postgres",
+        "userFieldType": "str",
+        "password": "geopoppy",
+        "passwordFieldType": "str"
+    },
+    {
+        "id": "52f144220523204c",
+        "type": "serial-port",
+        "serialport": "/dev/rfcomm1",
+        "serialbaud": "115200",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "2f1090c8e3632e25",
+        "type": "serial-port",
+        "serialport": "/dev/rfcomm2",
+        "serialbaud": "115200",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "7bfc332a5957ff21",
+        "type": "ui_group",
+        "name": "MPC",
+        "tab": "9d82af62cc9f1d3f",
+        "order": 1,
+        "disp": true,
+        "width": 16,
+        "collapse": false
+    },
+    {
+        "id": "9d82af62cc9f1d3f",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]

@@ -37,7 +37,6 @@
  * ##########################
  */
 /************** SERIAL PORTS *****************/
-#define URM14_SERIAL  Serial4
 
 /* Current date & time */
 #define YEAR      2023
@@ -60,34 +59,8 @@
 /************** TEENSY PINS *****************/
 // Logging LED
 #define LOG_LED       13
-// Modbus DE & RE pins
-#define DE_PIN        30 // RE = ~DE => Wired to pin 30 as well
-// OneWire
-#define ONE_WIRE_BUS  21 // Teensy temperature data wire pin
 // Disable logging button
 #define BUTTON_PIN    39
-
-/************** URM14 SENSOR *****************/
-// Sensor baudrate
-#define URM14_BAUDRATE 115200
-// Sensor ID
-#define URM14_ID  (uint16_t)0x11
-// Sensor registers
-#define URM14_ID_REG        (uint16_t)0x02
-#define URM14_DISTANCE_REG  (uint16_t)0x05
-#define URM14_EXT_TEMP_REG  (uint16_t)0x07
-#define URM14_CONTROL_REG   (uint16_t)0x08
-// Sensor config register bit values
-#define   TEMP_CPT_SEL_BIT      ((uint16_t)0x01)      // Use custom temperature compensation
-#define   TEMP_CPT_ENABLE_BIT   ((uint16_t)0x00 << 1) // Enable temperature compensation
-#define   MEASURE_MODE_BIT      ((uint16_t)0x00 << 2) // Passive(1)/auto(0) measure mode
-#define   MEASURE_TRIG_BIT      ((uint16_t)0x00 << 3) // Request mesure in passive mode. Unused in auto mode
-// URM14 read value when sensor disconnected
-#define URM14_DISCONNECTED  UINT16_MAX
-
-/************** DS18B20 SENSOR *****************/
-// Sensor ID
-#define DS18B20_ID   0
 
 /************** DATA NUMBER OF DECIMALS *****************/
 // Temperature
@@ -104,14 +77,14 @@
 enum Devices : uint8_t  {
 
   SD_CARD = 0,
-  DS18B20,
-  URM14,
+  TEMPERATURE,
+  DISTANCE,
 };
 
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -119,7 +92,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -128,9 +101,6 @@ enum Devices : uint8_t  {
 #include <RingBuf.h>
 #include <TimeLib.h>
 #include <SD.h>
-#include <ModbusMaster.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
 #include <Metro.h>
 
 /* ###########################
@@ -138,23 +108,24 @@ enum Devices : uint8_t  {
  * ###########################
  */
 // Error handling
-void waitForReboot(const String& msg = "");
+void waitForReboot(const String& msg);
 // Sd card setu
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
 void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegCountdown, volatile bool& deviceConnected);
-bool logToSD(File& file, const long& timestamp, const uint16_t& dist_mm, const float& temp_C);
+bool logToSD(File& file, const long& timestamp, const float& dist_mm, const float& temp_C);
 void dumpFileToSerial(File& file);
-// OneWire communication with DS18B20
-void setupDS18B20(DallasTemperature& sensorNetwork, volatile bool& deviceConnected);
-// Modbus communication with URM14
-void preTrans()  {  digitalWrite(DE_PIN, HIGH); }
-void postTrans() {  digitalWrite(DE_PIN, LOW);  }
-void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sensorBaudrate, void (*preTransCbk)(), void (*postTransCbk)(), volatile bool& deviceConnected);
 // Sensor reading interrupt
 void readSensors();
 // Digital IO update interrupt
 void handleDigitalIO();
+
+/* ######################
+ * #   SENSOR MODULES   #
+ * ######################
+ */
+#include "DS18B20_temperature.h"
+#include "URM14_distance.h"
 
 /* ##################
  * #    PROGRAM     #
@@ -172,20 +143,6 @@ File logFile;
 // Log state (enabled/disabled)
 volatile bool enLog = false;
 
-// DS18B20
-// OneWire bus
-OneWire oneWire(ONE_WIRE_BUS);
-// Dallas sensor bus
-DallasTemperature sensors(&oneWire);
-// DS18B20 address
-byte ds18b20_addr[8];
-
-// URM14
-// ModbusMaster sensor object for URM14
-ModbusMaster urm14;
-// URM14 config
-uint16_t urm14_controlBits = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENABLE_BIT | TEMP_CPT_SEL_BIT;
-
 // Timer interrputs
 IntervalTimer sensorRead_timer, ioRefresh_timer;
 
@@ -202,7 +159,7 @@ Metro fileDumpCountdown = Metro(1000);
 
 /*
  *  @brief:
- *    Sets up SD card, URM14 and DS18B20 sensors.
+ *    Sets up SD card, distance and temperature sensors.
  */
 void setup() {
 
@@ -221,11 +178,11 @@ void setup() {
   // SD card init
   setupSDCard(connectedDevices[SD_CARD]);
   SERIAL_DBG('\n')
-  // Setting up DS18B20
-  setupDS18B20(sensors, connectedDevices[DS18B20]);
+  // Setting up temperature sensor
+  setupTempSensor(connectedDevices[TEMPERATURE]);
   SERIAL_DBG('\n')
-  // Setting up URM14
-  setupURM14(urm14, URM14_ID, URM14_BAUDRATE, preTrans, postTrans, connectedDevices[URM14]);
+  // Setting up distance sensor
+  setupDistSensor(connectedDevices[DISTANCE]);
   SERIAL_DBG('\n')
   // Setting time
   setTime(HOURS, MINUTES, SECONDS, DAY, MONTH, YEAR);
@@ -244,13 +201,11 @@ void setup() {
 /************** LOOP() GLOBAL VARS *****************/
 // Buffers to store values to log
 RingBuf <long, MAX_BUFFER_SIZE> timestamp_buf;
-RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf;
-RingBuf <uint16_t, MAX_BUFFER_SIZE> dist_buf;
+RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf, dist_buf;
 
 // Variables to store buffer readings
 long timestamp_ms;
-float extTemp_C;
-uint16_t dist_mm;
+float extTemp_C, dist_mm;
 
 /*
  * @brief:
@@ -276,11 +231,11 @@ void loop() {
   SERIAL_DBG("SD CARD :\t")
   SERIAL_DBG(connectedDevices[SD_CARD])
   SERIAL_DBG('\n')
-  SERIAL_DBG("DS18B20 :\t")
-  SERIAL_DBG(connectedDevices[DS18B20])
+  SERIAL_DBG("TEMPERATURE :\t")
+  SERIAL_DBG(connectedDevices[TEMPERATURE])
   SERIAL_DBG('\n')
-  SERIAL_DBG("URM14 :\t\t")
-  SERIAL_DBG(connectedDevices[URM14])
+  SERIAL_DBG("DISTANCE :\t")
+  SERIAL_DBG(connectedDevices[DISTANCE])
   SERIAL_DBG("\n\n")
 
   // If logging enabled
@@ -347,14 +302,11 @@ void loop() {
  * @brief: 
  *    Interrupts loop() to read sensors.
  * @exec time:
- *     Long and mostly depends on DS18B20 resolution config.
+ *     Long and mostly depends on temperature resolution config.
  */
 void readSensors()  {
   // Interrupt execution time
   //long t = millis();
-  
-  // Store Modbus communication errors
-  uint8_t mbError;
   
   // If logging enabled and logFile open
   if (enLog && logFile) {
@@ -363,55 +315,11 @@ void readSensors()  {
 
       timestamp_buf.lockedPush(millis());
 
-// DS18B20 convertion takes time (depends on sensor resolution config)
-      // Read DS18B20 temperature
-      sensors.requestTemperatures();
-      extTemp_buf.push(sensors.getTempC(ds18b20_addr));
-      // Check for OneWire errors
-      if (extTemp_buf[extTemp_buf.size() -1] == DEVICE_DISCONNECTED_C) {
-        SERIAL_DBG("OneWire : DS18B20 disconnected...")
-        connectedDevices[DS18B20] = false;
-      }
-      else
-        connectedDevices[DS18B20] = true;
-// --------------
-
-      // External compensation: Updade external URM14 temperature register
-      if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)  {
-        mbError = urm14.writeSingleRegister(URM14_EXT_TEMP_REG, (uint16_t)(extTemp_buf[extTemp_buf.size()] * 10.0));
-        // Check for Modbus errors
-        if (mbError != ModbusMaster::ku8MBSuccess)  {
-          dist_buf.push(URM14_DISCONNECTED);
-          connectedDevices[URM14] = false;
-        }
-        else
-          connectedDevices[URM14] = true;
-      }
-
-      // Trigger mode: Set trigger bit to request one measurement
-      if (MEASURE_MODE_BIT) {
-        mbError = urm14.writeSingleRegister(URM14_CONTROL_REG, urm14_controlBits); //Writes the setting value to the control register
-        if (mbError != ModbusMaster::ku8MBSuccess)  {
-          dist_buf.push(URM14_DISCONNECTED);
-          connectedDevices[URM14] = false;
-        }
-        else
-          connectedDevices[URM14] = true;
-      }
-      // Readng distance input register at 0x05
-      // Should use readInputRegisters() but somehow doesn't work
-      // Trhows ku8MBIllegalDataAddress error (0x02)
-      // ToDo : understand error (might be manufacturer who did not follow Modbus standard)
-      mbError = urm14.readHoldingRegisters(URM14_DISTANCE_REG, 1);
-      // Check for Modbus errors
-      if (mbError != ModbusMaster::ku8MBSuccess)  {
-        dist_buf.push(URM14_DISCONNECTED);
-        connectedDevices[URM14] = false;
-      }
-      else  {
-        dist_buf.push(urm14.getResponseBuffer(0));
-        connectedDevices[URM14] = true;
-      }
+      // Acquire temperature
+      extTemp_buf.push(readTemperature(connectedDevices[TEMPERATURE]));
+      // Acquire distance
+      dist_buf.push(readDistance(extTemp_buf[extTemp_buf.size()-1], connectedDevices[DISTANCE]));
+      
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -602,24 +510,24 @@ void handleLogFile(File& file, String& dirName, String& fileName, Metro& logSegC
  *    dist_mm : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-void csv_logString(String& log_str, const long& timestamp, const uint16_t& dist_mm, const float& temp_C)  {
+void csv_logString(String& log_str, const long& timestamp, const float& dist_mm, const float& temp_C)  {
   
   // Inserting timestamp into log string
   timestampToStr(timestamp, log_str, true);
   log_str += ',';
   // Inserting distance into log string
-  if (dist_mm != URM14_DISCONNECTED)
-    log_str += String(dist_mm/10.0, DIST_DECIMALS);
+  if (dist_mm != DIST_NO_VALUE)
+    log_str += String(dist_mm, DIST_DECIMALS);
   else  {
-    SERIAL_DBG("No URM14 response, check wiring...\n")
+    SERIAL_DBG("No distance response, check wiring...\n")
     log_str += "Nan";
   }
   log_str += ',';
   // Inserting external temperature into log string
-  if (extTemp_C != DEVICE_DISCONNECTED_C)
+  if (extTemp_C != TEMP_NO_VALUE)
     log_str += String(extTemp_C, TEMP_DECIMALS);
   else  {
-    SERIAL_DBG("No DS18B20 response, check wiring...\n")
+    SERIAL_DBG("No temperature response, check wiring...\n")
     log_str += "Nan";
   }
 }
@@ -633,7 +541,7 @@ void csv_logString(String& log_str, const long& timestamp, const uint16_t& dist_
  *    dist_mm : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-bool logToSD(File& file, const long& timestamp, const uint16_t& dist_mm, const float& temp_C) {
+bool logToSD(File& file, const long& timestamp, const float& dist_mm, const float& temp_C) {
 
   String log_str;
   csv_logString(log_str, timestamp, dist_mm, temp_C);
@@ -672,76 +580,6 @@ void dumpFileToSerial(File& file) {
     SERIAL_DBG("---> dumpFileToSerial() : No file open...")  
 }
 
-/* ##############   URM14  ################ */
-/*
- * @brief: 
- *    Sets up the URM14 ultrasoic sensor
- * @params:
- *    sensor: ModbusMaster instance that represents the senter on the bus.
- *    sensorID: Sensor id on the bus.
- *    sensorBaudrate: Baudrate to communication with the sensor.
- *    preTransCbk: Callback called before modbus tansmission to set RS485 interface in transmission mode.
- *    postTransCbk: Callback called after modbus tansmission to set RS485 interface back in reception mode.
- *    deviceConnected: Bool to store if URM14 is connected or not.
- */
-void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sensorBaudrate, void (*preTransCbk)(), void (*postTransCbk)(),  volatile bool& deviceConnected)  {
-
-  // URM14 sensor binary config
-  uint16_t fileDumpCountdown = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENABLE_BIT | TEMP_CPT_SEL_BIT;
-  // Modbus communication errors
-  uint8_t mbError;
-
-  // RS485 DE pin setup
-  pinMode(DE_PIN, OUTPUT);
-  digitalWrite(DE_PIN, LOW);
-
-  // Set Modbus communication
-  URM14_SERIAL.begin(sensorBaudrate);
-  // Modbus slave id 0x11 on serial port URM14_SERIAL
-  sensor.begin(sensorID, URM14_SERIAL);
-  // Set pre/post transmision callbacks in ModbusMaster object
-  sensor.preTransmission(preTransCbk);
-  sensor.postTransmission(postTransCbk);
-
-  // Writing config
-  mbError = sensor.writeSingleRegister(URM14_CONTROL_REG, fileDumpCountdown); //Writes the setting value to the control register
-  if (mbError != ModbusMaster::ku8MBSuccess)
-    waitForReboot("Modbus : Config could not be written to UMR14 sensor, check wiring.");
-  else
-    SERIAL_DBG("Modbus : UMR14 sensor found and configured!\n")
-  
-  deviceConnected = true;
-  SERIAL_DBG("Done.\n")
-}
-
-/* ##############   DS18B20   ################ */
-/*
- * @brief: 
- *    Sets up the DS18B20 temperature sensor.
- * @params:
- *    sensorNetwork: DallasTemperature instance that represents a DallasTemperature sensor network.
- *    deviceConnected: Bool to store if DS18B20 is connected or not.
- */
-void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnected) {
-
-  sensorNetwork.begin();
-  // Setting resolution for temperature (the lower, the quicker the sensor responds)
-  sensorNetwork.setResolution(11);
-  // Store DS18B20 OneWire adress for fast data acquitsition
-  sensorNetwork.getAddress(ds18b20_addr, DS18B20_ID);
-  // Check for OneWire errors
-  if (sensorNetwork.getTempC(ds18b20_addr) == DEVICE_DISCONNECTED_C)  {
-    SERIAL_DBG("OneWire : No DS18B20 connected...\n")
-    SERIAL_DBG("No external temperature compensation possible.\n")
-    if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)
-      waitForReboot();
-  }
-  else
-    SERIAL_DBG("OneWire : DS18B20 found!\n")
-    
-  deviceConnected = true;
-  SERIAL_DBG("Done.\n")
-}
 
 /* ##############   DIGITAL IO  ################ */
 /*
@@ -755,7 +593,7 @@ void handleDigitalIO()  {
 
   // Check for disconnected devices
   bool deviceDisconnected = false;
-  for (uint8_t i = SD_CARD; i <= URM14; i++) {
+  for (uint8_t i = SD_CARD; i <= DISTANCE; i++) {
     deviceDisconnected |= !connectedDevices[i];
   }
   // Logging button

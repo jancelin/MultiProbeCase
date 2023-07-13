@@ -93,6 +93,7 @@ void waitForReboot(const String& msg = "")  {
 }
 
 bool readBTModuleConfig(String& btName, String& macAddr, String& UARTConf) {
+  String temp;
 
   // Reading module Bluetooth name
   if (!sendATCommand("AT+NAME", &btName))
@@ -104,6 +105,11 @@ bool readBTModuleConfig(String& btName, String& macAddr, String& UARTConf) {
     return false;
   macAddr.remove(0,6);
   macAddr.remove(macAddr.length()-2,2);
+
+  // Adding ":" to MACC ADDRESS ( 98d3:71:fe090f )
+  temp = macAddr.substring(0,2) + ":" + macAddr.substring(2,10) + ":" + macAddr.substring(10, 12) + ":" + macAddr.substring(12,14) ;
+  macAddr = temp.toUpperCase();
+
   // Reading module UART conf
   if (!sendATCommand("AT+UART", &UARTConf))
     return false;
@@ -111,6 +117,10 @@ bool readBTModuleConfig(String& btName, String& macAddr, String& UARTConf) {
   UARTConf.remove(UARTConf.length()-2,2);
 
   return true;
+}
+
+String addChar(String str, char ch, int position) {
+    return str.substring(0, position) + ch + str.substring(position);
 }
 
 bool configureBTModule(const String& btName, const String& UARTConf)  {

@@ -189,7 +189,7 @@ void loop() {
             Serial.println("Invalid sample detected, skipping.");
         } else {
             String json = "{";
-            json += "\"id\":\"Air_98:d3:71:fe:09:0f\",";
+            json += "\"id\":\"Air_"+ (String)macAddr + "\",";
             json += "\"time\":\"" + (String)gps.date.year() + "/" + (String)gps.date.month() + "/" + (String)gps.date.day() + " ";
             json += (String)gps.time.hour() + ":" + (String)gps.time.minute() + ":" + (String)gps.time.second() + "." +  (String)gps.time.centisecond() + "\",";
             json += "\"lon\":" + String(gps.location.lng(),8) + ","; 

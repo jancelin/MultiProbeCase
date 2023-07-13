@@ -1,6 +1,7 @@
 /* LIBRARY CONFIG TO SET PARAMETER AND SENSOR DATA */
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
+#include <SD.h>
 
 // SETUP FOR BLUETOOTH MODULE ( Adresse Mac 98:d3:71:fe:09:0f )
 #define COMM_BAUDRATE         115200
@@ -45,15 +46,7 @@ void configToJson(){
     // Using Logging Stream to send config to Serial(s)
     WriteLoggingStream loggedFile(Serial1, Serial);
     serializeJson(jsonConfig, loggedFile );
-    
-    // String json = "{";
-    // json += "\"NAME\":\""+ (String)SATELITE_NAME +"\",";
-	// json += "\"VERSION\":\""+ (String)VERSION +" \",";
-    // json += "\"SENSORS\":\""+ (String)VERSION +" \",";
-    
-    // json += "}";
-    // Serial.println(json);
-    // return json;
+
 }
 
 bool sendATCommand(const String& cmd, String* pAns = NULL) {
@@ -130,5 +123,37 @@ bool configureBTModule(const String& btName, const String& UARTConf)  {
   if (!sendATCommand("AT+UART=" + UARTConf))
     return false;
  
+  return true;
+}
+
+/* ##############   SD CARD    ################ */
+/*
+   @brief: sets up sd card
+*/
+void setupSDCard()  {
+
+  Serial.println("SD card setup... ");
+  // Try to open SD card
+  if (!SD.begin(BUILTIN_SDCARD))  {
+    Serial.println("Failed, waiting for reboot...\n");;
+    while (1);
+  }
+  else
+    Serial.println("Setup SD Card done.\n");
+//   deviceConnected = true;
+}
+
+bool logToSD(File& file, String log) {
+  // Check if log file is open
+
+  if (!file) {
+    Serial.println("Error file doesn't exist");
+    return false;
+  }
+
+  // Log into log file
+  file.println(log);
+  file.flush();
+  // Serial.println("Log on SD Card done");
   return true;
 }

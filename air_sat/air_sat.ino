@@ -54,6 +54,11 @@ unsigned long updateTime = 0;
 uint32_t logInterval = 5000;
 unsigned long previousLogTime = 0;
 
+/* Logging */
+String logDir = "";
+String logFileName = "AIR.csv";
+File logFile, confFile;
+
 void setup() {
   
     Serial.begin(115200);
@@ -133,6 +138,10 @@ void setup() {
 
     /*      GNSS From RX5       */
     Serial5.begin(GNSS_BAUDRATE);
+
+    /* CONFIG SD CARD for local storage */
+    setupSDCard();
+    logFile = SD.open("AIR.csv", FILE_WRITE);
 }
 
 /* *********************** */
@@ -207,6 +216,9 @@ void loop() {
             // Sending over Bluetooth
             Serial1.println(json);
             previousLogTime = millis(); 
+
+            // Save Log on SD Card
+            logToSD(logFile, json);
         }
     }
 }
@@ -254,7 +266,6 @@ void commandManager(String message) {
     start_log = 0;
   }
 }
-
 
 void printUint16Hex(uint16_t value) {
     Serial.print(value < 4096 ? "0" : "");

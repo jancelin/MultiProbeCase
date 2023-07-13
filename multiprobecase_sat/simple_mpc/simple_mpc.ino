@@ -44,10 +44,9 @@
  * #   GLOBAL DEFINITIONS   #
  * ###########################
  */
-
-/************** SERIAL PORTS *****************/
+/************** SERIAL PORTS *****************/ 
 #define GNSS_SERIAL Serial2
-#define BLUETOOTH_SERIAL  Serial1
+#define BLUETOOTH_SERIAL  Serial3
  
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
@@ -73,7 +72,7 @@
 
 /************** BLUETOOTH MODULE *****************/
 // Bluetooth module key (AT mode) pin
-#define BLUETOOTH_KEY 2
+#define BLUETOOTH_KEY 6
 // Bluetooth module communication baudrate
 #define BLUETOOTH_COMM_BAUDRATE 115200
 // BLUETOOTH INFO
@@ -93,9 +92,6 @@
 // NMEA messages inteval
 #define GNSS_NMEA_INTERVAL  200//ms
 
-/************** BLUETOOTH *****************/
-#define MODULE_NAME "Cyclopee"
-
 /************** DATA NUMBER OF DECIMALS *****************/
 // Location
 #define LOC_DECIMALS  9
@@ -106,7 +102,7 @@
 // Temperature
 #define TEMP_DECIMALS 3
 // Distance
-#define DIST_DECIMALS 1
+#define TURB_DECIMALS 1
 
 /************** BUFFERS *****************/
 // Maximum buffer size
@@ -118,7 +114,7 @@ enum Devices : uint8_t  {
 
   SD_CARD = 0,
   TEMPERATURE,
-  DISTANCE,
+  TURBIDITY,
   GNSS_MODULE,
   BLUETOOTH
 };
@@ -126,7 +122,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 1
+#if 0
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -134,7 +130,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 0
+#define FILE_DUMP 1
 
 /* ###################
  * #    LIBRARIES    #
@@ -154,14 +150,14 @@ enum Devices : uint8_t  {
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
 void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gnss, Metro& logSegCountdown, volatile bool& deviceConnected);
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const float& dist_mm, const float& temp_C);
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_ntu, const float& temp_C);
 void dumpFileToSerial(File& file);
 // GNSS setup
 void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected);
 void gnssRefresh();
 // Bluetooth communication
 void setupBluetooth(String& satelliteID, volatile bool& deviceConnected);
-void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const float& dist_mm, const float& temp_C);
+void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_ntu, const float& temp_C);
 void readBluetoothOrders();
 // Sensor reading interrupt
 void readSensors();
@@ -175,7 +171,7 @@ void waitForReboot(const String& msg);
  * ######################
  */
 #include "DS18B20_temperature.h"
-#include "JSN_SR04T_distance.h"
+#include "Gravity_turbidity.h"
 
 /* ##################
  * #    PROGRAM     #
@@ -196,9 +192,6 @@ volatile bool enLog = false;
 // GNSS MODULE
 // TinyGPSPlus objects to parse NMEA and store location and time
 TinyGPSPlus gnss;
-TinyGPSCustom gnssGeoidElv(gnss, "GNGGA", 11);
-TinyGPSCustom gnssFixMode(gnss, "GNGGA", 6);
-TinyGPSCustom gnssPDOP(gnss, "GNGSA", 15);
 
 // Bluetooth
 String satelliteID;
@@ -246,11 +239,11 @@ void setup() {
   SERIAL_DBG('\n')
   // Setting up temperature sensor
   SERIAL_DBG("## TEMPERATURE SENSOR\n")
-  //setupTempSensor(connectedDevices[TEMPERATURE]);
+  setupTempSensor(connectedDevices[TEMPERATURE]);
   SERIAL_DBG('\n')
-  // Setting up distance sensor
-  SERIAL_DBG("## DISTANCE SENSOR\n")
-  //setupDistSensor(connectedDevices[DISTANCE]);
+  // Setting up turb_ntuidity sensor
+  SERIAL_DBG("## TURBIDITY SENSOR\n")
+  setupTurbSensor(connectedDevices[TURBIDITY]);
   SERIAL_DBG('\n')
   // GNSS set up
   SERIAL_DBG("## GNSS MODULE\n")
@@ -275,13 +268,13 @@ void setup() {
 RingBuf <uint32_t, MAX_BUFFER_SIZE> time_buf;
 RingBuf <double, MAX_BUFFER_SIZE> lng_buf, lat_buf, elv_buf;
 RingBuf <const char*, MAX_BUFFER_SIZE> fixMode_buf, pdop_buf;
-RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf, dist_buf;
+RingBuf <float, MAX_BUFFER_SIZE> temp_buf, turbV_buf, turbNTU_buf;
 
 // Variables to store buffer readings
 uint32_t time_ms;
 double lng_deg, lat_deg, elv_m;
 const char *fixMode, *pdop;
-float extTemp_C, dist_mm;
+float temp_C, turb_V, turb_ntu;
 
 /*
  * @brief:
@@ -312,8 +305,8 @@ void loop() {
   SERIAL_DBG("TEMPERATURE :\t")
   SERIAL_DBG(connectedDevices[TEMPERATURE])
   SERIAL_DBG('\n')
-  SERIAL_DBG("DISTANCE :\t")
-  SERIAL_DBG(connectedDevices[DISTANCE])
+  SERIAL_DBG("turb_ntuIDITY :\t")
+  SERIAL_DBG(connectedDevices[TURBIDITY])
   SERIAL_DBG('\n')
   SERIAL_DBG("GNSS MODULE :\t")
   SERIAL_DBG(connectedDevices[GNSS_MODULE])
@@ -346,12 +339,13 @@ void loop() {
       elv_buf.pop(elv_m);
       fixMode_buf.pop(fixMode);
       pdop_buf.pop(pdop);
-      extTemp_buf.pop(extTemp_C);
-      dist_buf.pop(dist_mm);
+      temp_buf.pop(temp_C);
+      turbV_buf.pop(turb_V);
+      turbNTU_buf.pop(turb_ntu);
       // -----------------
-      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C) )
+      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, turb_V, turb_ntu, temp_C) )
         SERIAL_DBG("Logging failed...\n")
-      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C);
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, turb_V, turb_ntu, temp_C);
     }    
     // Dumping log file to Serial
     if (FILE_DUMP && fileDumpCountdown.check())
@@ -368,14 +362,15 @@ void loop() {
       elv_buf.pop(elv_m);
       fixMode_buf.pop(fixMode);
       pdop_buf.pop(pdop);
-      extTemp_buf.pop(extTemp_C);
-      dist_buf.pop(dist_mm);
+      temp_buf.pop(temp_C);
+      turbV_buf.pop(turb_V);
+      turbNTU_buf.pop(turb_ntu);
       // ---------------------
-      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C) )
+      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, turb_V, turb_ntu, temp_C) )
         SERIAL_DBG("Logging failed...\n")
       else
         logFile.close();
-      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C);
+      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, turb_V, turb_ntu, temp_C);
     }
     else
       SERIAL_DBG("Logging disabled...\n")
@@ -420,18 +415,12 @@ void readSensors()  {
         lat_buf.push(NO_GNSS_LOCATION);
       }
 
-      if (gnss.altitude.isUpdated())
-        elv_buf.lockedPush(gnss.altitude.meters() + strtod(gnssGeoidElv.value(), NULL));
-      else
-        elv_buf.push(NO_GNSS_ALTITUDE);
-
-      pdop_buf.lockedPush(gnssPDOP.value());
-      fixMode_buf.lockedPush(gnssFixMode.value());
-
       // Acquire temperature
-      extTemp_buf.push(readTemperature(connectedDevices[TEMPERATURE]));
-      // Acquire distance
-      dist_buf.push(readDistance(extTemp_buf[extTemp_buf.size()-1], connectedDevices[DISTANCE]));
+      temp_buf.push(readTemperature(connectedDevices[TEMPERATURE]));
+      // Acquire raw turb_ntuidity value
+      turbV_buf.push(readRawTurbidity(connectedDevices[TURBIDITY]));
+      // Compute turb_ntuidity
+      turbNTU_buf.push(computeTurbidity());
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -554,7 +543,7 @@ void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
   SERIAL_DBG("Done.\n")
 } 
 
-void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const float& dist_mm, const float& temp_C) {
+void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_V, const float& turb_ntu, const float& temp_C) {
 
   String timeVal_str = "", date_str = "";
   str = "" ;
@@ -585,21 +574,17 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
   else
     str += "null";
   str += ',';
-  // Inserting elevation
-  str += "\"elv\":";
-  if (elv_m != NO_GNSS_ALTITUDE)
-    str += String(elv_m, ELV_DECIMALS);
+  // Inserting raw turbidity
+  str += "\"raw_turb\":";
+  if (turb_V >= MIN_TURB_VOLT)
+    str += String(turb_V, TURB_DECIMALS);
   else
     str += "null";
   str += ',';
-  // Inserting GNSS fix mode
-  str += "\"fix\":" + String(fixMode) + ',';
-  // inserting GNSS PDOP value
-  str += "\"pdop\":" + String(pdop) + ',';
-  // Inserting distance
-  str += "\"dist\":";
-  if (dist_mm != DIST_NO_VALUE)
-    str += String(dist_mm, DIST_DECIMALS);
+  // Inserting turbidity
+  str += "\"turb\":";
+  if (turb_ntu != TURB_NO_VALUE)
+    str += String(turb_ntu, TURB_DECIMALS);
   else
     str += "null";
   str += ',';
@@ -612,10 +597,10 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
   str += '}';
 }
 
-void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C)  {
+void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_V, const float& turb_ntu, const float& temp_C)  {
 
   String str = "";
-  json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);
+  json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, turb_V, turb_ntu, temp_C);
   BLUETOOTH_SERIAL.println(str);
   
 }
@@ -652,6 +637,7 @@ void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected) {
       waitForReboot("No signal, check GNSS receiver wiring.");
   }
   SERIAL_DBG("Done.\n")
+
   // Acquiring GNSS date and time
   SERIAL_DBG("Acquiring GNSS date and time... ")
   while (gnss.date.value() == 0 && gnss.time.value() == 0)
@@ -814,7 +800,7 @@ bool newLogFile(File& file, const String& dirName, String& fileName)  {
     return false;
   }
   file.print("Date:,"); file.println(dirName);
-  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Altitude (cm),Fix Mode,PDOP,Distance (mm),External temperature (°C)");
+  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Raw Turbidity (V),Turbidity (NTU), Temperature (°C)");
   return true;
 }
 
@@ -881,10 +867,10 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
  *    lng_deg : Longitude in ° to log.
  *    lat_deg : Latitude in ° to log.
  *    elv_m : Longitude in cm to log.
- *    dist_mm : Distance in mm to log.
+ *    turb_ntu : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const float& dist_mm, const float& temp_C)  {
+void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_V, const float& turb_ntu, const float& temp_C)  {
 
   SERIAL_DBG("\n---> csv_logStr()\n") 
   
@@ -912,31 +898,23 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += "Nan";
   }
   log_str += ',';
-  // Inserting GNSS altitude into log string
-  if (elv_m != NO_GNSS_ALTITUDE)
-    log_str += String (elv_m, ELV_DECIMALS);
+  // Inserting raw turbidity into log string
+  if (turb_V >= MIN_TURB_VOLT)
+    log_str += String(turb_V, TURB_DECIMALS);
   else  {
-    SERIAL_DBG("No GNSS location response, check wiring...\n")
+    SERIAL_DBG("No turbidity response, check wiring...\n")
     log_str += "Nan";
   }
   log_str += ',';
-  // Inserting GNSS fix mode value
-  log_str += String(fixMode);
-  log_str += ',';
-  // Inserting GNSS PDOP value
-  log_str += String(pdop);
-  log_str += ',';
-  // Inserting distance into log string
-  if (dist_mm != DIST_NO_VALUE)
-    log_str += String(dist_mm, DIST_DECIMALS);
-  else  {
-    SERIAL_DBG("No distance response, check wiring...\n")
+  // Inserting turbidity into log string
+  if (turb_ntu != TURB_NO_VALUE)
+    log_str += String(turb_ntu, TURB_DECIMALS);
+  else
     log_str += "Nan";
-  }
   log_str += ',';
   // Inserting external temperature into log string
-  if (extTemp_C != TEMP_NO_VALUE)
-    log_str += String(extTemp_C, TEMP_DECIMALS);
+  if (temp_C != TEMP_NO_VALUE)
+    log_str += String(temp_C, TEMP_DECIMALS);
   else  {
     SERIAL_DBG("No temperature response, check wiring...\n")
     log_str += "Nan";
@@ -952,13 +930,13 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
  *    lng_deg : Longitude in ° to log.
  *    lat_deg : Latitude in ° to log.
  *    elv_m : Longitude in cm to log.
- *    dist_mm : Distance in mm to log.
+ *    turb_ntu : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const float& dist_mm, const float& temp_C) {
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const float& turb_V, const float& turb_ntu, const float& temp_C) {
 
   String log_str;
-  csv_logStr(log_str, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);
+  csv_logStr(log_str, timeVal, lng_deg, lat_deg, turb_V, turb_ntu, temp_C);
   // Check if log file is open
   if (!file)
     return false;

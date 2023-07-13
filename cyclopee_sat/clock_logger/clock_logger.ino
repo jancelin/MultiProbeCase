@@ -40,11 +40,11 @@
 
 /* Current date & time */
 #define YEAR      2023
-#define MONTH     04
+#define MONTH     21
 #define DAY       06
-#define HOURS     23
-#define MINUTES   59
-#define SECONDS   45
+#define HOURS     15
+#define MINUTES   45
+#define SECONDS   00
 
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
@@ -125,7 +125,7 @@ void handleDigitalIO();
  * ######################
  */
 #include "DS18B20_temperature.h"
-#include "URM14_distance.h"
+#include "JSN_SR04T_distance.h"
 
 /* ##################
  * #    PROGRAM     #
@@ -181,7 +181,11 @@ void setup() {
   // Setting up temperature sensor
   setupTempSensor(connectedDevices[TEMPERATURE]);
   SERIAL_DBG('\n')
+<<<<<<< HEAD
   // Setting up distance sensor
+=======
+  // Setting up distance
+>>>>>>> bluetooth
   setupDistSensor(connectedDevices[DISTANCE]);
   SERIAL_DBG('\n')
   // Setting time

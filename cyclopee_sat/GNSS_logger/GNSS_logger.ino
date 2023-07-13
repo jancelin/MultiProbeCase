@@ -38,7 +38,6 @@
  *      Serial (115200 baud)
  *      URM14_SERIAL (configured baudrate for URM14)
  *      GNSS_SERIAL (configured baudrate for GNSS module)
- *      BLUETOOTH_SERIAL (configured baudrate for Bluetooth module)
  * --------------------------
  */
 /* ###########################
@@ -46,15 +45,15 @@
  * ###########################
  */
 /************** SERIAL PORTS *****************/
-#define BLUETOOTH_SERIAL  Serial3
-#define URM14_SERIAL      Serial4
-#define GNSS_SERIAL       Serial2
-
+#define GNSS_SERIAL Serial2
+#define BLUETOOTH_SERIAL  Serial1
+ 
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
 // Check sensor reading interrupt duration before setting the value
 // 71s maximum
-#define READ_INTERVAL 2000/*ms*/ * 1000/*µs/ms*/
+#define READ_INTERVAL 1000/*ms*/ * 1000/*µs/ms*/
+
 // GNSS refresh interval
 // Minimal refresh rate to get 20ms GNSS time resolution
 #define GNSS_REFRESH_INTERVAL 1/*ms*/ * 1000/*ms/µs*/
@@ -68,44 +67,18 @@
 #define LOG_LED       13
 // Modbus DE & RE pins
 #define DE_PIN        30 // RE = ~DE => Wired to pin 30 as well
-// OneWire
-#define ONE_WIRE_BUS  14 // Teensy temperature data wire pin
 // Disable logging button
 #define BUTTON_PIN    16
 
 /************** BLUETOOTH MODULE *****************/
 // Bluetooth module key (AT mode) pin
-#define BLUETOOTH_KEY 6
-// Bluetooth module config baudrate
-#define BLUETOOTH_CONFIG_BAUDRATE 38400
+#define BLUETOOTH_KEY 2
 // Bluetooth module communication baudrate
 #define BLUETOOTH_COMM_BAUDRATE 115200
 // BLUETOOTH INFO
-#define BLUETOOTH_NAME           "Cyclopee"
+#define BLUETOOTH_NAME      "Cyclopee"
 #define BLUETOOTH_UART_CONF "115200,1,0"
-#define BLUETOOTH_NRG_MODE      ""
-
-/************** URM14 SENSOR *****************/
-// Sensor baudrate
-#define URM14_BAUDRATE 9600
-// Sensor ID
-#define URM14_ID  (uint16_t)0x11
-// Sensor registers
-#define URM14_ID_REG        (uint16_t)0x02
-#define URM14_DISTANCE_REG  (uint16_t)0x05
-#define URM14_EXT_TEMP_REG  (uint16_t)0x07
-#define URM14_CONTROL_REG   (uint16_t)0x08
-// Sensor config register bit values
-#define   TEMP_CPT_SEL_BIT      ((uint16_t)0x01)      // Use custom temperature compensation
-#define   TEMP_CPT_ENABLE_BIT   ((uint16_t)0x00 << 1) // Enable temperature compensation
-#define   MEASURE_MODE_BIT      ((uint16_t)0x00 << 2) // Passive(1)/auto(0) measure mode
-#define   MEASURE_TRIG_BIT      ((uint16_t)0x00 << 3) // Request mesure in passive mode. Unused in auto mode
-// URM14 read value when sensor disconnected
-#define URM14_DISCONNECTED  UINT16_MAX
-
-/************** DS18B20 SENSOR *****************/
-// Sensor ID
-#define DS18B20_ID   0
+#define BLUETOOTH_NRG_MODE  ""
 
 /************** GNSS module *****************/
 // GNSS commuiation baudrate
@@ -143,8 +116,8 @@
 enum Devices : uint8_t  {
 
   SD_CARD = 0,
-  DS18B20,
-  URM14,
+  TEMPERATURE,
+  DISTANCE,
   GNSS_MODULE,
   BLUETOOTH
 };
@@ -170,9 +143,6 @@ enum Devices : uint8_t  {
 #include <TinyGPSPlus.h>
 #include <TimeLib.h>
 #include <SD.h>
-#include <ModbusMaster.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
 #include <Metro.h>
 
 /* ###########################
@@ -183,27 +153,28 @@ enum Devices : uint8_t  {
 void setupSDCard(volatile bool& deviceConnected);
 // Log file setup
 void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& gnss, Metro& logSegCountdown, volatile bool& deviceConnected);
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const uint16_t& dist_mm, const float& temp_C);
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const float& dist_mm, const float& temp_C);
 void dumpFileToSerial(File& file);
-// OneWire communication with DS18B20
-void setupDS18B20(DallasTemperature& sensorNetwork, volatile bool& deviceConnected);
-// Modbus communication with URM14
-void preTrans()  {  digitalWrite(DE_PIN, HIGH); }
-void postTrans() {  digitalWrite(DE_PIN, LOW);  }
-void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sensorBaudrate, void (*preTransCbk)(), void (*postTransCbk)(), volatile bool& deviceConnected);
 // GNSS setup
 void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected);
 void gnssRefresh();
 // Bluetooth communication
 void setupBluetooth(String& satelliteID, volatile bool& deviceConnected);
-void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C);
+void sendDataToBluetooth(TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const float& dist_mm, const float& temp_C);
 void readBluetoothOrders();
 // Sensor reading interrupt
 void readSensors();
 // Digital IO update interrupt
 void handleDigitalIO();
-// Error handling
-void waitForReboot(const String& msg = "");
+// Handling errors
+void waitForReboot(const String& msg);
+
+/* ######################
+ * #   SENSOR MODULES   #
+ * ######################
+ */
+#include "DS18B20_temperature.h"
+#include "JSN_SR04T_distance.h"
 
 /* ##################
  * #    PROGRAM     #
@@ -220,20 +191,6 @@ String logFileName = "";
 File logFile;
 // Log state (enabled/disabled)
 volatile bool enLog = false;
-
-// DS18B20
-// OneWire bus
-OneWire oneWire(ONE_WIRE_BUS);
-// Dallas sensor bus
-DallasTemperature sensors(&oneWire);
-// DS18B20 address
-byte ds18b20_addr[8];
-
-// URM14
-// ModbusMaster sensor object for URM14
-ModbusMaster urm14;
-// URM14 config
-uint16_t urm14_controlBits = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENABLE_BIT | TEMP_CPT_SEL_BIT;
 
 // GNSS MODULE
 // TinyGPSPlus objects to parse NMEA and store location and time
@@ -261,7 +218,7 @@ Metro fileDumpCountdown = Metro(1000);
 
 /*
  *  @brief:
- *    Sets up SD card, GNSS module, URM14 and DS18B20 sensors.
+ *    Sets up SD card, GNSS module, distance and temperature sensors.
  */
 void setup() {
 
@@ -286,16 +243,16 @@ void setup() {
   SERIAL_DBG("## SD CARD\n")
   setupSDCard(connectedDevices[SD_CARD]);
   SERIAL_DBG('\n')
-  // Setting up DS18B20
-  SERIAL_DBG("## DS18B20\n")
-  setupDS18B20(sensors, connectedDevices[DS18B20]);
+  // Setting up temperature sensor
+  SERIAL_DBG("## TEMPERATURE SENSOR\n")
+  //setupTempSensor(connectedDevices[TEMPERATURE]);
   SERIAL_DBG('\n')
-  // Setting up URM14
-  SERIAL_DBG("## URM14\n")
-  setupURM14(urm14, URM14_ID, URM14_BAUDRATE, preTrans, postTrans, connectedDevices[URM14]);
+  // Setting up distance sensor
+  SERIAL_DBG("## DISTANCE SENSOR\n")
+  //setupDistSensor(connectedDevices[DISTANCE]);
   SERIAL_DBG('\n')
   // GNSS set up
-  SERIAL_DBG("## GNSS\n")
+  SERIAL_DBG("## GNSS MODULE\n")
   setupGNSS(gnss, connectedDevices[GNSS_MODULE]);
   SERIAL_DBG('\n')
   // Setting up timer interrupts
@@ -316,18 +273,14 @@ void setup() {
 // Buffers to store values to log
 RingBuf <uint32_t, MAX_BUFFER_SIZE> time_buf;
 RingBuf <double, MAX_BUFFER_SIZE> lng_buf, lat_buf, elv_buf;
-RingBuf <const char*, MAX_BUFFER_SIZE> fixMode_buf;
-RingBuf <const char*, MAX_BUFFER_SIZE> pdop_buf;
-RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf;
-RingBuf <uint16_t, MAX_BUFFER_SIZE> dist_buf;
+RingBuf <const char*, MAX_BUFFER_SIZE> fixMode_buf, pdop_buf;
+RingBuf <float, MAX_BUFFER_SIZE> extTemp_buf, dist_buf;
 
 // Variables to store buffer readings
 uint32_t time_ms;
 double lng_deg, lat_deg, elv_m;
-const char* pdop;
-const char* fixMode;
-float extTemp_C;
-uint16_t dist_mm;
+const char *fixMode, *pdop;
+float extTemp_C, dist_mm;
 
 /*
  * @brief:
@@ -355,11 +308,11 @@ void loop() {
   SERIAL_DBG("SD CARD :\t")
   SERIAL_DBG(connectedDevices[SD_CARD])
   SERIAL_DBG('\n')
-  SERIAL_DBG("DS18B20 :\t")
-  SERIAL_DBG(connectedDevices[DS18B20])
+  SERIAL_DBG("TEMPERATURE :\t")
+  SERIAL_DBG(connectedDevices[TEMPERATURE])
   SERIAL_DBG('\n')
-  SERIAL_DBG("URM14 :\t\t")
-  SERIAL_DBG(connectedDevices[URM14])
+  SERIAL_DBG("DISTANCE :\t")
+  SERIAL_DBG(connectedDevices[DISTANCE])
   SERIAL_DBG('\n')
   SERIAL_DBG("GNSS MODULE :\t")
   SERIAL_DBG(connectedDevices[GNSS_MODULE])
@@ -441,14 +394,11 @@ void loop() {
  * @brief: 
  *    Interrupts loop() to read sensors.
  * @exec time:
- *     Long and mostly depends on DS18B20 resolution config.
+ *     Long and mostly depends on temperature resolution config.
  */
 void readSensors()  {
   // Interrupt execution time
   //long t = millis();
-  
-  // Store Modbus communication errors
-  uint8_t mbError;
   
   // If logging enabled and logFile open
   if (enLog && logFile) {
@@ -477,55 +427,10 @@ void readSensors()  {
       pdop_buf.lockedPush(gnssPDOP.value());
       fixMode_buf.lockedPush(gnssFixMode.value());
 
-// DS18B20 convertion takes time (depends on sensor resolution config)
-      // Read DS18B20 temperature
-      sensors.requestTemperatures();
-      extTemp_buf.push(sensors.getTempC(ds18b20_addr));
-      // Check for OneWire errors
-      if (extTemp_buf[extTemp_buf.size() -1] == DEVICE_DISCONNECTED_C) {
-        SERIAL_DBG("OneWire : DS18B20 disconnected...")
-        connectedDevices[DS18B20] = false;
-      }
-      else
-        connectedDevices[DS18B20] = true;
-// --------------
-
-      // External compensation: Updade external URM14 temperature register
-      if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)  {
-        mbError = urm14.writeSingleRegister(URM14_EXT_TEMP_REG, (uint16_t)(extTemp_buf[extTemp_buf.size()] * 10.0));
-        // Check for Modbus errors
-        if (mbError != ModbusMaster::ku8MBSuccess)  {
-          dist_buf.push(URM14_DISCONNECTED);
-          connectedDevices[URM14] = false;
-        }
-        else
-          connectedDevices[URM14] = true;
-      }
-
-      // Trigger mode: Set trigger bit to request one measurement
-      if (MEASURE_MODE_BIT) {
-        mbError = urm14.writeSingleRegister(URM14_CONTROL_REG, urm14_controlBits); //Writes the setting value to the control register
-        if (mbError != ModbusMaster::ku8MBSuccess)  {
-          dist_buf.push(URM14_DISCONNECTED);
-          connectedDevices[URM14] = false;
-        }
-        else
-          connectedDevices[URM14] = true;
-      }
-      // Readng distance input register at 0x05
-      // Should use readInputRegisters() but somehow doesn't work
-      // Trhows ku8MBIllegalDataAddress error (0x02)
-      // ToDo : understand error (might be manufacturer who did not follow Modbus standard)
-      mbError = urm14.readHoldingRegisters(URM14_DISTANCE_REG, 1);
-      // Check for Modbus errors
-      if (mbError != ModbusMaster::ku8MBSuccess)  {
-        dist_buf.push(URM14_DISCONNECTED);
-        connectedDevices[URM14] = false;
-      }
-      else  {
-        dist_buf.push(urm14.getResponseBuffer(0));
-        connectedDevices[URM14] = true;
-      }
+      // Acquire temperature
+      extTemp_buf.push(readTemperature(connectedDevices[TEMPERATURE]));
+      // Acquire distance
+      dist_buf.push(readDistance(extTemp_buf[extTemp_buf.size()-1], connectedDevices[DISTANCE]));
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -539,12 +444,12 @@ void readSensors()  {
 
 bool sendATCommand(const String& cmd, String* pAns = NULL) {
 
-  char c;
+  char c = '\0';
   String tmp;
   // Writing command to module
   BLUETOOTH_SERIAL.println(cmd);
   // Waitng for data
-  delay(100);
+  delay(150);
   // Reading data
   while (BLUETOOTH_SERIAL.available() && c != '\n') {
     c = BLUETOOTH_SERIAL.read();
@@ -555,7 +460,7 @@ bool sendATCommand(const String& cmd, String* pAns = NULL) {
   // Checking fo errors
   if (tmp.length() == 0 || tmp.indexOf("ERROR") != -1) {
     tmp.remove(tmp.length()-1);
-    Serial.println("An error occured when writing command '" + cmd + "' : " + ((tmp.length() == 0) ? "No response" : tmp ) + '.');
+    SERIAL_DBG("An error occured when writing command '" + cmd + "' : " + ((tmp.length() == 0) ? "No response" : tmp ) + ".\n");
     return false;
   }
   // Affecting tmp to answer string if provided
@@ -648,7 +553,7 @@ void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
   SERIAL_DBG("Done.\n")
 } 
 
-void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C) {
+void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const float& dist_mm, const float& temp_C) {
 
   String timeVal_str = "", date_str = "";
   str = "" ;
@@ -692,14 +597,14 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
   str += "\"pdop\":" + String(pdop) + ',';
   // Inserting distance
   str += "\"dist\":";
-  if (dist_mm != URM14_DISCONNECTED)
-    str += String(dist_mm/10.0, DIST_DECIMALS);
+  if (dist_mm != DIST_NO_VALUE)
+    str += String(dist_mm, DIST_DECIMALS);
   else
     str += "null";
   str += ',';
   // Inserting temperature
   str += "\"temp\":";
-  if (temp_C != DEVICE_DISCONNECTED_C)
+  if (temp_C != TEMP_NO_VALUE)
     str += String(temp_C, TEMP_DECIMALS);
   else
     str += "null";
@@ -745,16 +650,15 @@ void setupGNSS(TinyGPSPlus& gnss, volatile bool& deviceConnected) {
     if (millis() - startTime > 7000)
       waitForReboot("No signal, check GNSS receiver wiring.");
   }
-  SERIAL_DBG("Done.\n");
+  SERIAL_DBG("Done.\n")
+
   // Acquiring GNSS date and time
   SERIAL_DBG("Acquiring GNSS date and time... ")
   while (gnss.date.value() == 0 && gnss.time.value() == 0)
     gnssRefresh();
-
-  SERIAL_DBG("Done.\n");
-    
-  deviceConnected = true;
   SERIAL_DBG("Done.\n")
+  
+  deviceConnected = true;
 }
 
 /*
@@ -980,7 +884,7 @@ void handleLogFile(File& file, String& dirName, String& fileName, TinyGPSPlus& g
  *    dist_mm : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C)  {
+void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const float& dist_mm, const float& temp_C)  {
 
   SERIAL_DBG("\n---> csv_logStr()\n") 
   
@@ -1023,18 +927,18 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
   log_str += String(pdop);
   log_str += ',';
   // Inserting distance into log string
-  if (dist_mm != URM14_DISCONNECTED)
-    log_str += String(dist_mm/10.0, DIST_DECIMALS);
+  if (dist_mm != DIST_NO_VALUE)
+    log_str += String(dist_mm, DIST_DECIMALS);
   else  {
-    SERIAL_DBG("No URM14 response, check wiring...\n")
+    SERIAL_DBG("No distance response, check wiring...\n")
     log_str += "Nan";
   }
   log_str += ',';
   // Inserting external temperature into log string
-  if (extTemp_C != DEVICE_DISCONNECTED_C)
+  if (extTemp_C != TEMP_NO_VALUE)
     log_str += String(extTemp_C, TEMP_DECIMALS);
   else  {
-    SERIAL_DBG("No DS18B20 response, check wiring...\n")
+    SERIAL_DBG("No temperature response, check wiring...\n")
     log_str += "Nan";
   }
 }
@@ -1051,7 +955,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
  *    dist_mm : Distance in mm to log.
  *    temp_C : Temperature in °C to log.
  */
-bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C) {
+bool logToSD(File& file, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const float& dist_mm, const float& temp_C) {
 
   String log_str;
   csv_logStr(log_str, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);
@@ -1089,77 +993,6 @@ void dumpFileToSerial(File& file) {
   }
   else
     SERIAL_DBG("---> dumpFileToSerial() : No file open...")  
-}
-
-/* ##############   URM14  ################ */
-/*
- * @brief: 
- *    Sets up the URM14 ultrasoic sensor
- * @params:
- *    sensor: ModbusMaster instance that represents the senter on the bus.
- *    sensorID: Sensor id on the bus.
- *    sensorBaudrate: Baudrate to communication with the sensor.
- *    preTransCbk: Callback called before modbus tansmission to set RS485 interface in transmission mode.
- *    postTransCbk: Callback called after modbus tansmission to set RS485 interface back in reception mode.
- *    deviceConnected: Bool to store if URM14 is connected or not.
- */
-void setupURM14(ModbusMaster& sensor, const uint16_t& sensorID, const long& sensorBaudrate, void (*preTransCbk)(), void (*postTransCbk)(),  volatile bool& deviceConnected)  {
-
-  // URM14 sensor binary config
-  uint16_t fileDumpCountdown = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENABLE_BIT | TEMP_CPT_SEL_BIT;
-  // Modbus communication errors
-  uint8_t mbError;
-
-  // RS485 DE pin setup
-  pinMode(DE_PIN, OUTPUT);
-  digitalWrite(DE_PIN, LOW);
-
-  // Set Modbus communication
-  URM14_SERIAL.begin(sensorBaudrate);
-  // Modbus slave id 0x11 on serial port URM14_SERIAL
-  sensor.begin(sensorID, URM14_SERIAL);
-  // Set pre/post transmision callbacks in ModbusMaster object
-  sensor.preTransmission(preTransCbk);
-  sensor.postTransmission(postTransCbk);
-
-  // Writing config
-  mbError = sensor.writeSingleRegister(URM14_CONTROL_REG, fileDumpCountdown); //Writes the setting value to the control register
-  if (mbError != ModbusMaster::ku8MBSuccess)
-    waitForReboot("Modbus : Config could not be written to UMR14 sensor, check wiring.");
-  else
-    SERIAL_DBG("Modbus : UMR14 sensor found and configured!\n")
-    
-  deviceConnected = true;
-  SERIAL_DBG("Done.\n")
-}
-
-/* ##############   DS18B20   ################ */
-/*
- * @brief: 
- *    Sets up the DS18B20 temperature sensor.
- * @params:
- *    sensorNetwork: DallasTemperature instance that represents a DallasTemperature sensor network.
- *    deviceConnected: Bool to store if DS18B20 is connected or not.
- */
-void setupDS18B20(DallasTemperature& sensorNetwork,  volatile bool& deviceConnected) {
-
-  sensorNetwork.begin();
-  // Setting resolution for temperature (the lower, the quicker the sensor responds)
-  sensorNetwork.setResolution(11);
-  // Store DS18B20 OneWire adress for fast data acquitsition
-  sensorNetwork.getAddress(ds18b20_addr, DS18B20_ID);
-  // Check for OneWire errors
-  if (sensorNetwork.getTempC(ds18b20_addr) == DEVICE_DISCONNECTED_C)  {
-    SERIAL_DBG("OneWire : No DS18B20 connected...\n")
-    SERIAL_DBG("No external temperature compensation possible.\n")
-    if (!TEMP_CPT_ENABLE_BIT && TEMP_CPT_SEL_BIT)
-      waitForReboot();
-  }
-  else
-    SERIAL_DBG("OneWire : DS18B20 found!\n")
-    
-  deviceConnected = true;
-  SERIAL_DBG("Done.\n")
 }
 
 /* ##############   DIGITAL IO  ################ */

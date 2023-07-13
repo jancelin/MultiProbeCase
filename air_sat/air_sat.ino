@@ -106,8 +106,30 @@ void setup() {
     }
 
     /* BLUETOOTH CONFIG */
-    Serial1.begin(COMM_BAUDRATE);
     String ans = "";
+    // Pin setup
+    pinMode(KEY_PIN, OUTPUT);
+    Serial1.begin(COMM_BAUDRATE);
+    delay(100);
+    digitalWrite(KEY_PIN, HIGH);
+    // Checking for bluetooth module presence
+    if (!sendATCommand("AT"))
+      waitForReboot("No module detected, check wiring...");
+    Serial.println("Module detected.");
+    // Current module config
+    Serial.println("Module initial config :");
+    if (!readBTModuleConfig(btName, macAddr, UARTConf)) {
+      Serial.println("Could not read Bluetooth module config.");
+    }
+    else {
+      Serial.println("BT name :\t" + btName);
+      Serial.println("MAC adress :\t" + macAddr);
+      Serial.println("UART config :\t" + UARTConf);
+      Serial.println();
+    }
+
+    delay(100);
+    digitalWrite(KEY_PIN, LOW);
 
     /*      GNSS From RX5       */
     Serial5.begin(GNSS_BAUDRATE);

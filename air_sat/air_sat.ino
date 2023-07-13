@@ -54,6 +54,11 @@ unsigned long updateTime = 0;
 uint32_t logInterval = 5000;
 unsigned long previousLogTime = 0;
 
+/* Logging */
+String logDir = "";
+String logFileName = "AIR.csv";
+File logFile, confFile;
+
 void setup() {
   
     Serial.begin(115200);
@@ -106,11 +111,37 @@ void setup() {
     }
 
     /* BLUETOOTH CONFIG */
-    Serial1.begin(COMM_BAUDRATE);
     String ans = "";
+    // Pin setup
+    pinMode(KEY_PIN, OUTPUT);
+    Serial1.begin(COMM_BAUDRATE);
+    delay(100);
+    digitalWrite(KEY_PIN, HIGH);
+    // Checking for bluetooth module presence
+    if (!sendATCommand("AT"))
+      waitForReboot("No module detected, check wiring...");
+    Serial.println("Module detected.");
+    // Current module config
+    Serial.println("Module initial config :");
+    if (!readBTModuleConfig(btName, macAddr, UARTConf)) {
+      Serial.println("Could not read Bluetooth module config.");
+    }
+    else {
+      Serial.println("BT name :\t" + btName);
+      Serial.println("MAC adress :\t" + macAddr);
+      Serial.println("UART config :\t" + UARTConf);
+      Serial.println();
+    }
+
+    delay(100);
+    digitalWrite(KEY_PIN, LOW);
 
     /*      GNSS From RX5       */
     Serial5.begin(GNSS_BAUDRATE);
+
+    /* CONFIG SD CARD for local storage */
+    setupSDCard();
+    logFile = SD.open("AIR.csv", FILE_WRITE);
 }
 
 /* *********************** */
@@ -167,7 +198,7 @@ void loop() {
             Serial.println("Invalid sample detected, skipping.");
         } else {
             String json = "{";
-            json += "\"id\":\"Air_98:d3:71:fe:09:0f\",";
+            json += "\"id\":\"Air_"+ (String)macAddr + "\",";
             json += "\"time\":\"" + (String)gps.date.year() + "/" + (String)gps.date.month() + "/" + (String)gps.date.day() + " ";
             json += (String)gps.time.hour() + ":" + (String)gps.time.minute() + ":" + (String)gps.time.second() + "." +  (String)gps.time.centisecond() + "\",";
             json += "\"lon\":" + String(gps.location.lng(),8) + ","; 
@@ -185,6 +216,9 @@ void loop() {
             // Sending over Bluetooth
             Serial1.println(json);
             previousLogTime = millis(); 
+
+            // Save Log on SD Card
+            logToSD(logFile, json);
         }
     }
 }
@@ -232,7 +266,6 @@ void commandManager(String message) {
     start_log = 0;
   }
 }
-
 
 void printUint16Hex(uint16_t value) {
     Serial.print(value < 4096 ? "0" : "");

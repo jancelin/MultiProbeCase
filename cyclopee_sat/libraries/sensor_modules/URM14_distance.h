@@ -62,7 +62,7 @@ uint16_t urm14_config_bits = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENAB
  */
 void preTransCbk()  {  digitalWrite(DE_PIN, HIGH); }
 void postTransCbk() {  digitalWrite(DE_PIN, LOW);  }
-void setupURM14(volatile bool& deviceConnected);
+void setupDistSensor(volatile bool& deviceConnected);
 float readDistance(const float& extTemp_C, volatile bool& deviceConnected);
 /*
  ****************************

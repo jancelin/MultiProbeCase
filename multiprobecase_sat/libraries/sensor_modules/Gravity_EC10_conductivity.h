@@ -33,7 +33,7 @@
  *********************
  */
 // Teensy analog pin wired to sensor output
-#define EC_PIN  33
+#define EC_PIN  A13
 
 /*
  *****************

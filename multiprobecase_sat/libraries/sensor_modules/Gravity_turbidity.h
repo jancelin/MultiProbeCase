@@ -30,7 +30,7 @@
 // Minimum turbidity value
 #define MIN_TURB_VOLT  2.5/*V*/
 // Turbidiy value if sensor is out of range or disconnected
-#define TURB_NO_VALUE	-1
+#define TURB_NO_VALUE   -1
 
 /*
  *********************
@@ -38,7 +38,7 @@
  *********************
  */
 // Teensy analog pin wired to voltage divided sensor output
-#define TURBIDITY_PIN  33
+#define TURBIDITY_PIN  A17
 
 /*
  *****************
@@ -52,7 +52,7 @@
  *   STATIC VARIABLES   *
  ************************
  */
-static float sensorVoltage = 0.0/*V*/;
+static float turb_voltage = 0.0/*V*/;
 
 
 /*
@@ -97,21 +97,20 @@ float readRawTurbidity(volatile bool& deviceConnected)	{
 	float analogVoltage = analogRead(TURBIDITY_PIN) * ADC_QUANTUM;
     
 	// Compute the actual sensor voltage
-	sensorVoltage = analogVoltage / (VOLT_DIV_FACTOR);
-	
+	turb_voltage = analogVoltage / (VOLT_DIV_FACTOR);	
 
 	// Checking if device still connected
-	if (sensorVoltage < MIN_TURB_VOLT)
+	if (turb_voltage < MIN_TURB_VOLT)
 		deviceConnected = false;
 	else
 		deviceConnected = true;
 	
-    return sensorVoltage;
+    return turb_voltage;
 }
 
 /*
  * @brief: 
- *      returns turbidity computed using sensorVoltage sensor module static variable.
+ *      returns turbidity computed using turb_voltage sensor module static variable.
  * @params:
  *      deviceConnected: bool to store if sensor is connected or not.
  * @retrun:
@@ -120,5 +119,5 @@ float readRawTurbidity(volatile bool& deviceConnected)	{
 float computeTurbidity()    {
 
 	// Compute turbidity value with turbidity/voltage sensor curve
-	return (-3169.75*(sensorVoltage)) + 11220.52;
+	return (-3169.75*(turb_voltage)) + 11220.52;
 }

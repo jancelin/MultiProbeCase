@@ -38,7 +38,7 @@
  *********************
  */
 // Teensy analog pin wired to voltage divided sensor output
-#define TURBIDITY_PIN  33
+#define TURBIDITY_PIN  A17
 
 /*
  *****************
@@ -97,8 +97,7 @@ float readRawTurbidity(volatile bool& deviceConnected)	{
 	float analogVoltage = analogRead(TURBIDITY_PIN) * ADC_QUANTUM;
     
 	// Compute the actual sensor voltage
-	turb_voltage = analogVoltage / (VOLT_DIV_FACTOR);
-	
+	turb_voltage = analogVoltage / (VOLT_DIV_FACTOR);	
 
 	// Checking if device still connected
 	if (turb_voltage < MIN_TURB_VOLT)

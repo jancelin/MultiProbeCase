@@ -33,7 +33,7 @@
  *********************
  */
 // Teensy analog pin wired to sensor output
-#define EC_PIN  A13
+#define EC_PIN  33
 
 /*
  *****************
@@ -56,9 +56,9 @@ static float ec_voltage = 0.0/*mV*/;
  *   FUNCTION PROTOTYPES   *
  ***************************
  */
-void setupECSensor(volatile bool& deviceConnected);
-float readRawEC(volatile bool& deviceConnected);
-float computeEC();
+void setupCondSensor(volatile bool& deviceConnected);
+float readRawConductivity(volatile bool& deviceConnected);
+float computeConductivity();
 
 /*
  ****************************
@@ -71,13 +71,13 @@ float computeEC();
  * @params:
  *      deviceConnected: bool to store if sensor is connected or not.
  */
-void setupECSensor(volatile bool& deviceConnected)  {
+void setupCondSensor(volatile bool& deviceConnected)  {
 
     sensor.begin();
-    readRawEC(deviceConnected);
-    /*if (!deviceConnected)
+    readRawConductivity(deviceConnected);
+    if (!deviceConnected)
         waitForReboot("No Gravity EC sensor detected...");
-    */
+    
     deviceConnected = true;
 }
 
@@ -89,7 +89,7 @@ void setupECSensor(volatile bool& deviceConnected)  {
  * @retrun:
  *      sensor voltage output.
  */
-float readRawEC(volatile bool& deviceConnected) {
+float readRawConductivity(volatile bool& deviceConnected) {
 
     // Get measured voltage on voltage divider
     ec_voltage = analogRead(EC_PIN) * ADC_QUANTUM * 1000;
@@ -99,8 +99,6 @@ float readRawEC(volatile bool& deviceConnected) {
         deviceConnected = false;
     else
         deviceConnected = true;
-
-    sensor.calibration(ec_voltage, 23);
     
     return ec_voltage;
 }
@@ -113,8 +111,8 @@ float readRawEC(volatile bool& deviceConnected) {
  * @retrun:
  *      computed EC.
  */
-float computeEC(const float& temperature)    {
+float computeConductivity(const float& temperature)    {
 
-    // Compute EC value with EC using DFRobot_EC10 library
+    // Compute EC value using DFRobot_EC10 library
     return sensor.readEC(ec_voltage, temperature);
 }

@@ -45,8 +45,8 @@
  * ###########################
  */
 /************** SERIAL PORTS *****************/ 
-#define GNSS_SERIAL Serial2
-#define BLUETOOTH_SERIAL  Serial3
+#define GNSS_SERIAL Serial3
+#define BLUETOOTH_SERIAL  Serial1
  
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
@@ -72,7 +72,7 @@
 
 /************** BLUETOOTH MODULE *****************/
 // Bluetooth module key (AT mode) pin
-#define BLUETOOTH_KEY 6
+#define BLUETOOTH_KEY 2
 // Bluetooth module communication baudrate
 #define BLUETOOTH_COMM_BAUDRATE 115200
 // BLUETOOTH INFO
@@ -87,18 +87,12 @@
 #define NO_GNSS_TIME      24606099 // HH:MM:SS.CC
 // Longitude/latitude value if GNSS module disconnected
 #define NO_GNSS_LOCATION  91//°
-// Altitude value if GNSS module disconnected
-#define NO_GNSS_ALTITUDE  INT32_MAX
 // NMEA messages inteval
 #define GNSS_NMEA_INTERVAL  200//ms
 
 /************** DATA NUMBER OF DECIMALS *****************/
 // Location
 #define LOC_DECIMALS  9
-// Elevation
-#define ELV_DECIMALS  3
-// PDOP
-#define PDOP_DECIMALS 1
 // Temperature
 #define TEMP_DECIMALS 3
 // Turbidity
@@ -115,16 +109,16 @@
 enum Devices : uint8_t  {
 
   SD_CARD = 0,
+  GNSS_MODULE,
   TEMPERATURE,
   TURBIDITY,
-  GNSS_MODULE,
-  BLUETOOTH
+  CONDUCTIVITY
 };
 
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -132,7 +126,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -182,7 +176,7 @@ void waitForReboot(const String& msg);
  */
 /************** GLOBALS *****************/
 // Array to store devices connection state
-volatile bool connectedDevices[4] = {false, false, false, false};
+volatile bool connectedDevices[5] = {false, false, false, false, false};
 
 // LOGGING
 // Log file
@@ -234,7 +228,7 @@ void setup() {
 
   // Bluetooth setup
   SERIAL_DBG("## BLUETOOTH\n")
-  setupBluetooth(satelliteID, connectedDevices[BLUETOOTH]);
+  setupBluetooth(satelliteID);
   SERIAL_DBG('\n')
   // SD card init
   SERIAL_DBG("## SD CARD\n")
@@ -248,6 +242,11 @@ void setup() {
   SERIAL_DBG("## TURBIDITY SENSOR\n")
   setupTurbSensor(connectedDevices[TURBIDITY]);
   SERIAL_DBG('\n')
+  // Setting up conductivity sensor
+  SERIAL_DBG("## CONDUCTIVITY SENSOR\n")
+  setupCondSensor(connectedDevices[CONDUCTIVITY]);
+  SERIAL_DBG('\n')
+  
   // GNSS set up
   SERIAL_DBG("## GNSS MODULE\n")
   setupGNSS(gnss, connectedDevices[GNSS_MODULE]);
@@ -306,8 +305,11 @@ void loop() {
   SERIAL_DBG("TEMPERATURE :\t")
   SERIAL_DBG(connectedDevices[TEMPERATURE])
   SERIAL_DBG('\n')
-  SERIAL_DBG("turbIDITY :\t")
+  SERIAL_DBG("TURBIDITY :\t")
   SERIAL_DBG(connectedDevices[TURBIDITY])
+  SERIAL_DBG('\n')
+  SERIAL_DBG("CONDUCTIVITY :\t")
+  SERIAL_DBG(connectedDevices[CONDUCTIVITY])
   SERIAL_DBG('\n')
   SERIAL_DBG("GNSS MODULE :\t")
   SERIAL_DBG(connectedDevices[GNSS_MODULE])
@@ -421,6 +423,10 @@ void readSensors()  {
       rawTurb_buf.push(readRawTurbidity(connectedDevices[TURBIDITY]));
       // Compute turbidity
       turb_buf.push(computeTurbidity());
+      // Acquire raw conductvity value
+      rawCond_buf.push(readRawConductivity(connectedDevices[CONDUCTIVITY]));
+      // Compute conductivity
+      cond_buf.push(computeConductivity(temp_buf[temp_buf.size()-1]));
     }
     else
       SERIAL_DBG("Buffer is full!\n")
@@ -436,15 +442,20 @@ bool sendATCommand(const String& cmd, String* pAns = NULL) {
 
   char c = '\0';
   String tmp;
+
+  // Set AT mode pin high
+  digitalWrite(BLUETOOTH_KEY, HIGH);
+  
   // Writing command to module
   BLUETOOTH_SERIAL.println(cmd);
   // Waitng for data
-  delay(150);
+  delay(200);
   // Reading data
   while (BLUETOOTH_SERIAL.available() && c != '\n') {
     c = BLUETOOTH_SERIAL.read();
     tmp += c;
   }
+  digitalWrite(BLUETOOTH_KEY, LOW);
   // Clearing remaining OK answer
   BLUETOOTH_SERIAL.clear();
   // Checking fo errors
@@ -490,7 +501,7 @@ bool configureBTModule(const String& btName, const String& UARTConf, const Strin
   return true;
 }
 
-void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
+void setupBluetooth(String& satelliteID)  {
 
   String btName, macAddr, UARTConf, nrgMode;
 
@@ -498,9 +509,6 @@ void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
   pinMode(BLUETOOTH_KEY, OUTPUT);
   // Wait for Bluetooth module to boot
   delay(600);
-  // Set AT mode pin high for module configuration
-  digitalWrite(BLUETOOTH_KEY, HIGH);
-
   // Serial port setup
   BLUETOOTH_SERIAL.begin(BLUETOOTH_COMM_BAUDRATE);
 
@@ -537,9 +545,7 @@ void setupBluetooth(String& satelliteID, volatile bool& deviceConnected)  {
 
   // Configure Bluetooth for data comunication
   BLUETOOTH_SERIAL.begin(BLUETOOTH_COMM_BAUDRATE);
-  
-  deviceConnected = true;
-
+ 
   SERIAL_DBG("Done.\n")
 } 
 
@@ -575,12 +581,7 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
     str += "null";
   str += ',';
   // Inserting raw turbidity
-  str += "\"raw_turb\":";
-  if (rawTurb >= MIN_TURB_VOLT)
-    str += String(rawTurb, TURB_DECIMALS);
-  else
-    str += "null";
-  str += ',';
+  str += "\"raw_turb\":" + String(rawTurb, 3) + ',';
   // Inserting turbidity
   str += "\"turb\":";
   if (turb != TURB_NO_VALUE)
@@ -589,12 +590,7 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
     str += "null";
   str += ',';
   // Inserting raw cnductivity
-  str += "\"raw_cond\":";
-  if (rawCond >= MIN_EC_VOLT)
-    str += String(rawCond, COND_DECIMALS);
-  else
-    str += "null";
-  str += ',';
+  str += "\"raw_cond\":" + String(rawCond, 3) + ',';
   // Inserting turbidity
   str += "\"cond\":";
   if (cond != EC_NO_VALUE)
@@ -616,7 +612,6 @@ void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const
   String str = "";
   json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, rawTurb, turb, rawCond, cond, temp_C);
   BLUETOOTH_SERIAL.println(str);
-  
 }
 
 void readBluetoothOrders()  {
@@ -913,13 +908,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
   }
   log_str += ',';
   // Inserting raw turbidity into log string
-  if (rawTurb >= MIN_TURB_VOLT)
-    log_str += String(rawTurb, TURB_DECIMALS);
-  else  {
-    SERIAL_DBG("No turbidity response, check wiring...\n")
-    log_str += "Nan";
-  }
-  log_str += ',';
+  log_str += String(rawTurb, 3) + ',';
   // Inserting turbidity into log string
   if (turb != TURB_NO_VALUE)
     log_str += String(turb, TURB_DECIMALS);
@@ -927,13 +916,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += "Nan";
   log_str += ',';
   // Inserting raw conductivity into log string
-  if (rawCond >= MIN_EC_VOLT)
-    log_str += String(rawCond, COND_DECIMALS);
-  else  {
-    SERIAL_DBG("No conductivity response, check wiring...\n")
-    log_str += "Nan";
-  }
-  log_str += ',';
+  log_str += String(rawCond, 3) + ',';
   // Inserting conductivity into log string
   if (cond != EC_NO_VALUE)
     log_str += String(cond, COND_DECIMALS);

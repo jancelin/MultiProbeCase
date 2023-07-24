@@ -40,11 +40,11 @@
 
 /* Current date & time */
 #define YEAR      2023
-#define MONTH     04
-#define DAY       06
-#define HOURS     23
-#define MINUTES   59
-#define SECONDS   45
+#define MONTH     7
+#define DAY       20
+#define HOURS     00
+#define MINUTES   00
+#define SECONDS   00
 
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval
@@ -52,7 +52,7 @@
 // 71s maximum
 #define READ_INTERVAL       1/*s*/ * 1000000/*µs/s*/
 // Logging segmentation interval
-#define LOG_SEG_INTERVAL    120/*s*/ * 1000/*ms/s*/
+#define LOG_SEG_INTERVAL    1000/*ms/s*/ * 60/*s/min*/ * 5/*min*///* 60/*min/h*/
 // Digital I.O. refresh interval
 #define IO_REFRESH_INTERVAL 50/*ms*/ * 1000/*µs/ms*/
 
@@ -84,7 +84,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 1
+#if 0
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -92,7 +92,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 0
+#define FILE_DUMP 1
 
 /* ###################
  * #    LIBRARIES    #
@@ -125,7 +125,7 @@ void handleDigitalIO();
  * ######################
  */
 #include "DS18B20_temperature.h"
-#include "URM14_distance.h"
+#include "JSN_SR04T_distance.h"
 
 /* ##################
  * #    PROGRAM     #

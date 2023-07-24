@@ -39,7 +39,7 @@
 #define URM14_CONTROL_REG   (uint16_t)0x08
 // Sensor config register bit values
 #define TEMP_CPT_SEL_BIT      ((uint16_t)0x01)      // Use custom temperature compensation
-#define TEMP_CPT_ENABLE_BIT   ((uint16_t)0x00 << 1) // Enable temperature compensation
+#define TEMP_CPT_ENABLE_BIT   ((uint16_t)0x01 << 1) // Enable temperature compensation
 #define MEASURE_MODE_BIT      ((uint16_t)0x00 << 2) // Passive(1)/auto(0) measure mode
 #define MEASURE_TRIG_BIT      ((uint16_t)0x00 << 3) // Request mesure in passive mode. Unused in auto mode
 // Modbus DE & RE pins

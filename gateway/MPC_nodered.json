@@ -8,6 +8,303 @@
         "env": []
     },
     {
+        "id": "e8ac9bf3d52fa0f7",
+        "type": "serial-port",
+        "serialport": "/dev/rfcomm0",
+        "serialbaud": "115200",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "52f144220523204c",
+        "type": "serial-port",
+        "serialport": "/dev/rfcomm1",
+        "serialbaud": "115200",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "3660cf129311ca49",
+        "type": "postgreSQLConfig",
+        "name": "",
+        "host": "localhost",
+        "hostFieldType": "str",
+        "port": "5432",
+        "portFieldType": "num",
+        "database": "mpc",
+        "databaseFieldType": "str",
+        "ssl": "false",
+        "sslFieldType": "bool",
+        "applicationName": "",
+        "applicationNameType": "str",
+        "max": "10",
+        "maxFieldType": "num",
+        "idle": "1000",
+        "idleFieldType": "num",
+        "connectionTimeout": "10000",
+        "connectionTimeoutFieldType": "num",
+        "user": "postgres",
+        "userFieldType": "str",
+        "password": "geopoppy",
+        "passwordFieldType": "str"
+    },
+    {
+        "id": "2f1090c8e3632e25",
+        "type": "serial-port",
+        "serialport": "/dev/rfcomm2",
+        "serialbaud": "115200",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "0b9aa8126746505a",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#0094CE",
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#fafafa",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#1bbfff",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#0094ce",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "08e387de1fe57cbd",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "9d0b488a87887902",
+        "type": "ui_group",
+        "name": "MPC",
+        "tab": "08e387de1fe57cbd",
+        "order": 1,
+        "disp": true,
+        "width": 30,
+        "collapse": false
+    },
+    {
+        "id": "bd7ef7bf0516b7fc",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 2,
+        "width": 11,
+        "height": 1
+    },
+    {
+        "id": "7c94ad4048686667",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 3,
+        "width": 11,
+        "height": 1
+    },
+    {
+        "id": "f91aa7b81a34c01f",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 4,
+        "width": 11,
+        "height": 1
+    },
+    {
+        "id": "bb74e5e82dba1bc2",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 5,
+        "width": 11,
+        "height": 1
+    },
+    {
+        "id": "6aa00089c58a57c2",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 6,
+        "width": 11,
+        "height": 1
+    },
+    {
+        "id": "a8476b79a126500c",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 7,
+        "width": 11,
+        "height": 1
+    },
+    {
+        "id": "e153d999d3c2ac59",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 8,
+        "width": 11,
+        "height": 1
+    },
+    {
+        "id": "96cf401211567ad8",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 9,
+        "width": 11,
+        "height": 1
+    },
+    {
+        "id": "4f5d0d16fdad3343",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 10,
+        "width": 11,
+        "height": 1
+    },
+    {
+        "id": "ea07952191a74220",
+        "type": "ui_spacer",
+        "z": "cba0c3b5b8568f89",
+        "name": "spacer",
+        "group": "9d0b488a87887902",
+        "order": 11,
+        "width": 11,
+        "height": 1
+    },
+    {
         "id": "4ddea886c3ba7790",
         "type": "serial in",
         "z": "cba0c3b5b8568f89",
@@ -17,7 +314,6 @@
         "y": 140,
         "wires": [
             [
-                "d87bfbd0caa05eed",
                 "cfc78bba62d9f587"
             ]
         ]
@@ -28,8 +324,8 @@
         "z": "cba0c3b5b8568f89",
         "name": "Récupération du sensor / split data et insert dans postgresql",
         "info": "",
-        "x": 800,
-        "y": 460,
+        "x": 480,
+        "y": 340,
         "wires": []
     },
     {
@@ -84,7 +380,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 940,
-        "y": 140,
+        "y": 160,
         "wires": []
     },
     {
@@ -107,7 +403,7 @@
         "id": "4102408347e5479f",
         "type": "serial in",
         "z": "cba0c3b5b8568f89",
-        "name": "1 OIO",
+        "name": "1 AIR",
         "serial": "52f144220523204c",
         "x": 150,
         "y": 200,
@@ -121,14 +417,13 @@
         "id": "96b61f7257b6057d",
         "type": "serial in",
         "z": "cba0c3b5b8568f89",
-        "name": "2 Air",
+        "name": "2 Eau",
         "serial": "2f1090c8e3632e25",
         "x": 150,
         "y": 260,
         "wires": [
             [
-                "cfc78bba62d9f587",
-                "dc81c8b41454b47d"
+                "cfc78bba62d9f587"
             ]
         ]
     },
@@ -144,11 +439,10 @@
         "winHide": false,
         "oldrc": false,
         "name": "",
-        "x": 410,
-        "y": 720,
+        "x": 430,
+        "y": 740,
         "wires": [
             [
-                "f48261ea0a9d7828",
                 "a09d6db05305d87e"
             ],
             [],
@@ -159,7 +453,7 @@
         "id": "97856f888e807f22",
         "type": "inject",
         "z": "cba0c3b5b8568f89",
-        "name": "",
+        "name": "10s",
         "props": [
             {
                 "p": "payload"
@@ -169,18 +463,20 @@
                 "vt": "str"
             }
         ],
-        "repeat": "",
+        "repeat": "10",
         "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
+        "once": true,
+        "onceDelay": "5",
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 140,
-        "y": 720,
+        "x": 150,
+        "y": 740,
         "wires": [
             [
-                "026060a705062ab8"
+                "026060a705062ab8",
+                "54dad4dcf0f175f3",
+                "76618010a492c22b"
             ]
         ]
     },
@@ -196,8 +492,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 780,
-        "y": 540,
+        "x": 1140,
+        "y": 520,
         "wires": []
     },
     {
@@ -212,8 +508,8 @@
         "winHide": false,
         "oldrc": false,
         "name": "",
-        "x": 400,
-        "y": 640,
+        "x": 420,
+        "y": 540,
         "wires": [
             [
                 "f48261ea0a9d7828"
@@ -236,7 +532,7 @@
                 "vt": "str"
             }
         ],
-        "repeat": "",
+        "repeat": "60",
         "crontab": "",
         "once": true,
         "onceDelay": 0.1,
@@ -244,7 +540,7 @@
         "payload": "",
         "payloadType": "date",
         "x": 150,
-        "y": 640,
+        "y": 540,
         "wires": [
             [
                 "ce6fd77a9b7f63e6"
@@ -266,98 +562,18 @@
         "strings": true,
         "include_empty_strings": "",
         "include_null_values": "",
-        "x": 690,
-        "y": 700,
+        "x": 610,
+        "y": 720,
         "wires": [
-            [
-                "f48261ea0a9d7828",
-                "7e15fd5a996e822e",
-                "b29b23cfd8948a2f",
-                "41b964acf035c322"
-            ]
+            []
         ]
-    },
-    {
-        "id": "1b9dc9ae960871d2",
-        "type": "ui_button",
-        "z": "cba0c3b5b8568f89",
-        "name": "",
-        "group": "7bfc332a5957ff21",
-        "order": 1,
-        "width": "3",
-        "height": "2",
-        "passthru": false,
-        "label": "button",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "icon": "",
-        "payload": "",
-        "payloadType": "date",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 150,
-        "y": 680,
-        "wires": [
-            [
-                "026060a705062ab8"
-            ]
-        ]
-    },
-    {
-        "id": "7e15fd5a996e822e",
-        "type": "ui_table",
-        "z": "cba0c3b5b8568f89",
-        "group": "7bfc332a5957ff21",
-        "name": "BT",
-        "order": 3,
-        "width": "16",
-        "height": "12",
-        "columns": [],
-        "outputs": 0,
-        "cts": false,
-        "x": 910,
-        "y": 740,
-        "wires": []
-    },
-    {
-        "id": "b29b23cfd8948a2f",
-        "type": "ui_text",
-        "z": "cba0c3b5b8568f89",
-        "group": "7bfc332a5957ff21",
-        "order": 3,
-        "width": 0,
-        "height": 0,
-        "name": "",
-        "label": "text",
-        "format": "{{msg.payload}}",
-        "layout": "row-spread",
-        "x": 990,
-        "y": 660,
-        "wires": []
-    },
-    {
-        "id": "41b964acf035c322",
-        "type": "ui_table",
-        "z": "cba0c3b5b8568f89",
-        "group": "7bfc332a5957ff21",
-        "name": "test",
-        "order": 4,
-        "width": 0,
-        "height": 0,
-        "columns": [],
-        "outputs": 0,
-        "cts": false,
-        "x": 830,
-        "y": 780,
-        "wires": []
     },
     {
         "id": "f5a86730fbfe936a",
         "type": "serial out",
         "z": "cba0c3b5b8568f89",
-        "name": "Air Output 2",
-        "serial": "2f1090c8e3632e25",
+        "name": "Air Output 1",
+        "serial": "52f144220523204c",
         "x": 670,
         "y": 1240,
         "wires": []
@@ -383,8 +599,8 @@
         "topic": "",
         "payload": "{\"order\":\"getConfig\"}",
         "payloadType": "json",
-        "x": 210,
-        "y": 1020,
+        "x": 150,
+        "y": 1140,
         "wires": [
             [
                 "f5a86730fbfe936a",
@@ -397,22 +613,6 @@
         "type": "debug",
         "z": "cba0c3b5b8568f89",
         "name": "debug 7",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 660,
-        "y": 1020,
-        "wires": []
-    },
-    {
-        "id": "dc81c8b41454b47d",
-        "type": "debug",
-        "z": "cba0c3b5b8568f89",
-        "name": "debug 8",
         "active": true,
         "tosidebar": true,
         "console": false,
@@ -420,8 +620,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 340,
-        "y": 260,
+        "x": 660,
+        "y": 1160,
         "wires": []
     },
     {
@@ -445,8 +645,8 @@
         "topic": "",
         "payload": "{\"order\":\"update_interval\", \"value\":5000}",
         "payloadType": "json",
-        "x": 200,
-        "y": 1120,
+        "x": 160,
+        "y": 1180,
         "wires": [
             [
                 "f5a86730fbfe936a",
@@ -460,8 +660,8 @@
         "z": "cba0c3b5b8568f89",
         "name": "ORDER TO TEENSY",
         "info": "",
-        "x": 160,
-        "y": 900,
+        "x": 580,
+        "y": 1100,
         "wires": []
     },
     {
@@ -516,7 +716,7 @@
         "payload": "{\"order\":\"stopLog\"}",
         "payloadType": "json",
         "x": 180,
-        "y": 1360,
+        "y": 1280,
         "wires": [
             [
                 "f5a86730fbfe936a",
@@ -525,113 +725,385 @@
         ]
     },
     {
-        "id": "e6c023613f929b52",
-        "type": "ui_spacer",
+        "id": "90bc7ad2f6ede9ef",
+        "type": "exec",
         "z": "cba0c3b5b8568f89",
-        "name": "spacer",
-        "group": "7bfc332a5957ff21",
-        "order": 2,
-        "width": 16,
-        "height": 1
-    },
-    {
-        "id": "e8ac9bf3d52fa0f7",
-        "type": "serial-port",
-        "serialport": "/dev/rfcomm0",
-        "serialbaud": "115200",
-        "databits": "8",
-        "parity": "none",
-        "stopbits": "1",
-        "waitfor": "",
-        "dtr": "none",
-        "rts": "none",
-        "cts": "none",
-        "dsr": "none",
-        "newline": "\\n",
-        "bin": "false",
-        "out": "char",
-        "addchar": "",
-        "responsetimeout": "10000"
-    },
-    {
-        "id": "3660cf129311ca49",
-        "type": "postgreSQLConfig",
+        "command": "bluetoothctl paired-devices",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
         "name": "",
-        "host": "localhost",
-        "hostFieldType": "str",
-        "port": "5432",
-        "portFieldType": "num",
-        "database": "mpc",
-        "databaseFieldType": "str",
-        "ssl": "false",
-        "sslFieldType": "bool",
-        "applicationName": "",
-        "applicationNameType": "str",
-        "max": "10",
-        "maxFieldType": "num",
-        "idle": "1000",
-        "idleFieldType": "num",
-        "connectionTimeout": "10000",
-        "connectionTimeoutFieldType": "num",
-        "user": "postgres",
-        "userFieldType": "str",
-        "password": "geopoppy",
-        "passwordFieldType": "str"
+        "x": 420,
+        "y": 640,
+        "wires": [
+            [
+                "178ffc332c9b6f9e"
+            ],
+            [],
+            []
+        ]
     },
     {
-        "id": "52f144220523204c",
-        "type": "serial-port",
-        "serialport": "/dev/rfcomm1",
-        "serialbaud": "115200",
-        "databits": "8",
-        "parity": "none",
-        "stopbits": "1",
-        "waitfor": "",
-        "dtr": "none",
-        "rts": "none",
-        "cts": "none",
-        "dsr": "none",
-        "newline": "\\n",
-        "bin": "false",
-        "out": "char",
-        "addchar": "",
-        "responsetimeout": "10000"
+        "id": "178ffc332c9b6f9e",
+        "type": "csv",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "sep": " ",
+        "hdrin": "",
+        "hdrout": "all",
+        "multi": "one",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 650,
+        "y": 620,
+        "wires": [
+            [
+                "f48261ea0a9d7828",
+                "5c6e784218ec0027"
+            ]
+        ]
     },
     {
-        "id": "2f1090c8e3632e25",
-        "type": "serial-port",
-        "serialport": "/dev/rfcomm2",
-        "serialbaud": "115200",
-        "databits": "8",
-        "parity": "none",
-        "stopbits": "1",
-        "waitfor": "",
-        "dtr": "none",
-        "rts": "none",
-        "cts": "none",
-        "dsr": "none",
-        "newline": "\\n",
-        "bin": "false",
-        "out": "char",
-        "addchar": "",
-        "responsetimeout": "10000"
+        "id": "68c139e63b9fb49c",
+        "type": "exec",
+        "z": "cba0c3b5b8568f89",
+        "command": "",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 1090,
+        "y": 620,
+        "wires": [
+            [
+                "f48261ea0a9d7828"
+            ],
+            [
+                "f48261ea0a9d7828"
+            ],
+            []
+        ]
     },
     {
-        "id": "7bfc332a5957ff21",
-        "type": "ui_group",
-        "name": "MPC",
-        "tab": "9d82af62cc9f1d3f",
+        "id": "54dad4dcf0f175f3",
+        "type": "exec",
+        "z": "cba0c3b5b8568f89",
+        "command": "bluetoothctl devices | cut -f2 -d' ' | while read uuid; do bluetoothctl info $uuid; done | grep -e \"Name\\|Device\\|Paired\\|Connected\"",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "connected devices",
+        "x": 430,
+        "y": 820,
+        "wires": [
+            [
+                "f467e16936fed1a5"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "fbd48a1d921a6ec0",
+        "type": "debug",
+        "z": "cba0c3b5b8568f89",
+        "name": "debug 9",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1080,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "f467e16936fed1a5",
+        "type": "csv",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "sep": " ",
+        "hdrin": "",
+        "hdrout": "none",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 650,
+        "y": 780,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d6228a6ad8faa767",
+        "type": "exec",
+        "z": "cba0c3b5b8568f89",
+        "command": "",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 1290,
+        "y": 640,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "fc5e1354e8ce7755",
+        "type": "function",
+        "z": "cba0c3b5b8568f89",
+        "name": "disconnect BT",
+        "func": "var con = {};\ncon.bt = msg.payload.col2;\ncon.cmd = \"sudo rfcomm release 0\";\n\ncon.run = con.cmd + \" \" + con.bt;\nmsg.payload = con.run;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1300,
+        "y": 700,
+        "wires": [
+            [
+                "d6228a6ad8faa767"
+            ]
+        ]
+    },
+    {
+        "id": "a288cfeeee476a15",
+        "type": "debug",
+        "z": "cba0c3b5b8568f89",
+        "name": "debug 10",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 1080,
+        "wires": []
+    },
+    {
+        "id": "5c6e784218ec0027",
+        "type": "function",
+        "z": "cba0c3b5b8568f89",
+        "name": "connect BT",
+        "func": "var con = {};\ncon.bt = msg.payload.col2;\ncon.cmd = \"sudo rfcomm bind \";\nif (msg.payload.col3 === \"Cyclopee\") {\n    con.rfcomm = 0\n} else if (msg.payload.col3 === \"Air\") {\n    con.rfcomm = 1\n}else if (msg.payload.col3 === \"Eau\") {\n    con.rfcomm = 2\n};\ncon.run = con.cmd + con.rfcomm + \" \" + con.bt;\nmsg.payload = con.run;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 870,
+        "y": 620,
+        "wires": [
+            [
+                "68c139e63b9fb49c",
+                "f48261ea0a9d7828"
+            ]
+        ]
+    },
+    {
+        "id": "6654653cc11254a2",
+        "type": "inject",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "5",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 640,
+        "wires": [
+            [
+                "90bc7ad2f6ede9ef"
+            ]
+        ]
+    },
+    {
+        "id": "76618010a492c22b",
+        "type": "exec",
+        "z": "cba0c3b5b8568f89",
+        "command": "bluetoothctl devices | cut -f2 -d' ' | while read uuid; do /home/pi/.local/bin/jc bluetoothctl info $uuid ; done",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "connected devices",
+        "x": 370,
+        "y": 940,
+        "wires": [
+            [
+                "5454bc5bdf4fa864"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "5454bc5bdf4fa864",
+        "type": "split",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": true,
+        "addname": "",
+        "x": 550,
+        "y": 940,
+        "wires": [
+            [
+                "55c4052ffc972fbf"
+            ]
+        ]
+    },
+    {
+        "id": "55c4052ffc972fbf",
+        "type": "json",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 670,
+        "y": 940,
+        "wires": [
+            [
+                "d546de39939e6115"
+            ]
+        ]
+    },
+    {
+        "id": "d546de39939e6115",
+        "type": "join",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "payload",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "8",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 790,
+        "y": 940,
+        "wires": [
+            [
+                "fbd48a1d921a6ec0",
+                "89dbe8272ba260ec"
+            ]
+        ]
+    },
+    {
+        "id": "25f24098512c1a57",
+        "type": "comment",
+        "z": "cba0c3b5b8568f89",
+        "name": "Nested Arrays",
+        "info": "",
+        "x": 810,
+        "y": 880,
+        "wires": []
+    },
+    {
+        "id": "b14a266878d771ee",
+        "type": "function",
+        "z": "cba0c3b5b8568f89",
+        "name": "nested_arrays",
+        "func": "\nmsg.payload = [].concat(...msg.payload).map(({ address }) => address);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 980,
+        "y": 980,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "89dbe8272ba260ec",
+        "type": "function",
+        "z": "cba0c3b5b8568f89",
+        "name": "concat_nested_arrays",
+        "func": "\nmsg.payload = [].concat.apply([], msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 980,
+        "y": 940,
+        "wires": [
+            [
+                "fbd48a1d921a6ec0",
+                "41edd6d7c18d4d4a"
+            ]
+        ]
+    },
+    {
+        "id": "41edd6d7c18d4d4a",
+        "type": "ui_table",
+        "z": "cba0c3b5b8568f89",
+        "group": "9d0b488a87887902",
+        "name": "",
         "order": 1,
-        "disp": true,
-        "width": 16,
-        "collapse": false
-    },
-    {
-        "id": "9d82af62cc9f1d3f",
-        "type": "ui_tab",
-        "name": "Home",
-        "icon": "dashboard",
-        "disabled": false,
-        "hidden": false
+        "width": "27",
+        "height": "13",
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 1190,
+        "y": 940,
+        "wires": []
     }
 ]

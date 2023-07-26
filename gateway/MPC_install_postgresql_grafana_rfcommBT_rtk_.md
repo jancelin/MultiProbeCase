@@ -28,12 +28,12 @@ systemctl restart postgresql
 * change password
 ```
 sudo -u postgres psql
-  
-  Into postgres console : 
-  
+
+  Into postgres console :
+
   postgres=# \password postgres
-  Enter new password for user "postgres": 
-  Enter it again: 
+  Enter new password for user "postgres":
+  Enter it again:
   postgres=# \q
 
 ```
@@ -53,8 +53,7 @@ CREATE EXTENSION IF NOT EXISTS pg_cron cascade;
 
 ```\dx```
 
-```
-                                                List of installed extensions
+```                                                List of installed extensions
     Name     | Version |   Schema   |                                      Description                                      
 -------------+---------+------------+---------------------------------------------------------------------------------------
  pg_cron     | 1.5     | pg_catalog | Job scheduler for PostgreSQL
@@ -63,6 +62,7 @@ CREATE EXTENSION IF NOT EXISTS pg_cron cascade;
  timescaledb | 2.11.0  | public     | Enables scalable inserts and complex queries for time-series data (Community Edition)
 (4 rows)
 ```
+
 * create table
 
 ```
@@ -83,6 +83,7 @@ SELECT create_hypertable('cyclopee.sensor','time', chunk_time_interval => INTERV
 -- ## https://docs.timescale.com/use-timescale/latest/schema-management/json/#index-individual-fields
 CREATE INDEX idx_sensor ON cyclopee.sensor (((data->>'id')::text), time DESC);
 ```
+
 * exit
 
 ```\q```
@@ -102,9 +103,7 @@ sudo /bin/systemctl start grafana-server
 ```
 ## BLUETOOTH
 
-```
-bluetoothctl
-```
+```bluetoothctl```
 
 * list available devices: ```devices```
 * ```scan on``` get mac
@@ -115,9 +114,9 @@ bluetoothctl
 
 * cyclopée
 * oio
-* air - 
+* air -
 
-### create /etc/systemd/system/rfcomm.service to enable 
+### create /etc/systemd/system/rfcomm.service to enable
 ### the Bluetooth serial port from systemctl
 
   sudo cat <<EOF | sudo tee /etc/systemd/system/rfcomm.service > /dev/null
@@ -135,7 +134,6 @@ bluetoothctl
 
 ### enable the new rfcomm service
   sudo systemctl enable rfcomm
-
 ### start the rfcomm service
   sudo systemctl restart rfcomm
 
@@ -144,6 +142,18 @@ sudo rfcomm bind 0 98:D3:B1:FD:C3:2C
 sudo rfcomm bind 1 98:D3:61:FD:6C:E4
 sudo rfcomm bind 2 98:D3:71:FE:09:0F
 ```
+
+## jc
+
+parse les résultats de commande en json
+
+```
+sudo apt-get install python-pip3
+sudo apt-get install python3-pip
+pip3 install jc
+```
+ex ```/home/pi/.local/bin/jc bluetoothctl devices```
+
 
 ## RTK
 

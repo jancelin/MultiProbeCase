@@ -78,8 +78,9 @@ void setupDistSensor(volatile bool& deviceConnected) {
  */
 float readDistance(const float& extTemp_C, volatile bool& deviceConnected)  {
 
+
     unsigned long travelTime;
-    float soundVelocity = 331.1 + ( extTemp_C == TEMP_NO_VALUE ? 0 : (0.606 * extTemp_C) );
+    float soundVelocity = 331.1 + 24.0*0.606;//( extTemp_C == TEMP_NO_VALUE ? 0 : (0.606 * extTemp_C) );
     float dist;
 
     digitalWrite(TRIG_PIN, HIGH);   // Set trigger pin HIGH 

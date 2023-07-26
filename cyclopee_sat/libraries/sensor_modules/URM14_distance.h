@@ -39,7 +39,7 @@
 #define URM14_CONTROL_REG   (uint16_t)0x08
 // Sensor config register bit values
 #define TEMP_CPT_SEL_BIT      ((uint16_t)0x01)      // Use custom temperature compensation
-#define TEMP_CPT_ENABLE_BIT   ((uint16_t)0x00 << 1) // Enable temperature compensation
+#define TEMP_CPT_ENABLE_BIT   ((uint16_t)0x01 << 1) // Enable temperature compensation
 #define MEASURE_MODE_BIT      ((uint16_t)0x00 << 2) // Passive(1)/auto(0) measure mode
 #define MEASURE_TRIG_BIT      ((uint16_t)0x00 << 3) // Request mesure in passive mode. Unused in auto mode
 // Modbus DE & RE pins
@@ -62,7 +62,7 @@ uint16_t urm14_config_bits = MEASURE_TRIG_BIT | MEASURE_MODE_BIT | TEMP_CPT_ENAB
  */
 void preTransCbk()  {  digitalWrite(DE_PIN, HIGH); }
 void postTransCbk() {  digitalWrite(DE_PIN, LOW);  }
-void setupURM14(volatile bool& deviceConnected);
+void setupDistSensor(volatile bool& deviceConnected);
 float readDistance(const float& extTemp_C, volatile bool& deviceConnected);
 /*
  ****************************

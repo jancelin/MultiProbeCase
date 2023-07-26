@@ -3,7 +3,7 @@
  *    ext_temp_comp_test
  *    SD_test
  *   
- * @brief:
+ * @brief:z
  *    This program logs distance and temperature readings into a log file on the SD card.
  *    Log file segmentation and new day file creation are handled.
  *   
@@ -87,7 +87,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 1
+#if 0
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -95,7 +95,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 0
+#define FILE_DUMP 1
 
 /* ###################
  * #    LIBRARIES    #

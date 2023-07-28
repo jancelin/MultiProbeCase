@@ -88,6 +88,7 @@ float readDistance(const float& extTemp_C, volatile bool& deviceConnected)  {
     digitalWrite(TRIG_PIN, LOW);    // Return trigger pin back to LOW again.
   
     // Measure time in µs for echo to come back.
+    // 10 000µs timeout
     travelTime = pulseIn(ECHO_PIN, HIGH, 10000) / 2;
     // Compute distance
     dist = (soundVelocity * 1000.0/*mm/m*/ / 1000000.0/*µs/s*/) * travelTime;

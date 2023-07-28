@@ -868,7 +868,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     timeValToStr(timeVal, log_str);
   else  {
     SERIAL_DBG("No GNSS time response...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting GNSS longitude into log string
@@ -876,7 +876,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += String(lng_deg, LOC_DECIMALS);
   else  {
     SERIAL_DBG("No GNSS location response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting GNSS latitude into log string
@@ -884,7 +884,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += String(lat_deg, LOC_DECIMALS);
   else  {
     SERIAL_DBG("No GNSS location response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting raw turbidity into log string
@@ -893,7 +893,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
   if (turb != TURB_NO_VALUE)
     log_str += String(turb, TURB_DECIMALS);
   else
-    log_str += "Nan";
+    log_str += "NaN";
   log_str += ',';
   // Inserting raw conductivity into log string
   log_str += String(rawCond, 3) + ',';
@@ -901,7 +901,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
   if (cond != EC_NO_VALUE)
     log_str += String(cond, COND_DECIMALS);
   else
-    log_str += "Nan";
+    log_str += "NaN";
   log_str += ',';
   
   // Inserting external temperature into log string
@@ -909,7 +909,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += String(temp_C, TEMP_DECIMALS);
   else  {
     SERIAL_DBG("No temperature response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
 }
 

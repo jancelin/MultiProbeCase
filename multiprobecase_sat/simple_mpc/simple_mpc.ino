@@ -694,12 +694,9 @@ void setupSDCard(volatile bool& deviceConnected)  {
  */
 void dateToStr(TinyGPSDate& gnssDate, String& str) {
   
-  str = "";
-  str += gnssDate.year();
-  str += '_';
-  str += gnssDate.month();
-  str += '_';
-  str += gnssDate.day();
+  str = String(gnssDate.year()) + '_' + 
+        ( (gnssDate.month() < 10) ? '0' + String(gnssDate.month()) : String(gnssDate.month()) ) + '_' + 
+        ( (gnssDate.day() < 10) ? '0' + String(gnssDate.day()) : String(gnssDate.day()) );
 }
   
 /*
@@ -711,12 +708,9 @@ void dateToStr(TinyGPSDate& gnssDate, String& str) {
  */
 void timeToStr(TinyGPSTime& gnssTime, String& str) {
 
-  str = "";
-  str += gnssTime.hour();
-  str += '_';
-  str += gnssTime.minute();
-  str += '_';
-  str += gnssTime.second();
+  str = ( (gnssTime.hour() < 10) ? '0' + String(gnssTime.hour()) : String(gnssTime.hour()) ) + '_' + 
+        ( (gnssTime.minute() < 10) ? '0' + String(gnssTime.minute()) : String(gnssTime.minute()) ) + '_' + 
+        ( (gnssTime.second() < 10) ? '0' + String(gnssTime.second()) : String(gnssTime.second()) );
 }
 
 /*
@@ -730,14 +724,23 @@ void timeValToStr(const uint32_t& timeVal, String& str) {
 
   uint32_t tmp = timeVal;
 
-  str = "";
-  str += String(tmp/1000000) + ':';
+  int h = tmp/1000000;
   tmp %= 1000000;
-  str += String(tmp/10000) + ':';
+  int m = tmp/10000;
   tmp %= 10000;
-  str += String(tmp/100) + '.';
+  int s = tmp/100;
   tmp %= 100;
-  str += String(tmp);
+  int ms = tmp;
+  
+  str = ( (h < 10) ? '0' + String(h) : String(h) ) + ':' + 
+        ( (m < 10) ? '0' + String(m) : String(m) ) + ':' + 
+        ( (s < 10) ? '0' + String(s) : String(s) ) + ':';
+  if (ms < 100)  {
+    str += '0';
+    if (ms < 10)
+      str += '0'; 
+  }
+  str += ms;
 }
 
 /*
@@ -789,7 +792,7 @@ bool newLogFile(File& file, const String& dirName, String& fileName)  {
     return false;
   }
   file.print("Date:,"); file.println(dirName);
-  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Raw Turbidity (V),Turbidity (NTU), Temperature (°C)");
+  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Raw Turbidity (V),Turbidity (NTU),Raw Conductivity (mV),Condctivity (mS/cm),Temperature (°C)");
   return true;
 }
 

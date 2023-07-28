@@ -134,7 +134,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -246,11 +246,11 @@ void setup() {
   SERIAL_DBG('\n')
   // Setting up temperature sensor
   SERIAL_DBG("## TEMPERATURE SENSOR\n")
-  //setupTempSensor(connectedDevices[TEMPERATURE]);
+  setupTempSensor(connectedDevices[TEMPERATURE]);
   SERIAL_DBG('\n')
   // Setting up distance sensor
   SERIAL_DBG("## DISTANCE SENSOR\n")
-  //setupDistSensor(connectedDevices[DISTANCE]);
+  setupDistSensor(connectedDevices[DISTANCE]);
   SERIAL_DBG('\n')
   // GNSS set up
   SERIAL_DBG("## GNSS MODULE\n")
@@ -736,7 +736,7 @@ void timeToStr(TinyGPSTime& gnssTime, String& str) {
 void timeValToStr(const uint32_t& timeVal, String& str) {
 
   uint32_t tmp = timeVal;
-
+  Serial.println(timeVal);
   int h = tmp/1000000;
   tmp %= 1000000;
   int m = tmp/10000;

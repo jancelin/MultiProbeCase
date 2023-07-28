@@ -50,7 +50,7 @@
 // Sensor acquisition interval
 // Check sensor reading interrupt duration before setting the value
 // 71s maximum
-#define READ_INTERVAL       1/*s*/ * 1000000/*µs/s*/
+#define READ_INTERVAL       1000/*µs/ms*/ * 1000/*ms*/
 // Logging segmentation interval
 #define LOG_SEG_INTERVAL    1000/*ms/s*/ * 60/*s/min*/ * 5/*min*///* 60/*min/h*/
 // Digital I.O. refresh interval
@@ -125,7 +125,7 @@ void handleDigitalIO();
  * ######################
  */
 #include "DS18B20_temperature.h"
-#include "JSN_SR04T_distance.h"
+#include "URM14_distance.h"
 
 /* ##################
  * #    PROGRAM     #
@@ -222,8 +222,27 @@ float extTemp_C, dist_mm;
  */
 void loop() {
   // Loop execution time
-  //long t = millis();
+  //long t = micros();
 
+  // File management and data storage
+  // If buffers are empty
+  if (timestamp_buf.isEmpty()) {
+    if (!enLog)
+      logFile.close();
+  }
+  else {
+    // Handling log file management
+    handleLogFile(logFile, logDir, logFileName, logSegCountdown, connectedDevices[SD_CARD]);
+    // Create function for this
+    timestamp_buf.pop(timestamp_ms);
+    extTemp_buf.pop(extTemp_C);
+    dist_buf.pop(dist_mm);
+    // -----------------
+    if ( !logToSD(logFile, timestamp_ms, dist_mm, extTemp_C) )
+      SERIAL_DBG("Logging failed...\n")
+  }
+
+  // Debug serial output
   SERIAL_DBG("#### LOOP FUNCTION ####\n\n")
 
   // Print conected devices state
@@ -248,49 +267,21 @@ void loop() {
       SERIAL_DBG("/")
       SERIAL_DBG(logFileName)
       SERIAL_DBG('\n')
+      SERIAL_DBG("\n###\n")
     }
     else
-      SERIAL_DBG("No log file open.\n")
-    SERIAL_DBG("\n###\n")
+      SERIAL_DBG("No log file open...\n")
+  }
+  else
+    SERIAL_DBG("Logging disabled...\n")
 
-    // Handling log file management
-    handleLogFile(logFile, logDir, logFileName, logSegCountdown, connectedDevices[SD_CARD]);
-
-    // Logging into file
-    if (logFile && !timestamp_buf.isEmpty()) {
-      // Create function for this
-      timestamp_buf.pop(timestamp_ms);
-      extTemp_buf.pop(extTemp_C);
-      dist_buf.pop(dist_mm);
-      // -----------------
-      if ( !logToSD(logFile, timestamp_ms, dist_mm, extTemp_C) )
-        SERIAL_DBG("Logging failed...\n")
-    }    
-    // Dumping log file to Serial
+  // Dumping log file to Serial
     if (FILE_DUMP && fileDumpCountdown.check())
       dumpFileToSerial(logFile);
-  }
-  else  {
-    // If log file open then empty buffers into it before closing
-    if (logFile)  {
-      SERIAL_DBG("Writing remaining buffer values...\n")
-      // Create function for this
-      timestamp_buf.pop(timestamp_ms);
-      extTemp_buf.pop(extTemp_C);
-      dist_buf.pop(dist_mm);
-      // ---------------------
-      if ( !timestamp_buf.isEmpty() && !logToSD(logFile, timestamp_ms, dist_mm, extTemp_C) )
-        SERIAL_DBG("Logging failed...\n")
-      else
-        logFile.close();
-    }
-    else
-      SERIAL_DBG("Logging disabled...\n")
-  }
-  SERIAL_DBG("\n\n")
 
+  SERIAL_DBG("\n\n")
   // Loop execution time
-  //Serial.println(millis() - t);
+  //Serial.println(micros() - t);
 }
 
 /* ############################
@@ -309,7 +300,7 @@ void readSensors()  {
   //long t = millis();
   
   // If logging enabled and logFile open
-  if (enLog && logFile) {
+  if (enLog) {
     // If buffer not full
     if ( !timestamp_buf.isFull() ) {
 
@@ -370,7 +361,10 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
   m%=60;
   h%=24;
   // Generate the time String
-  str = String(h) + ':' + String(m) + ':' + String(s);
+  str = ((h < 10) ? '0' + String(h) : String(h)) + ':' +
+        ((m < 10) ? '0' + String(m) : String(m)) + ':' +
+        ((s < 10) ? '0' + String(s) : String(s));
+  // Add miliseconds
   if (add_ms) {
     str += '.';
     if (ms < 10)
@@ -389,7 +383,9 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
  */
 void dateToStr(String& str) {
   
-  str = String(year()) + '_' + String(month()) + '_' + String(day());
+  str = String(year()) + '_' + 
+        ( (month() < 10) ? '0' + String(month()) : String(month()) ) + '_' +
+        ( (day() < 10) ? '0' + String(day()) : String(day()) );
 }
 
 /*
@@ -520,7 +516,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& dist_mm,
     log_str += String(dist_mm, DIST_DECIMALS);
   else  {
     SERIAL_DBG("No distance response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting external temperature into log string
@@ -528,7 +524,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& dist_mm,
     log_str += String(extTemp_C, TEMP_DECIMALS);
   else  {
     SERIAL_DBG("No temperature response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
 }
 

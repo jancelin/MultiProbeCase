@@ -29,11 +29,19 @@
  *********************
  */
 // Sensor serial port
+<<<<<<< HEAD
 #define A01NYUB_SERIAL  Serial4
 // Sensor baudrate
 #define A01NYUB_BAUDRATE 9600
 // Sensor TX pin
 #define A01NYUB_TX_PIN  32
+=======
+#define A01NYUB_SERIAL  Serial5
+// Sensor baudrate
+#define A01NYUB_BAUDRATE 9600
+// Sensor TX pin
+#define A01NYUB_TX_PIN  34
+>>>>>>> GNSS_logger
 
 /*
  ***********************
@@ -66,6 +74,12 @@ void setupDistSensor(volatile bool& deviceConnected)  {
 
   readDistance(25, deviceConnected);
 
+<<<<<<< HEAD
+=======
+  if (!deviceConnected)
+    waitForReboot("No A01NYUB distance sensor detected, check wiring...");
+
+>>>>>>> GNSS_logger
 }
 
 /*

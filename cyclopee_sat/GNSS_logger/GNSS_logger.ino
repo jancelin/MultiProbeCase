@@ -45,8 +45,8 @@
  * ###########################
  */
 
-/************** SERIAL PORTS *****************/
-#define GNSS_SERIAL Serial2
+/************** SERIAL PORTS *****************/ 
+#define GNSS_SERIAL       Serial3
 #define BLUETOOTH_SERIAL  Serial1
  
 /************** TIMER INTERRUPTS INTERVALS *****************/
@@ -126,7 +126,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 1
+#if 0
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -134,7 +134,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 0
+#define FILE_DUMP 1
 
 /* ###################
  * #    LIBRARIES    #
@@ -324,6 +324,7 @@ void loop() {
     // -----------------
     if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C) )
       SERIAL_DBG("Logging failed...\n")
+    sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, extTemp_C);
   }
 
   // Debug serial output

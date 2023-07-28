@@ -45,8 +45,8 @@
  * ###########################
  */
 /************** SERIAL PORTS *****************/ 
-#define GNSS_SERIAL Serial2
-#define BLUETOOTH_SERIAL  Serial3
+#define GNSS_SERIAL       Serial3
+#define BLUETOOTH_SERIAL  Serial1
  
 /************** TIMER INTERRUPTS INTERVALS *****************/
 // Sensor acquisition interval

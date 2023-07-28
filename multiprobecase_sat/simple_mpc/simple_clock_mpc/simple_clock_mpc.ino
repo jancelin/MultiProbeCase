@@ -392,8 +392,8 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
   m%=60;
   h%=24;
   // Generate the time String
-  str +=  ((h < 10) ? '0' + String(h) : String(h)) + ':'
-          ((m < 10) ? '0' + String(m) : String(m)) + ':'
+  str +=  ((h < 10) ? '0' + String(h) : String(h)) + ':' +
+          ((m < 10) ? '0' + String(m) : String(m)) + ':' +
           ((s < 10) ? '0' + String(s) : String(s));
   // Add miliseconds
   if (add_ms) {
@@ -405,7 +405,6 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
     str += String(ms);
   }
 }
-
 
 /*
  * @brief: 

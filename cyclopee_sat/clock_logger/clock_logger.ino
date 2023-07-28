@@ -520,7 +520,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& dist_mm,
     log_str += String(dist_mm, DIST_DECIMALS);
   else  {
     SERIAL_DBG("No distance response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting external temperature into log string
@@ -528,7 +528,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& dist_mm,
     log_str += String(extTemp_C, TEMP_DECIMALS);
   else  {
     SERIAL_DBG("No temperature response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
 }
 

@@ -52,7 +52,7 @@
 // 71s maximum
 #define READ_INTERVAL       1/*s*/ * 1000000/*µs/s*/
 // Logging segmentation interval
-#define LOG_SEG_INTERVAL    1000/*ms/s*/ * 60/*s/min*/ * 5/*min*///* 60/*min/h*/
+#define LOG_SEG_INTERVAL    1000/*ms/s*/ * 10/*s*///* 60/*s/min*/ * 60/*min/h*/
 // Digital I.O. refresh interval
 #define IO_REFRESH_INTERVAL 50/*ms*/ * 1000/*µs/ms*/
 
@@ -87,7 +87,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -95,7 +95,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -392,7 +392,7 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
   m%=60;
   h%=24;
   // Generate the time String
-  str +=  ((h < 10) ? '0' + String(h) : String(h)) + ':' +
+  str =  ((h < 10) ? '0' + String(h) : String(h)) + ':' +
           ((m < 10) ? '0' + String(m) : String(m)) + ':' +
           ((s < 10) ? '0' + String(s) : String(s));
   // Add miliseconds
@@ -414,7 +414,9 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
  */
 void dateToStr(String& str) {
   
-  str = String(year()) + '_' + String(month()) + '_' + String(day());
+  str = String(year()) + '_' + 
+        ( (month() < 10) ? '0' + String(month()) : String(month()) ) + '_' +
+        ( (day() < 10) ? '0' + String(day()) : String(day()) );
 }
 
 /*

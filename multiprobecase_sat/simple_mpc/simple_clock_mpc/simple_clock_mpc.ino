@@ -3,7 +3,7 @@
  *    ext_temp_comp_test
  *    SD_test
  *   
- * @brief:z
+ * @brief:
  *    This program logs distance and temperature readings into a log file on the SD card.
  *    Log file segmentation and new day file creation are handled.
  *   
@@ -189,7 +189,7 @@ void setup() {
   setupTurbSensor(connectedDevices[TURBIDITY]);
   SERIAL_DBG('\n')
   // Setting up conductivity sensor
-  setupCondSensor(connectedDevices[CONDUCTIVITY]);
+  //setupCondSensor(connectedDevices[CONDUCTIVITY]);
   SERIAL_DBG('\n')
   
   // Setting time
@@ -230,8 +230,30 @@ float temp_C, rawTurb, turb, rawCond, cond;
  */
 void loop() {
   // Loop execution time
-  //long t = millis();
+  //long t = micros();
 
+  // File management and data storage
+  // If buffers are empty
+  if (timestamp_buf.isEmpty()) {
+    if (!enLog)
+      logFile.close();
+  }
+  else {
+    // Handling log file management
+    handleLogFile(logFile, logDir, logFileName, logSegCountdown, connectedDevices[SD_CARD]);
+    // Create function for this
+    timestamp_buf.pop(timestamp);
+    temp_buf.pop(temp_C);
+    rawTurb_buf.pop(rawTurb);
+    turb_buf.pop(turb);
+    rawCond_buf.pop(rawCond);
+    cond_buf.pop(cond);
+    // -----------------
+    if ( !logToSD(logFile, timestamp, rawTurb, turb, rawCond, cond, temp_C) )
+      SERIAL_DBG("Logging failed...\n")
+  }
+
+  // Debug serial output
   SERIAL_DBG("#### LOOP FUNCTION ####\n\n")
 
   // Print conected devices state
@@ -259,55 +281,21 @@ void loop() {
       SERIAL_DBG("/")
       SERIAL_DBG(logFileName)
       SERIAL_DBG('\n')
+      SERIAL_DBG("\n###\n")
     }
     else
-      SERIAL_DBG("No log file open.\n")
-    SERIAL_DBG("\n###\n")
-
-    // Handling log file management
-    handleLogFile(logFile, logDir, logFileName, logSegCountdown, connectedDevices[SD_CARD]);
-
-    // Logging into file
-    if (logFile && !timestamp_buf.isEmpty()) {
-      // Create function for this
-      timestamp_buf.pop(timestamp);
-      temp_buf.pop(temp_C);
-      rawTurb_buf.pop(rawTurb);
-      turb_buf.pop(turb);
-      rawCond_buf.pop(rawCond);
-      cond_buf.pop(cond);
-      // -----------------
-      if ( !logToSD(logFile, timestamp, rawTurb, turb, rawCond, cond, temp_C) )
-        SERIAL_DBG("Logging failed...\n")
-    }    
-    // Dumping log file to Serial
-    if (FILE_DUMP && fileDumpCountdown.check())
-      dumpFileToSerial(logFile);
+      SERIAL_DBG("No log file open...\n")
   }
-  else  {
-    // If log file open then empty buffers into it before closing
-    if (logFile)  {
-      SERIAL_DBG("Writing remaining buffer values...\n")
-      // Create function for this
-      timestamp_buf.pop(timestamp);
-      temp_buf.pop(temp_C);
-      rawTurb_buf.pop(rawTurb);
-      turb_buf.pop(turb);
-      rawCond_buf.pop(rawCond);
-      cond_buf.pop(cond);
-      // ---------------------
-      if ( !timestamp_buf.isEmpty() && !logToSD(logFile, timestamp, rawTurb, turb, rawCond, cond, temp_C) )
-        SERIAL_DBG("Logging failed...\n")
-      else
-        logFile.close();
-    }
-    else
-      SERIAL_DBG("Logging disabled...\n")
-  }
+  else
+    SERIAL_DBG("Logging disabled...\n")
+
+  // Dumping log file to Serial
+  if (FILE_DUMP && fileDumpCountdown.check())
+    dumpFileToSerial(logFile);
+
   SERIAL_DBG("\n\n")
-
   // Loop execution time
-  //Serial.println(millis() - t);
+  //Serial.println(micros() - t);
 }
 
 /* ############################
@@ -326,7 +314,7 @@ void readSensors()  {
   //long t = millis();
   
   // If logging enabled and logFile open
-  if (enLog && logFile) {
+  if (enLog) {
     // If buffer not full
     if ( !timestamp_buf.isFull() ) {
 

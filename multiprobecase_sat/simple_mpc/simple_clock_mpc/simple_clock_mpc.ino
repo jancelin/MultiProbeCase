@@ -392,7 +392,10 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
   m%=60;
   h%=24;
   // Generate the time String
-  str = String(h) + ':' + String(m) + ':' + String(s);
+  str +=  ((h < 10) ? '0' + String(h) : String(h)) + ':'
+          ((m < 10) ? '0' + String(m) : String(m)) + ':'
+          ((s < 10) ? '0' + String(s) : String(s));
+  // Add miliseconds
   if (add_ms) {
     str += '.';
     if (ms < 10)
@@ -402,6 +405,7 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
     str += String(ms);
   }
 }
+
 
 /*
  * @brief: 
@@ -544,7 +548,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& rawTurb,
     log_str += String(turb, TURB_DECIMALS);
   else  {
     SERIAL_DBG("No turbidity response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting raw conductivity into log string
@@ -554,7 +558,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& rawTurb,
     log_str += String(cond, COND_DECIMALS);
   else  {
     SERIAL_DBG("No conductivity response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   
@@ -563,7 +567,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& rawTurb,
     log_str += String(temp_C, TEMP_DECIMALS);
   else  {
     SERIAL_DBG("No temperature response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
 }
 

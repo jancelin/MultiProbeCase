@@ -60,7 +60,7 @@
 // Logging LED
 #define LOG_LED       13
 // Disable logging button
-#define BUTTON_PIN    39
+#define BUTTON_PIN    14
 
 /************** DATA NUMBER OF DECIMALS *****************/
 // Temperature
@@ -125,7 +125,7 @@ void handleDigitalIO();
  * ######################
  */
 #include "DS18B20_temperature.h"
-#include "URM14_distance.h"
+#include "A01NYUB_distance.h"
 
 /* ##################
  * #    PROGRAM     #

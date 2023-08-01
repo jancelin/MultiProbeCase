@@ -57,8 +57,8 @@
   /* TEENSY pins */
   #ifdef TEENSY
   // Modbus
-  #define DE_PIN  2 // RE = ~DE => Wired to pin 30 as well
-  #define URM14_SERIAL Serial1
+  #define DE_PIN  30 // RE = ~DE => Wired to pin 30 as well
+  #define URM14_SERIAL Serial4
   // OneWire
   #define ONE_WIRE_BUS  24 // Teensy temperature data wire pin
 #endif
@@ -68,7 +68,7 @@
 
 /*  URM14 sensor */
 // Sensor baudrate
-#define URM14_BAUDRATE 115200
+#define URM14_BAUDRATE 9600
 // Sensor id
 #define UMR14_ID  0x11
 // Sensor registers

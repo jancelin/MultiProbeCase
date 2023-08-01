@@ -27,7 +27,7 @@
  *********************
  */
 // Sensor serial port
-#define URM14_SERIAL  Serial5
+#define URM14_SERIAL  Serial4
 // Sensor baudrate
 #define URM14_BAUDRATE 9600
 // Sensor ID
@@ -43,7 +43,7 @@
 #define MEASURE_MODE_BIT      ((uint16_t)0x00 << 2) // Passive(1)/auto(0) measure mode
 #define MEASURE_TRIG_BIT      ((uint16_t)0x00 << 3) // Request mesure in passive mode. Unused in auto mode
 // Modbus DE & RE pins
-#define DE_PIN  35 // RE = ~DE => Wired to pin 30 as well
+#define DE_PIN  30 // RE = ~DE => Wired to pin 30 as well
 
 /*
  ***********************

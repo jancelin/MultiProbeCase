@@ -35,8 +35,8 @@
  */
 
 // Modbus
-#define URM14_SERIAL Serial5
-#define DE_PIN  35 // RE = \DE => Wired to pin 30 as well
+#define URM14_SERIAL Serial4
+#define DE_PIN  30 // RE = \DE => Wired to pin 30 as well
 
 // URM14 sensor
 // Sensor baudrate

@@ -29,11 +29,11 @@
  *********************
  */
 // Sensor serial port
-#define A01NYUB_SERIAL  Serial5
+#define A01NYUB_SERIAL  Serial2
 // Sensor baudrate
 #define A01NYUB_BAUDRATE 9600
 // Sensor TX pin
-#define A01NYUB_TX_PIN  34
+#define A01NYUB_TX_PIN  9
 
 /*
  ***********************

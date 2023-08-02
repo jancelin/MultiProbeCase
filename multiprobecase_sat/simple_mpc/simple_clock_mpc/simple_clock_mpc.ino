@@ -52,7 +52,7 @@
 // 71s maximum
 #define READ_INTERVAL       1/*s*/ * 1000000/*µs/s*/
 // Logging segmentation interval
-#define LOG_SEG_INTERVAL    1000/*ms/s*/ * 60/*s/min*/ * 5/*min*///* 60/*min/h*/
+#define LOG_SEG_INTERVAL    1000/*ms/s*/ * 10/*s*///* 60/*s/min*/ * 60/*min/h*/
 // Digital I.O. refresh interval
 #define IO_REFRESH_INTERVAL 50/*ms*/ * 1000/*µs/ms*/
 
@@ -60,7 +60,7 @@
 // Logging LED
 #define LOG_LED       13
 // Disable logging button
-#define BUTTON_PIN    16
+#define BUTTON_PIN    39
 
 /************** DATA NUMBER OF DECIMALS *****************/
 // Temperature
@@ -87,7 +87,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -95,7 +95,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -189,7 +189,7 @@ void setup() {
   setupTurbSensor(connectedDevices[TURBIDITY]);
   SERIAL_DBG('\n')
   // Setting up conductivity sensor
-  setupCondSensor(connectedDevices[CONDUCTIVITY]);
+  //setupCondSensor(connectedDevices[CONDUCTIVITY]);
   SERIAL_DBG('\n')
   
   // Setting time
@@ -230,8 +230,30 @@ float temp_C, rawTurb, turb, rawCond, cond;
  */
 void loop() {
   // Loop execution time
-  //long t = millis();
+  //long t = micros();
 
+  // File management and data storage
+  // If buffers are empty
+  if (timestamp_buf.isEmpty()) {
+    if (!enLog)
+      logFile.close();
+  }
+  else {
+    // Handling log file management
+    handleLogFile(logFile, logDir, logFileName, logSegCountdown, connectedDevices[SD_CARD]);
+    // Create function for this
+    timestamp_buf.pop(timestamp);
+    temp_buf.pop(temp_C);
+    rawTurb_buf.pop(rawTurb);
+    turb_buf.pop(turb);
+    rawCond_buf.pop(rawCond);
+    cond_buf.pop(cond);
+    // -----------------
+    if ( !logToSD(logFile, timestamp, rawTurb, turb, rawCond, cond, temp_C) )
+      SERIAL_DBG("Logging failed...\n")
+  }
+
+  // Debug serial output
   SERIAL_DBG("#### LOOP FUNCTION ####\n\n")
 
   // Print conected devices state
@@ -259,55 +281,21 @@ void loop() {
       SERIAL_DBG("/")
       SERIAL_DBG(logFileName)
       SERIAL_DBG('\n')
+      SERIAL_DBG("\n###\n")
     }
     else
-      SERIAL_DBG("No log file open.\n")
-    SERIAL_DBG("\n###\n")
-
-    // Handling log file management
-    handleLogFile(logFile, logDir, logFileName, logSegCountdown, connectedDevices[SD_CARD]);
-
-    // Logging into file
-    if (logFile && !timestamp_buf.isEmpty()) {
-      // Create function for this
-      timestamp_buf.pop(timestamp);
-      temp_buf.pop(temp_C);
-      rawTurb_buf.pop(rawTurb);
-      turb_buf.pop(turb);
-      rawCond_buf.pop(rawCond);
-      cond_buf.pop(cond);
-      // -----------------
-      if ( !logToSD(logFile, timestamp, rawTurb, turb, rawCond, cond, temp_C) )
-        SERIAL_DBG("Logging failed...\n")
-    }    
-    // Dumping log file to Serial
-    if (FILE_DUMP && fileDumpCountdown.check())
-      dumpFileToSerial(logFile);
+      SERIAL_DBG("No log file open...\n")
   }
-  else  {
-    // If log file open then empty buffers into it before closing
-    if (logFile)  {
-      SERIAL_DBG("Writing remaining buffer values...\n")
-      // Create function for this
-      timestamp_buf.pop(timestamp);
-      temp_buf.pop(temp_C);
-      rawTurb_buf.pop(rawTurb);
-      turb_buf.pop(turb);
-      rawCond_buf.pop(rawCond);
-      cond_buf.pop(cond);
-      // ---------------------
-      if ( !timestamp_buf.isEmpty() && !logToSD(logFile, timestamp, rawTurb, turb, rawCond, cond, temp_C) )
-        SERIAL_DBG("Logging failed...\n")
-      else
-        logFile.close();
-    }
-    else
-      SERIAL_DBG("Logging disabled...\n")
-  }
+  else
+    SERIAL_DBG("Logging disabled...\n")
+
+  // Dumping log file to Serial
+  if (FILE_DUMP && fileDumpCountdown.check())
+    dumpFileToSerial(logFile);
+
   SERIAL_DBG("\n\n")
-
   // Loop execution time
-  //Serial.println(millis() - t);
+  //Serial.println(micros() - t);
 }
 
 /* ############################
@@ -326,7 +314,7 @@ void readSensors()  {
   //long t = millis();
   
   // If logging enabled and logFile open
-  if (enLog && logFile) {
+  if (enLog) {
     // If buffer not full
     if ( !timestamp_buf.isFull() ) {
 
@@ -392,7 +380,10 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
   m%=60;
   h%=24;
   // Generate the time String
-  str = String(h) + ':' + String(m) + ':' + String(s);
+  str =  ((h < 10) ? '0' + String(h) : String(h)) + ':' +
+          ((m < 10) ? '0' + String(m) : String(m)) + ':' +
+          ((s < 10) ? '0' + String(s) : String(s));
+  // Add miliseconds
   if (add_ms) {
     str += '.';
     if (ms < 10)
@@ -411,7 +402,9 @@ void timestampToStr(const long& timestamp , String& str, bool add_ms) {
  */
 void dateToStr(String& str) {
   
-  str = String(year()) + '_' + String(month()) + '_' + String(day());
+  str = String(year()) + '_' + 
+        ( (month() < 10) ? '0' + String(month()) : String(month()) ) + '_' +
+        ( (day() < 10) ? '0' + String(day()) : String(day()) );
 }
 
 /*
@@ -463,7 +456,7 @@ bool newLogFile(File& file, const String& dirName, String& fileName)  {
     return false;
   }
   file.print("Date:,"); file.println(dirName);
-  file.println("Time (HH:MM:SS.CCC),Distance (mm),External temperature (°C)");
+  file.println("Time (HH:MM:SS.CCC),Raw Turbidity (V),Turbidity (NTU),Raw Conductivity (mV),Conductivity (mS/cm),Temperature (°C)");
   return true;
 }
 
@@ -544,7 +537,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& rawTurb,
     log_str += String(turb, TURB_DECIMALS);
   else  {
     SERIAL_DBG("No turbidity response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting raw conductivity into log string
@@ -554,7 +547,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& rawTurb,
     log_str += String(cond, COND_DECIMALS);
   else  {
     SERIAL_DBG("No conductivity response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   
@@ -563,7 +556,7 @@ void csv_logString(String& log_str, const long& timestamp, const float& rawTurb,
     log_str += String(temp_C, TEMP_DECIMALS);
   else  {
     SERIAL_DBG("No temperature response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
 }
 

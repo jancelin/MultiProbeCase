@@ -291,10 +291,34 @@ float temp_C, rawTurb, turb, rawCond, cond;
  */
 void loop() {
   // Loop execution time
-  //long t = millis();
+  //long t = micros();
 
-  //readBluetoothOrders();
+  // File management and data storage
+  // If buffers are empty
+  if (time_buf.isEmpty()) {
+    if (!enLog)
+      logFile.close();
+  }
+  else {
+    // Handling log file management
+    handleLogFile(logFile, logDir, logFileName, gnss, logSegCountdown, connectedDevices[SD_CARD]);
+    // Create function for this
+    time_buf.pop(time_ms);
+    temp_buf.pop(temp_C);
+    lng_buf.pop(lng_deg);
+    lat_buf.pop(lat_deg);
+    rawTurb_buf.pop(rawTurb);
+    turb_buf.pop(turb);
+    rawCond_buf.pop(rawCond);
+    cond_buf.pop(cond);
+    // -----------------
+    if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, rawTurb, turb, rawCond, cond, temp_C) )
+      SERIAL_DBG("Logging failed...\n")
 
+    sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, rawTurb, turb, rawCond, cond, temp_C);
+  }
+
+  // Debug serial output
   SERIAL_DBG("#### LOOP FUNCTION ####\n\n")
 
   // Print conected devices state
@@ -310,9 +334,6 @@ void loop() {
   SERIAL_DBG('\n')
   SERIAL_DBG("CONDUCTIVITY :\t")
   SERIAL_DBG(connectedDevices[CONDUCTIVITY])
-  SERIAL_DBG('\n')
-  SERIAL_DBG("GNSS MODULE :\t")
-  SERIAL_DBG(connectedDevices[GNSS_MODULE])
   SERIAL_DBG("\n\n")
 
   // If logging enabled
@@ -325,62 +346,21 @@ void loop() {
       SERIAL_DBG("/")
       SERIAL_DBG(logFileName)
       SERIAL_DBG('\n')
+      SERIAL_DBG("\n###\n")
     }
     else
-      SERIAL_DBG("No log file open.\n")
-    SERIAL_DBG("\n###\n")
-
-    // Handling log file management
-    handleLogFile(logFile, logDir, logFileName, gnss, logSegCountdown, connectedDevices[SD_CARD]);
-
-    // Logging into file
-    if (logFile && !time_buf.isEmpty()) {
-      // Create function for this
-      time_buf.pop(time_ms);
-      lng_buf.pop(lng_deg);
-      lat_buf.pop(lat_deg);
-      temp_buf.pop(temp_C);
-      rawTurb_buf.pop(rawTurb);
-      turb_buf.pop(turb);
-      rawCond_buf.pop(rawCond);
-      cond_buf.pop(cond);
-      
-      // -----------------
-      if ( !logToSD(logFile, time_ms, lng_deg, lat_deg, rawTurb, turb, rawCond, cond, temp_C) )
-        SERIAL_DBG("Logging failed...\n")
-      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, rawTurb, turb, rawCond, cond, temp_C);
-    }    
-    // Dumping log file to Serial
-    if (FILE_DUMP && fileDumpCountdown.check())
-      dumpFileToSerial(logFile);
+      SERIAL_DBG("No log file open...\n")
   }
-  else  {
-    // If log file open then empty buffers into it before closing
-    if (logFile)  {
-      SERIAL_DBG("Writing remaining buffer values...\n")
-      // Create function for this
-      time_buf.pop(time_ms);
-      lng_buf.pop(lng_deg);
-      lat_buf.pop(lat_deg);
-      temp_buf.pop(temp_C);
-      rawTurb_buf.pop(rawTurb);
-      turb_buf.pop(turb);
-      rawCond_buf.pop(rawCond);
-      cond_buf.pop(cond);
-      // ---------------------
-      if ( !time_buf.isEmpty() && !logToSD(logFile, time_ms, lng_deg, lat_deg, rawTurb, turb, rawTurb, rawCond, temp_C) )
-        SERIAL_DBG("Logging failed...\n")
-      else
-        logFile.close();
-      sendDataToBluetooth(satelliteID, gnss.date, time_ms, lng_deg, lat_deg, rawTurb, turb, rawTurb, rawCond, temp_C);
-    }
-    else
-      SERIAL_DBG("Logging disabled...\n")
-  }
-  SERIAL_DBG("\n")
+  else
+    SERIAL_DBG("Logging disabled...\n")
 
+  // Dumping log file to Serial
+  if (FILE_DUMP && fileDumpCountdown.check())
+    dumpFileToSerial(logFile);
+
+  SERIAL_DBG("\n\n")
   // Loop execution time
-  //Serial.println(millis() - t);
+  //Serial.println(micros() - t);
 }
 
 /* ############################
@@ -399,7 +379,7 @@ void readSensors()  {
   //long t = millis();
   
   // If logging enabled and logFile open
-  if (enLog && logFile) {
+  if (enLog) {
     // If buffer not full
     if ( !time_buf.isFull() ) {
 
@@ -714,12 +694,9 @@ void setupSDCard(volatile bool& deviceConnected)  {
  */
 void dateToStr(TinyGPSDate& gnssDate, String& str) {
   
-  str = "";
-  str += gnssDate.year();
-  str += '_';
-  str += gnssDate.month();
-  str += '_';
-  str += gnssDate.day();
+  str = String(gnssDate.year()) + '_' + 
+        ( (gnssDate.month() < 10) ? '0' + String(gnssDate.month()) : String(gnssDate.month()) ) + '_' + 
+        ( (gnssDate.day() < 10) ? '0' + String(gnssDate.day()) : String(gnssDate.day()) );
 }
   
 /*
@@ -731,12 +708,9 @@ void dateToStr(TinyGPSDate& gnssDate, String& str) {
  */
 void timeToStr(TinyGPSTime& gnssTime, String& str) {
 
-  str = "";
-  str += gnssTime.hour();
-  str += '_';
-  str += gnssTime.minute();
-  str += '_';
-  str += gnssTime.second();
+  str = ( (gnssTime.hour() < 10) ? '0' + String(gnssTime.hour()) : String(gnssTime.hour()) ) + '_' + 
+        ( (gnssTime.minute() < 10) ? '0' + String(gnssTime.minute()) : String(gnssTime.minute()) ) + '_' + 
+        ( (gnssTime.second() < 10) ? '0' + String(gnssTime.second()) : String(gnssTime.second()) );
 }
 
 /*
@@ -750,14 +724,18 @@ void timeValToStr(const uint32_t& timeVal, String& str) {
 
   uint32_t tmp = timeVal;
 
-  str = "";
-  str += String(tmp/1000000) + ':';
+  int h = tmp/1000000;
   tmp %= 1000000;
-  str += String(tmp/10000) + ':';
+  int m = tmp/10000;
   tmp %= 10000;
-  str += String(tmp/100) + '.';
+  int s = tmp/100;
   tmp %= 100;
-  str += String(tmp);
+  int ms = tmp;
+  
+  str = ( (h < 10) ? '0' + String(h) : String(h) ) + ':' + 
+        ( (m < 10) ? '0' + String(m) : String(m) ) + ':' + 
+        ( (s < 10) ? '0' + String(s) : String(s) ) + '.' +
+        ( (ms < 10) ? '0' + String(ms) : String(ms) );
 }
 
 /*
@@ -809,7 +787,7 @@ bool newLogFile(File& file, const String& dirName, String& fileName)  {
     return false;
   }
   file.print("Date:,"); file.println(dirName);
-  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Raw Turbidity (V),Turbidity (NTU), Temperature (°C)");
+  file.println("Time (HH:MM:SS.CC),Longitude (°),Latitude (°),Raw Turbidity (V),Turbidity (NTU),Raw Conductivity (mV),Condctivity (mS/cm),Temperature (°C)");
   return true;
 }
 
@@ -888,7 +866,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     timeValToStr(timeVal, log_str);
   else  {
     SERIAL_DBG("No GNSS time response...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting GNSS longitude into log string
@@ -896,7 +874,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += String(lng_deg, LOC_DECIMALS);
   else  {
     SERIAL_DBG("No GNSS location response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting GNSS latitude into log string
@@ -904,7 +882,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += String(lat_deg, LOC_DECIMALS);
   else  {
     SERIAL_DBG("No GNSS location response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
   log_str += ',';
   // Inserting raw turbidity into log string
@@ -913,7 +891,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
   if (turb != TURB_NO_VALUE)
     log_str += String(turb, TURB_DECIMALS);
   else
-    log_str += "Nan";
+    log_str += "NaN";
   log_str += ',';
   // Inserting raw conductivity into log string
   log_str += String(rawCond, 3) + ',';
@@ -921,7 +899,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
   if (cond != EC_NO_VALUE)
     log_str += String(cond, COND_DECIMALS);
   else
-    log_str += "Nan";
+    log_str += "NaN";
   log_str += ',';
   
   // Inserting external temperature into log string
@@ -929,7 +907,7 @@ void csv_logStr(String& log_str, const uint32_t& timeVal, const double& lng_deg,
     log_str += String(temp_C, TEMP_DECIMALS);
   else  {
     SERIAL_DBG("No temperature response, check wiring...\n")
-    log_str += "Nan";
+    log_str += "NaN";
   }
 }
 

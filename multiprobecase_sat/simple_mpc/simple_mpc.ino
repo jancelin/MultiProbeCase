@@ -734,13 +734,8 @@ void timeValToStr(const uint32_t& timeVal, String& str) {
   
   str = ( (h < 10) ? '0' + String(h) : String(h) ) + ':' + 
         ( (m < 10) ? '0' + String(m) : String(m) ) + ':' + 
-        ( (s < 10) ? '0' + String(s) : String(s) ) + ':';
-  if (ms < 100)  {
-    str += '0';
-    if (ms < 10)
-      str += '0'; 
-  }
-  str += ms;
+        ( (s < 10) ? '0' + String(s) : String(s) ) + '.' +
+        ( (ms < 10) ? '0' + String(ms) : String(ms) );
 }
 
 /*

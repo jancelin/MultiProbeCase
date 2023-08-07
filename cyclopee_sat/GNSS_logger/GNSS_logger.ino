@@ -46,7 +46,7 @@
  */
 
 /************** SERIAL PORTS *****************/ 
-#define GNSS_SERIAL       Serial3
+#define GNSS_SERIAL       Serial5
 #define BLUETOOTH_SERIAL  Serial1
  
 /************** TIMER INTERRUPTS INTERVALS *****************/
@@ -66,14 +66,12 @@
 /************** TEENSY PINS *****************/
 // Logging LED
 #define LOG_LED       13
-// Modbus DE & RE pins
-#define DE_PIN        30 // RE = ~DE => Wired to pin 30 as well
 // Disable logging button
-#define BUTTON_PIN    16
+#define BUTTON_PIN    14
 
 /************** BLUETOOTH MODULE *****************/
 // Bluetooth module key (AT mode) pin
-#define BLUETOOTH_KEY 2
+#define BLUETOOTH_KEY 21
 // Bluetooth module communication baudrate
 #define BLUETOOTH_COMM_BAUDRATE 115200
 // BLUETOOTH INFO
@@ -83,7 +81,7 @@
 
 /************** GNSS module *****************/
 // GNSS commuiation baudrate
-#define GNSS_BAUDRATE 115200//bauds
+#define GNSS_BAUDRATE 9600//bauds
 // Time value if GNSS module disconnected
 #define NO_GNSS_TIME      24606099 // HH:MM:SS.CC
 // Longitude/latitude value if GNSS module disconnected
@@ -91,7 +89,7 @@
 // Altitude value if GNSS module disconnected
 #define NO_GNSS_ALTITUDE  INT32_MAX
 // NMEA messages inteval
-#define GNSS_NMEA_INTERVAL  200//ms
+#define GNSS_NMEA_INTERVAL  1000//ms
 
 /************** BLUETOOTH *****************/
 #define MODULE_NAME "Cyclopee"
@@ -126,7 +124,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -134,7 +132,7 @@ enum Devices : uint8_t  {
 // File dump
 // Set to 1 to dump open log file to Serial port
 // Probably better to set Serial debug to 0
-#define FILE_DUMP 1
+#define FILE_DUMP 0
 
 /* ###################
  * #    LIBRARIES    #
@@ -600,7 +598,7 @@ void json_logStr(String& str, const String& satelliteID, TinyGPSDate& gnssDate, 
   str += '}';
 }
 
-void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const uint16_t& dist_mm, const float& temp_C)  {
+void sendDataToBluetooth(const String& satelliteID, TinyGPSDate& gnssDate, const uint32_t& timeVal, const double& lng_deg, const double& lat_deg, const double& elv_m, const char* fixMode, const char* pdop, const float& dist_mm, const float& temp_C)  {
 
   String str = "";
   json_logStr(str, satelliteID, gnssDate, timeVal, lng_deg, lat_deg, elv_m, fixMode, pdop, dist_mm, temp_C);

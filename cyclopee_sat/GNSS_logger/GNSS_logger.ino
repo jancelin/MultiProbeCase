@@ -81,7 +81,7 @@
 
 /************** GNSS module *****************/
 // GNSS commuiation baudrate
-#define GNSS_BAUDRATE 9600//bauds
+#define GNSS_BAUDRATE 115200//bauds
 // Time value if GNSS module disconnected
 #define NO_GNSS_TIME      24606099 // HH:MM:SS.CC
 // Longitude/latitude value if GNSS module disconnected
@@ -89,7 +89,7 @@
 // Altitude value if GNSS module disconnected
 #define NO_GNSS_ALTITUDE  INT32_MAX
 // NMEA messages inteval
-#define GNSS_NMEA_INTERVAL  1000//ms
+#define GNSS_NMEA_INTERVAL  250//ms
 
 /************** BLUETOOTH *****************/
 #define MODULE_NAME "Cyclopee"
@@ -674,6 +674,9 @@ void gnssRefresh() {
   // Feed TinyGPSPlus object with NMEA data
   while (GNSS_SERIAL.available())
      gnss.encode(GNSS_SERIAL.read());
+
+  while (BLUETOOTH_SERIAL.available())
+    GNSS_SERIAL.write((char)BLUETOOTH_SERIAL.read());
 }
 
 

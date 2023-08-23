@@ -9,9 +9,9 @@ Satellite Cyclopée
 ==================
 
 ## Description
-Le satellite Cyclopée a été développé pour les chrcheurs du laboratoire LIENSs à La Rochelle pour réaliser des mesures de niveau marin à bas coût.<br>
-C'est un dispositif permettant de réaliser des mesures de niveau realtives ou absolues (hauteur d'eau, niveau marin, etc.). Il embarque un distancemètre ultrasonore permettant de mesurer la distance le séparant d'une surface (sol, eau), un capteur de température externe au distancemètre et un récepteur GNSS donnant l'heure et sa position. Le récepteur GNSS peut être quelconque du moment qu'il transmet les trames NMEA `$GPGGA` et `$GPRMC`.<br>
-Ce dispositif horodate, géoréférence et stocke localement (carte SD) les mesures de distance à la surface étudiée. Si associé à une passerelle, il peut également lui transmettre ses mesures pour stockage en base de données. Après post traitement des données, il est possible de remonter à l'altitude de la surface étudiée.
+Le satellite Cyclopée a été développé pour les chrcheurs du laboratoire LIENSs à La Rochelle pour réaliser des mesures de niveau marin, à bord d'embarcations et à bas coût.<br>
+Il est équipé un altimètre ultrasonore permettant de mesurer la distance le séparant d'une surface (sol, eau), un capteur de température, externe au distancemètre et un récepteur GNSS donnant l'heure et sa position. Le récepteur GNSS peut être quelconque du moment qu'il transmet les trames NMEA `$GPGGA` et `$GPRMC`.<br>
+Ce dispositif horodate, géoréférence et stocke localement (carte SD) les mesures de distance à la surface étudiée. Si associé à une passerelle, il peut également lui transmettre ses mesures pour stockage en base de données.
 
 ![Diagramme des flux](assets/schemas/flux_diagram_latest.png)
 

@@ -92,7 +92,7 @@ Les capteurs utilisés pour ce projets ont été approuvés pour la mesure d'eau
 Fournisseurs :
 
 - Farnell
-- DFROBOT
+- DFRobot
 
 |SEN0169|pH|
 |---------------------------------|-|
@@ -225,12 +225,12 @@ Fournisseur DFROBOT.
 
 | |SensOcean|SETIER Datalogger|OceanIsOpen|
 |-|---------|-----------------|-----------|
-|**Alimentation**|Batterie|Secteur|?|
-|**Recharge**|Secteur & solaire||?|
+|**Alimentation**|Batterie|Secteur|Batterie|
+|**Recharge**|Secteur & solaire||Secteur|
 |**Mise en veille**|Oui |Oui |Non|
 |**Date/heure**|Horloge|Horloge|GNSS|
 |**Accès aux données**|Carte SD|SD & WiFi|Internet, WiFi & SD|
 |**Visualisation de données**|Ecran (temps réel) & post traitement| Post traitement|Grafana (local ou distant)|
-|**Signalisation LED**|Oui|Non|?|
+|**Signalisation LED**|Oui|Non|Non|
 |**Ecran**|Oui|Non|Oui|
 |**Aide à la calibration**|+|++|+++|

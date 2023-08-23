@@ -10,6 +10,24 @@ Valise Multicapteurs
 Cahier des charges fonctionnel
 ------------------
 
+Des analyses fonctionnelles externe et interne ont été menées afin de rédiger le Cahier des Charges Fonctionnel  (CdCF) du système.
+
+
+### Identification des besoins
+
+Le contexte introduit précedemment a permis de formuler le besoin primaire,
+qui donnera par la suite au système ses fonctions primaires, inscrites dans le CdCF.
+Une approche par projet a  également permis de recenser les besoins techniques des
+chercheurs. Ils serviront à dimensionner le système aux besoins scientifiques des
+chercheurs.
+La principale raison de l’existence de ce projet est le manque de donnees environnementales dans la zone des pertuis Rochelais. Nous nous sommes interrogés sur les raisons de ce manque, et avons relevé que le coût des campagnes de mesure, et les difficultés rencontrées quant à la mise à disposition des données, constituent des freins à leur acquisition. Le besoin primaire, auquel doit répondre le système, a donc été formulé ainsi :
+
+*Récolter, à moindre coût, des séries temporelles de données environnementales sur un vaste territoire, et faciliter leur mise à dispoition.*
+
+En plus du besoin primaire, un temps d’échange avec les chercheurs a permis
+d’identifier des besoins ou contraintes techniques auxquels le sytème doit répondre,
+afin de mener ses missions à bien au sein de leurs projets de recherche. Les différents projets recensés se concentrent sur deux thématiques : la mesure du niveau marin et la mesure de la qualité de l’eau. Le tableau synthétise les informations recueillies lors de ce temps d’échange. Elles sont précieuses pour l’établissement du CdCF.
+
 ### Fonctionnalités :
 
 #### Energie :

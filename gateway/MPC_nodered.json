@@ -8,6 +8,14 @@
         "env": []
     },
     {
+        "id": "90040b5d2b0211bd",
+        "type": "tab",
+        "label": "Flow 2",
+        "disabled": true,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "e8ac9bf3d52fa0f7",
         "type": "serial-port",
         "serialport": "/dev/rfcomm0",
@@ -53,7 +61,7 @@
         "hostFieldType": "str",
         "port": "5432",
         "portFieldType": "num",
-        "database": "mpc",
+        "database": "mpc2",
         "databaseFieldType": "str",
         "ssl": "false",
         "sslFieldType": "bool",
@@ -310,8 +318,8 @@
         "z": "cba0c3b5b8568f89",
         "name": "0 cyclopee",
         "serial": "e8ac9bf3d52fa0f7",
-        "x": 160,
-        "y": 140,
+        "x": 80,
+        "y": 40,
         "wires": [
             [
                 "cfc78bba62d9f587"
@@ -324,8 +332,8 @@
         "z": "cba0c3b5b8568f89",
         "name": "Récupération du sensor / split data et insert dans postgresql",
         "info": "",
-        "x": 480,
-        "y": 340,
+        "x": 420,
+        "y": 40,
         "wires": []
     },
     {
@@ -339,8 +347,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 590,
-        "y": 260,
+        "x": 410,
+        "y": 100,
         "wires": [
             [
                 "d87bfbd0caa05eed",
@@ -358,8 +366,8 @@
         "split": false,
         "rowsPerMsg": 1,
         "outputs": 1,
-        "x": 850,
-        "y": 320,
+        "x": 290,
+        "y": 160,
         "wires": [
             [
                 "d87bfbd0caa05eed"
@@ -379,8 +387,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 940,
-        "y": 160,
+        "x": 300,
+        "y": 260,
         "wires": []
     },
     {
@@ -391,8 +399,8 @@
         "property": "payload",
         "action": "obj",
         "pretty": false,
-        "x": 330,
-        "y": 200,
+        "x": 230,
+        "y": 100,
         "wires": [
             [
                 "7ce810bfc08b1da0"
@@ -405,8 +413,8 @@
         "z": "cba0c3b5b8568f89",
         "name": "1 AIR",
         "serial": "52f144220523204c",
-        "x": 150,
-        "y": 200,
+        "x": 70,
+        "y": 100,
         "wires": [
             [
                 "cfc78bba62d9f587"
@@ -419,34 +427,12 @@
         "z": "cba0c3b5b8568f89",
         "name": "2 Eau",
         "serial": "2f1090c8e3632e25",
-        "x": 150,
-        "y": 260,
+        "x": 70,
+        "y": 160,
         "wires": [
             [
                 "cfc78bba62d9f587"
             ]
-        ]
-    },
-    {
-        "id": "026060a705062ab8",
-        "type": "exec",
-        "z": "cba0c3b5b8568f89",
-        "command": "bluetoothctl devices",
-        "addpay": "",
-        "append": "",
-        "useSpawn": "false",
-        "timer": "",
-        "winHide": false,
-        "oldrc": false,
-        "name": "",
-        "x": 430,
-        "y": 740,
-        "wires": [
-            [
-                "a09d6db05305d87e"
-            ],
-            [],
-            []
         ]
     },
     {
@@ -470,103 +456,151 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 150,
-        "y": 740,
+        "x": 90,
+        "y": 400,
         "wires": [
             [
-                "026060a705062ab8",
-                "54dad4dcf0f175f3",
                 "76618010a492c22b"
             ]
         ]
     },
     {
-        "id": "f48261ea0a9d7828",
+        "id": "fbd48a1d921a6ec0",
         "type": "debug",
         "z": "cba0c3b5b8568f89",
-        "name": "debug 6",
-        "active": true,
+        "name": "debug 9",
+        "active": false,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1140,
-        "y": 520,
+        "x": 640,
+        "y": 260,
         "wires": []
     },
     {
-        "id": "ce6fd77a9b7f63e6",
+        "id": "76618010a492c22b",
         "type": "exec",
         "z": "cba0c3b5b8568f89",
-        "command": "bluetoothctl scan on",
+        "command": "bluetoothctl devices | cut -f2 -d' ' | while read uuid; do /home/pi/.local/bin/jc bluetoothctl info $uuid ; done",
         "addpay": "",
         "append": "",
         "useSpawn": "false",
         "timer": "",
         "winHide": false,
         "oldrc": false,
-        "name": "",
-        "x": 420,
-        "y": 540,
+        "name": "connected devices",
+        "x": 270,
+        "y": 400,
         "wires": [
             [
-                "f48261ea0a9d7828"
+                "5454bc5bdf4fa864"
             ],
             [],
             []
         ]
     },
     {
-        "id": "e2dee656fc9800ea",
-        "type": "inject",
+        "id": "5454bc5bdf4fa864",
+        "type": "split",
         "z": "cba0c3b5b8568f89",
         "name": "",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "60",
-        "crontab": "",
-        "once": true,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 150,
-        "y": 540,
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": true,
+        "addname": "",
+        "x": 450,
+        "y": 400,
         "wires": [
             [
-                "ce6fd77a9b7f63e6"
+                "55c4052ffc972fbf"
             ]
         ]
     },
     {
-        "id": "a09d6db05305d87e",
-        "type": "csv",
+        "id": "55c4052ffc972fbf",
+        "type": "json",
         "z": "cba0c3b5b8568f89",
         "name": "",
-        "sep": " ",
-        "hdrin": "",
-        "hdrout": "all",
-        "multi": "mult",
-        "ret": "\\n",
-        "temp": "",
-        "skip": "0",
-        "strings": true,
-        "include_empty_strings": "",
-        "include_null_values": "",
-        "x": 610,
-        "y": 720,
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 570,
+        "y": 400,
         "wires": [
-            []
+            [
+                "d546de39939e6115"
+            ]
         ]
+    },
+    {
+        "id": "d546de39939e6115",
+        "type": "join",
+        "z": "cba0c3b5b8568f89",
+        "name": "",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "payload",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "8",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 690,
+        "y": 400,
+        "wires": [
+            [
+                "fbd48a1d921a6ec0",
+                "89dbe8272ba260ec"
+            ]
+        ]
+    },
+    {
+        "id": "89dbe8272ba260ec",
+        "type": "function",
+        "z": "cba0c3b5b8568f89",
+        "name": "concat_nested_arrays",
+        "func": "\nmsg.payload = [].concat.apply([], msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 900,
+        "y": 400,
+        "wires": [
+            [
+                "fbd48a1d921a6ec0",
+                "41edd6d7c18d4d4a"
+            ]
+        ]
+    },
+    {
+        "id": "41edd6d7c18d4d4a",
+        "type": "ui_table",
+        "z": "cba0c3b5b8568f89",
+        "group": "9d0b488a87887902",
+        "name": "",
+        "order": 1,
+        "width": "27",
+        "height": "13",
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 990,
+        "y": 460,
+        "wires": []
     },
     {
         "id": "f5a86730fbfe936a",
@@ -574,8 +608,8 @@
         "z": "cba0c3b5b8568f89",
         "name": "Air Output 1",
         "serial": "52f144220523204c",
-        "x": 670,
-        "y": 1240,
+        "x": 450,
+        "y": 620,
         "wires": []
     },
     {
@@ -599,8 +633,8 @@
         "topic": "",
         "payload": "{\"order\":\"getConfig\"}",
         "payloadType": "json",
-        "x": 150,
-        "y": 1140,
+        "x": 130,
+        "y": 520,
         "wires": [
             [
                 "f5a86730fbfe936a",
@@ -620,8 +654,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 660,
-        "y": 1160,
+        "x": 440,
+        "y": 540,
         "wires": []
     },
     {
@@ -645,8 +679,8 @@
         "topic": "",
         "payload": "{\"order\":\"update_interval\", \"value\":5000}",
         "payloadType": "json",
-        "x": 160,
-        "y": 1180,
+        "x": 140,
+        "y": 560,
         "wires": [
             [
                 "f5a86730fbfe936a",
@@ -660,8 +694,8 @@
         "z": "cba0c3b5b8568f89",
         "name": "ORDER TO TEENSY",
         "info": "",
-        "x": 580,
-        "y": 1100,
+        "x": 560,
+        "y": 480,
         "wires": []
     },
     {
@@ -685,8 +719,8 @@
         "topic": "",
         "payload": "{\"order\":\"startLog\"}",
         "payloadType": "json",
-        "x": 180,
-        "y": 1240,
+        "x": 160,
+        "y": 620,
         "wires": [
             [
                 "f5a86730fbfe936a",
@@ -715,8 +749,8 @@
         "topic": "",
         "payload": "{\"order\":\"stopLog\"}",
         "payloadType": "json",
-        "x": 180,
-        "y": 1280,
+        "x": 160,
+        "y": 660,
         "wires": [
             [
                 "f5a86730fbfe936a",
@@ -725,178 +759,10 @@
         ]
     },
     {
-        "id": "90bc7ad2f6ede9ef",
-        "type": "exec",
-        "z": "cba0c3b5b8568f89",
-        "command": "bluetoothctl paired-devices",
-        "addpay": "",
-        "append": "",
-        "useSpawn": "false",
-        "timer": "",
-        "winHide": false,
-        "oldrc": false,
-        "name": "",
-        "x": 420,
-        "y": 640,
-        "wires": [
-            [
-                "178ffc332c9b6f9e"
-            ],
-            [],
-            []
-        ]
-    },
-    {
-        "id": "178ffc332c9b6f9e",
-        "type": "csv",
-        "z": "cba0c3b5b8568f89",
-        "name": "",
-        "sep": " ",
-        "hdrin": "",
-        "hdrout": "all",
-        "multi": "one",
-        "ret": "\\n",
-        "temp": "",
-        "skip": "0",
-        "strings": true,
-        "include_empty_strings": "",
-        "include_null_values": "",
-        "x": 650,
-        "y": 620,
-        "wires": [
-            [
-                "f48261ea0a9d7828",
-                "5c6e784218ec0027"
-            ]
-        ]
-    },
-    {
-        "id": "68c139e63b9fb49c",
-        "type": "exec",
-        "z": "cba0c3b5b8568f89",
-        "command": "",
-        "addpay": "payload",
-        "append": "",
-        "useSpawn": "false",
-        "timer": "",
-        "winHide": false,
-        "oldrc": false,
-        "name": "",
-        "x": 1090,
-        "y": 620,
-        "wires": [
-            [
-                "f48261ea0a9d7828"
-            ],
-            [
-                "f48261ea0a9d7828"
-            ],
-            []
-        ]
-    },
-    {
-        "id": "54dad4dcf0f175f3",
-        "type": "exec",
-        "z": "cba0c3b5b8568f89",
-        "command": "bluetoothctl devices | cut -f2 -d' ' | while read uuid; do bluetoothctl info $uuid; done | grep -e \"Name\\|Device\\|Paired\\|Connected\"",
-        "addpay": "",
-        "append": "",
-        "useSpawn": "false",
-        "timer": "",
-        "winHide": false,
-        "oldrc": false,
-        "name": "connected devices",
-        "x": 430,
-        "y": 820,
-        "wires": [
-            [
-                "f467e16936fed1a5"
-            ],
-            [],
-            []
-        ]
-    },
-    {
-        "id": "fbd48a1d921a6ec0",
+        "id": "f48261ea0a9d7828",
         "type": "debug",
-        "z": "cba0c3b5b8568f89",
-        "name": "debug 9",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1080,
-        "y": 780,
-        "wires": []
-    },
-    {
-        "id": "f467e16936fed1a5",
-        "type": "csv",
-        "z": "cba0c3b5b8568f89",
-        "name": "",
-        "sep": " ",
-        "hdrin": "",
-        "hdrout": "none",
-        "multi": "mult",
-        "ret": "\\n",
-        "temp": "",
-        "skip": "0",
-        "strings": true,
-        "include_empty_strings": "",
-        "include_null_values": "",
-        "x": 650,
-        "y": 780,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "d6228a6ad8faa767",
-        "type": "exec",
-        "z": "cba0c3b5b8568f89",
-        "command": "",
-        "addpay": "payload",
-        "append": "",
-        "useSpawn": "false",
-        "timer": "",
-        "winHide": false,
-        "oldrc": false,
-        "name": "",
-        "x": 1290,
-        "y": 640,
-        "wires": [
-            [],
-            [],
-            []
-        ]
-    },
-    {
-        "id": "fc5e1354e8ce7755",
-        "type": "function",
-        "z": "cba0c3b5b8568f89",
-        "name": "disconnect BT",
-        "func": "var con = {};\ncon.bt = msg.payload.col2;\ncon.cmd = \"sudo rfcomm release 0\";\n\ncon.run = con.cmd + \" \" + con.bt;\nmsg.payload = con.run;\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1300,
-        "y": 700,
-        "wires": [
-            [
-                "d6228a6ad8faa767"
-            ]
-        ]
-    },
-    {
-        "id": "a288cfeeee476a15",
-        "type": "debug",
-        "z": "cba0c3b5b8568f89",
-        "name": "debug 10",
+        "z": "90040b5d2b0211bd",
+        "name": "debug 6",
         "active": true,
         "tosidebar": true,
         "console": false,
@@ -904,34 +770,36 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 840,
-        "y": 1080,
+        "x": 1120,
+        "y": 220,
         "wires": []
     },
     {
-        "id": "5c6e784218ec0027",
-        "type": "function",
-        "z": "cba0c3b5b8568f89",
-        "name": "connect BT",
-        "func": "var con = {};\ncon.bt = msg.payload.col2;\ncon.cmd = \"sudo rfcomm bind \";\nif (msg.payload.col3 === \"Cyclopee\") {\n    con.rfcomm = 0\n} else if (msg.payload.col3 === \"Air\") {\n    con.rfcomm = 1\n}else if (msg.payload.col3 === \"Eau\") {\n    con.rfcomm = 2\n};\ncon.run = con.cmd + con.rfcomm + \" \" + con.bt;\nmsg.payload = con.run;\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 870,
-        "y": 620,
+        "id": "ce6fd77a9b7f63e6",
+        "type": "exec",
+        "z": "90040b5d2b0211bd",
+        "command": "bluetoothctl scan on",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 400,
+        "y": 240,
         "wires": [
             [
-                "68c139e63b9fb49c",
                 "f48261ea0a9d7828"
-            ]
+            ],
+            [],
+            []
         ]
     },
     {
-        "id": "6654653cc11254a2",
+        "id": "e2dee656fc9800ea",
         "type": "inject",
-        "z": "cba0c3b5b8568f89",
+        "z": "90040b5d2b0211bd",
         "name": "",
         "props": [
             {
@@ -944,13 +812,171 @@
         ],
         "repeat": "",
         "crontab": "",
-        "once": true,
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 240,
+        "wires": [
+            [
+                "ce6fd77a9b7f63e6"
+            ]
+        ]
+    },
+    {
+        "id": "90bc7ad2f6ede9ef",
+        "type": "exec",
+        "z": "90040b5d2b0211bd",
+        "command": "bluetoothctl paired-devices",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 420,
+        "y": 360,
+        "wires": [
+            [
+                "178ffc332c9b6f9e"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "178ffc332c9b6f9e",
+        "type": "csv",
+        "z": "90040b5d2b0211bd",
+        "name": "",
+        "sep": " ",
+        "hdrin": "",
+        "hdrout": "all",
+        "multi": "one",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 630,
+        "y": 320,
+        "wires": [
+            [
+                "f48261ea0a9d7828",
+                "5c6e784218ec0027"
+            ]
+        ]
+    },
+    {
+        "id": "68c139e63b9fb49c",
+        "type": "exec",
+        "z": "90040b5d2b0211bd",
+        "command": "",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 1070,
+        "y": 320,
+        "wires": [
+            [
+                "f48261ea0a9d7828"
+            ],
+            [
+                "f48261ea0a9d7828"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "d6228a6ad8faa767",
+        "type": "exec",
+        "z": "90040b5d2b0211bd",
+        "command": "",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "",
+        "x": 1270,
+        "y": 340,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "fc5e1354e8ce7755",
+        "type": "function",
+        "z": "90040b5d2b0211bd",
+        "name": "disconnect BT",
+        "func": "var con = {};\ncon.bt = msg.payload.col2;\ncon.cmd = \"sudo rfcomm release 0\";\n\ncon.run = con.cmd + \" \" + con.bt;\nmsg.payload = con.run;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1280,
+        "y": 400,
+        "wires": [
+            [
+                "d6228a6ad8faa767"
+            ]
+        ]
+    },
+    {
+        "id": "5c6e784218ec0027",
+        "type": "function",
+        "z": "90040b5d2b0211bd",
+        "name": "connect BT",
+        "func": "var con = {};\ncon.bt = msg.payload.col2;\ncon.cmd = \"sudo rfcomm bind \";\nif (msg.payload.col3 === \"Cyclopee\") {\n    con.rfcomm = 0\n} else if (msg.payload.col3 === \"Air\") {\n    con.rfcomm = 1\n}else if (msg.payload.col3 === \"Eau\") {\n    con.rfcomm = 2\n};\ncon.run = con.cmd + con.rfcomm + \" \" + con.bt;\nmsg.payload = con.run;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 320,
+        "wires": [
+            [
+                "68c139e63b9fb49c",
+                "f48261ea0a9d7828"
+            ]
+        ]
+    },
+    {
+        "id": "6654653cc11254a2",
+        "type": "inject",
+        "z": "90040b5d2b0211bd",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
         "onceDelay": "5",
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 150,
-        "y": 640,
+        "x": 120,
+        "y": 340,
         "wires": [
             [
                 "90bc7ad2f6ede9ef"
@@ -958,152 +984,70 @@
         ]
     },
     {
-        "id": "76618010a492c22b",
+        "id": "35141bcbb2b7ba4e",
+        "type": "inject",
+        "z": "90040b5d2b0211bd",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "5",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 140,
+        "wires": [
+            [
+                "1ea9fd626da2479e"
+            ]
+        ]
+    },
+    {
+        "id": "1ea9fd626da2479e",
         "type": "exec",
-        "z": "cba0c3b5b8568f89",
-        "command": "bluetoothctl devices | cut -f2 -d' ' | while read uuid; do /home/pi/.local/bin/jc bluetoothctl info $uuid ; done",
+        "z": "90040b5d2b0211bd",
+        "command": "str2str -in ntrip://:@caster.centipede.fr:80/LIENSS -out serial://rfcomm0:115200:8:N:1:off",
         "addpay": "",
         "append": "",
         "useSpawn": "false",
         "timer": "",
         "winHide": false,
         "oldrc": false,
-        "name": "connected devices",
-        "x": 370,
-        "y": 940,
+        "name": "",
+        "x": 570,
+        "y": 140,
         "wires": [
             [
-                "5454bc5bdf4fa864"
+                "b1e46df091d4ca19"
             ],
             [],
             []
         ]
     },
     {
-        "id": "5454bc5bdf4fa864",
-        "type": "split",
-        "z": "cba0c3b5b8568f89",
-        "name": "",
-        "splt": "\\n",
-        "spltType": "str",
-        "arraySplt": 1,
-        "arraySpltType": "len",
-        "stream": true,
-        "addname": "",
-        "x": 550,
-        "y": 940,
-        "wires": [
-            [
-                "55c4052ffc972fbf"
-            ]
-        ]
-    },
-    {
-        "id": "55c4052ffc972fbf",
-        "type": "json",
-        "z": "cba0c3b5b8568f89",
-        "name": "",
-        "property": "payload",
-        "action": "obj",
-        "pretty": false,
-        "x": 670,
-        "y": 940,
-        "wires": [
-            [
-                "d546de39939e6115"
-            ]
-        ]
-    },
-    {
-        "id": "d546de39939e6115",
-        "type": "join",
-        "z": "cba0c3b5b8568f89",
-        "name": "",
-        "mode": "custom",
-        "build": "array",
-        "property": "payload",
-        "propertyType": "msg",
-        "key": "payload",
-        "joiner": "\\n",
-        "joinerType": "str",
-        "accumulate": false,
-        "timeout": "8",
-        "count": "",
-        "reduceRight": false,
-        "reduceExp": "",
-        "reduceInit": "",
-        "reduceInitType": "",
-        "reduceFixup": "",
-        "x": 790,
-        "y": 940,
-        "wires": [
-            [
-                "fbd48a1d921a6ec0",
-                "89dbe8272ba260ec"
-            ]
-        ]
-    },
-    {
-        "id": "25f24098512c1a57",
-        "type": "comment",
-        "z": "cba0c3b5b8568f89",
-        "name": "Nested Arrays",
-        "info": "",
-        "x": 810,
-        "y": 880,
-        "wires": []
-    },
-    {
-        "id": "b14a266878d771ee",
-        "type": "function",
-        "z": "cba0c3b5b8568f89",
-        "name": "nested_arrays",
-        "func": "\nmsg.payload = [].concat(...msg.payload).map(({ address }) => address);\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 980,
-        "y": 980,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "89dbe8272ba260ec",
-        "type": "function",
-        "z": "cba0c3b5b8568f89",
-        "name": "concat_nested_arrays",
-        "func": "\nmsg.payload = [].concat.apply([], msg.payload);\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 980,
-        "y": 940,
-        "wires": [
-            [
-                "fbd48a1d921a6ec0",
-                "41edd6d7c18d4d4a"
-            ]
-        ]
-    },
-    {
-        "id": "41edd6d7c18d4d4a",
-        "type": "ui_table",
-        "z": "cba0c3b5b8568f89",
-        "group": "9d0b488a87887902",
-        "name": "",
-        "order": 1,
-        "width": "27",
-        "height": "13",
-        "columns": [],
-        "outputs": 0,
-        "cts": false,
-        "x": 1190,
-        "y": 940,
+        "id": "b1e46df091d4ca19",
+        "type": "debug",
+        "z": "90040b5d2b0211bd",
+        "name": "debug 11",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 140,
         "wires": []
     }
 ]

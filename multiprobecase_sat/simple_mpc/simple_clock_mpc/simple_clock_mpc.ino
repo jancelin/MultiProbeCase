@@ -368,7 +368,8 @@ void setupSDCard( volatile bool& deviceConnected)  {
  */
 void timestampToStr(const long& timestamp , String& str, bool add_ms) {
 
-  uint16_t h, m, s, ms;
+  uint16_t ms;
+  uint32_t s, m, h;
 
   // Convert timestamp to different time units
   ms = timestamp%1000;

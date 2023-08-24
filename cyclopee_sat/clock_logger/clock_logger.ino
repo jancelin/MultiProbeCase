@@ -40,10 +40,10 @@
 
 /* Current date & time */
 #define YEAR      2023
-#define MONTH     7
-#define DAY       20
-#define HOURS     00
-#define MINUTES   00
+#define MONTH     8
+#define DAY       22
+#define HOURS     16
+#define MINUTES   35
 #define SECONDS   00
 
 /************** TIMER INTERRUPTS INTERVALS *****************/
@@ -52,7 +52,7 @@
 // 71s maximum
 #define READ_INTERVAL       1000/*µs/ms*/ * 1000/*ms*/
 // Logging segmentation interval
-#define LOG_SEG_INTERVAL    1000/*ms/s*/ * 60/*s/min*/ * 5/*min*///* 60/*min/h*/
+#define LOG_SEG_INTERVAL    1000/*ms/s*/ * 60/*s/min*/ * 60/*min*///* 60/*min/h*/
 // Digital I.O. refresh interval
 #define IO_REFRESH_INTERVAL 50/*ms*/ * 1000/*µs/ms*/
 
@@ -60,7 +60,7 @@
 // Logging LED
 #define LOG_LED       13
 // Disable logging button
-#define BUTTON_PIN    14
+#define BUTTON_PIN    39
 
 /************** DATA NUMBER OF DECIMALS *****************/
 // Temperature
@@ -84,7 +84,7 @@ enum Devices : uint8_t  {
 /************** DEBUG *****************/
 // Serial debug
 // Set to 1 to see debug on Serial port
-#if 0
+#if 1
 #define SERIAL_DBG(...) {Serial.print(__VA_ARGS__);}
 #else
 #define SERIAL_DBG(...) {}
@@ -125,7 +125,7 @@ void handleDigitalIO();
  * ######################
  */
 #include "DS18B20_temperature.h"
-#include "A01NYUB_distance.h"
+#include "JSN_SR04T_distance.h"
 
 /* ##################
  * #    PROGRAM     #
@@ -349,7 +349,8 @@ void setupSDCard( volatile bool& deviceConnected)  {
  */
 void timestampToStr(const long& timestamp , String& str, bool add_ms) {
 
-  uint16_t h, m, s, ms;
+  uint16_t ms;
+  uint32_t s, m, h;
 
   // Convert timestamp to different time units
   ms = timestamp%1000;

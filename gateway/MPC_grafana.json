@@ -151,7 +151,7 @@
           "format": "time_series",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000) as \"elv-urm\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000) as \"elv-a01\",\n  (data ->>'elv')::numeric as elv\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  AND (data ->>'urm')::numeric > 1100\n  AND (data ->>'urm')::numeric < 1500\n  AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'a01')::numeric < 1500\nORDER BY 1,2",
+          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000) as \"elv-urm\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000) as \"elv-a01\",\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000) as \"elv-dist\",\n  (data ->>'elv')::numeric as elv\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
           "refId": "B",
           "sql": {
             "columns": [
@@ -295,7 +295,7 @@
           "format": "time_series",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'urm')::numeric as urm,\n  (data ->>'a01')::numeric as a01,\n  (data ->>'temp')::numeric as temperature\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  AND (data ->>'urm')::numeric > 1100\n  AND (data ->>'urm')::numeric < 1500\n  AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'a01')::numeric < 1500\nORDER BY 1,2",
+          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'urm')::numeric as urm,\n    (data ->>'a01')::numeric as a01,\n  (data ->>'dist')::numeric as dist,\n  (data ->>'temp')::numeric as temperature\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
           "refId": "B",
           "sql": {
             "columns": [
@@ -462,6 +462,19 @@
       "type": "geomap"
     },
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 22,
+      "panels": [],
+      "title": "Cyclopée query",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "datasource",
         "uid": "-- Mixed --"
@@ -537,31 +550,6 @@
                 "value": "celsius"
               }
             ]
-          },
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "elv-a01 Cyclopee;98d3:b1:fdc32c",
-                  "elv-urm Cyclopee;98d3:b1:fdc32c"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
           }
         ]
       },
@@ -569,7 +557,7 @@
         "h": 14,
         "w": 10,
         "x": 0,
-        "y": 15
+        "y": 16
       },
       "id": 19,
       "options": {
@@ -602,7 +590,7 @@
           "format": "time_series",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000)- 0.109 as \"elv-urm\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000)- 0.086 as \"elv-a01\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  AND (data ->>'urm')::numeric > 1100\n  AND (data ->>'urm')::numeric < 1500\n  AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'a01')::numeric < 1500\nORDER BY 1,2",
+          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000)- 0.109 as \"elv-urm\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000)- 0.109 as \"elv-a01\",\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 as \"elv-dist\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  --AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
           "refId": "B",
           "sql": {
             "columns": [
@@ -689,7 +677,7 @@
         "h": 14,
         "w": 14,
         "x": 10,
-        "y": 15
+        "y": 16
       },
       "id": 21,
       "options": {
@@ -744,7 +732,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n  time - interval'2 hour',\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000)- 0.109 - 46.941 + 3.447 as \"elv-urm-zeroHydro\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000)- 0.086 - 46.941 + 3.447 as \"elv-a01-zeroHydro\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  AND (data ->>'urm')::numeric > 1100\n  AND (data ->>'urm')::numeric < 1500\n  AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'a01')::numeric < 1500\nORDER BY 1,2",
+          "rawSql": "SELECT\n  time - interval'2 hour',\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000)- 0.109 - 46.941 + 3.447 as \"elv-urm-zeroHydro\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000)- 0.086 - 46.941 + 3.447 as \"elv-a01-zeroHydro\",\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 - 46.941 + 3.447 as \"elv-dist-zeroHydro\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  --AND (data ->>'a01')::numeric < 1500\nORDER BY 1,2",
           "refId": "B",
           "sql": {
             "columns": [
@@ -774,7 +762,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 30
       },
       "id": 13,
       "panels": [
@@ -1332,7 +1320,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 31
       },
       "id": 7,
       "panels": [
@@ -1594,104 +1582,103 @@
       "type": "row"
     },
     {
-      "collapsed": true,
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 32
       },
       "id": 8,
-      "panels": [
+      "panels": [],
+      "title": "Audit data",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 7,
+        "x": 0,
+        "y": 33
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
         {
           "datasource": {
             "type": "postgres",
             "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
           },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "custom": {
-                "align": "auto",
-                "cellOptions": {
-                  "type": "auto"
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n distinct data ->>'id' as metric ,\n jsonb_object_keys(data) as key\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\nGROUP BY data,key\nORDER BY metric,key ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
                 },
-                "inspect": false
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
+                "type": "groupBy"
               }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 14,
-            "w": 7,
-            "x": 0,
-            "y": 9
-          },
-          "id": 9,
-          "options": {
-            "cellHeight": "sm",
-            "footer": {
-              "countRows": false,
-              "fields": "",
-              "reducer": [
-                "sum"
-              ],
-              "show": false
-            },
-            "showHeader": true
-          },
-          "pluginVersion": "10.0.0",
-          "targets": [
-            {
-              "datasource": {
-                "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
-              },
-              "editorMode": "code",
-              "format": "table",
-              "rawQuery": true,
-              "rawSql": "SELECT\n distinct data ->>'id' as metric ,\n jsonb_object_keys(data) as key\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\nGROUP BY data,key\nORDER BY metric,key ASC",
-              "refId": "A",
-              "sql": {
-                "columns": [
-                  {
-                    "parameters": [],
-                    "type": "function"
-                  }
-                ],
-                "groupBy": [
-                  {
-                    "property": {
-                      "type": "string"
-                    },
-                    "type": "groupBy"
-                  }
-                ],
-                "limit": 50
-              }
-            }
-          ],
-          "title": "Panel Title",
-          "type": "table"
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "Audit data",
-      "type": "row"
+      "title": "Panel Title",
+      "type": "table"
     },
     {
       "collapsed": true,
@@ -1699,7 +1686,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 47
       },
       "id": 12,
       "panels": [],
@@ -1712,7 +1699,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 48
       },
       "id": 6,
       "panels": [
@@ -1858,14 +1845,14 @@
           "type": "postgres",
           "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
         },
-        "definition": "SELECT\n distinct data ->>'id' as metric\nFROM\n  cyclopee.sensor \nGROUP BY data\nORDER BY metric ASC",
+        "definition": "SELECT\n distinct data ->>'id' as metric\nFROM\n  cyclopee.sensor \n where time > (now() - interval '3 days')\nGROUP BY data\nORDER BY metric ASC",
         "hide": 0,
         "includeAll": true,
         "label": "satellites",
         "multi": true,
         "name": "satellites",
         "options": [],
-        "query": "SELECT\n distinct data ->>'id' as metric\nFROM\n  cyclopee.sensor \nGROUP BY data\nORDER BY metric ASC",
+        "query": "SELECT\n distinct data ->>'id' as metric\nFROM\n  cyclopee.sensor \n where time > (now() - interval '3 days')\nGROUP BY data\nORDER BY metric ASC",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -1875,7 +1862,7 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {
@@ -1894,6 +1881,6 @@
   "timezone": "",
   "title": "MPC",
   "uid": "e45baf49-897e-49d6-8cab-2cef3a8a8fd9",
-  "version": 94,
+  "version": 109,
   "weekStart": ""
 }

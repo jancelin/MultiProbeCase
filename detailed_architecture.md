@@ -12,7 +12,7 @@ has_children: false
 Les satellites sont à la base de la chaîne d’acquisition. Ils constituent des solutions particulières, adaptées aux besoins des projets de recherche, pour générer des données. 
 Leur rôle est d’enregistrer des mesures de grandeurs physiques, et de les communiquer à la passerelle. À noter qu’ils peuvent très bien fonctionner de manière isolée, sans cette dernière, et simplement enregister les données localement.
 
-Malgré le nombre de projets rescencés (cf. [Cahier des Charges Foncionnel](docs/cfunctional_specspdf)), nous avons pu regrouper les mesurandes apparaissant le plus souvent ensemble, et imaginer un nombre restreint de satellites. Pour le moment, Ils sont au nombre de trois : 
+Malgré le nombre de projets rescencés (cf. [Cahier des Charges Foncionnel](docs/cfunctional_specspdf)), nous avons pu regrouper les mesurandes apparaissant le plus souvent ensemble, et imaginer un nombre restreint de satellites. Pour le moment, ils sont au nombre de trois : 
 
 - Le satellite Cyclopée, chargé de la mesure de niveau marin;
 - Deux versions d'une valise multicapteurs, chargées de relever les caractéristiques de l’eau.

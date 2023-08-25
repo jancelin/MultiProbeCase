@@ -47,8 +47,8 @@ Afin de répondre aux objectifs évoqués ci-dessus, un système de kits de mesu
 Une description détaillée de l'architecture physique et logiecielle du projet est disponible [ici](detailed_architecture.md).
 
 ## Fonctionnalités
-#### Implémentées
-###### Satellites
+### Implémentées
+#### Satellites
 - [x] Configuration via code source.
 - [x] Mesure ponctuelle.
 - [x] Horodatage et géoréférencement GNSS.
@@ -56,17 +56,17 @@ Une description détaillée de l'architecture physique et logiecielle du projet 
 - [x] Enrgistrement des données sur carte SD.
 - [x] Transfert des données en temps réel via Bluetooth.
 - [x] LED de fonctionnement.
-###### Passerelle
+#### Passerelle
 - [x] Connexion Bluetooth jusqu'à 7 satellites.
 - [x] Enrgistrement des données en base de données locale.
 - [x] Visualisation locale avec Grafana.
 
-#### En attente
-###### Satellites
+### En attente
+#### Satellites
 - [ ] Fréquences d'acquisition plus faibles (fonctionnement en endormissement).
 - [ ] Mesure en mode burst.
 - [ ] Fichier de configuration sur carte SD.
-###### Passerelle
+#### Passerelle
 - [ ] Téléchargement des données localement.
 - [ ] Synchronisation avec le serveur distant.
 - [ ] Commande à distance des satellites.

@@ -17,9 +17,9 @@ Malgré le nombre de projets rescencés (cf. [Cahier des Charges Foncionnel](doc
 - Le satellite Cyclopée, chargé de la mesure de niveau marin;
 - Deux versions d'une valise multicapteurs, chargées de relever les caractéristiques de l’eau.
 
-#### Architecture et fonctionnement
+### Architecture et fonctionnement
 
-###### Archtecture physique
+#### Archtecture physique
 
 Les satellites ont été conçus sur une base commune. Ils utilisent donc globalement les mêmes composants, et fonctionnent sur le même principe.
 
@@ -27,7 +27,7 @@ Le diagramme des flux suivant représente l'architecture des satellites. Le rece
 
 <img src="assets/flux_satellites.png" width="500">
 
-###### Architecture et fonctionnement logiciel
+#### Architecture et fonctionnement logiciel
 
 L’architecture logicielle repose sur celle d’un projet Arduino. Elle s’articule autour d’une fonction `setup()`, exécutée une seule fois au début du programme, et d’une boucle d’exécution `loop()`, appelée en continu et consitutant la base du programme. A ces fonctions, ont été ajoutées des interruptions périodiques permettant de répondre aux contraintes de temps réel des satellites. Les diagrammes suivant illustre l'organisation du fichier source.
 
@@ -58,12 +58,12 @@ Les figures suivantes schématisent le déroulement du programme, et le chronogr
 <img src="assets/setup&loop_detail.png" width="600">
 <img src="assets/program_chronogram.png" width="500">
 
-##### Le satellite Cyclopée
+#### Le satellite Cyclopée
 La détermination du niveau marin par Cyclopée consiste en la mesure du tirant d’air le séparant de la surface de l’eau, et du calcul précis de sa position GNSS. Ce principe développé et validé par [Chupin et al. (2020)](https://doi.org/10.3390/rs12162656) permet, à partir des données recueillies de calculer le niveau marin.
 
 ![Principe de fonctionnement de Cylopée](assets/Cyclopee_principle.png)
 
-##### La valise multicapteurs
+#### La valise multicapteurs
 La valise multicapteurs est destinée à la mesure de plusieurs grandeurs. Elle embarquera donc différentes sondes. Pour répondre aux besoins du laboratoire (cf. [Cahier des Charges Fonctionnel](docs/functional_specs.pdf)) de la documentation), elle a principalement été développée pour le suivi de la qualité de l’eau.
 
 Deux versions ont été réalisées :
@@ -80,8 +80,16 @@ La passerelle, de son côté, constitue l’élément central du système. C’e
 
 <img src="assets/flux_gateway.png" width="650">
 
+Elle est globalement constituée de cartes réseau cartes Bluetooth et WiF, et de briques logicielles, hébergées sur un Raspberry Pi. Ces ordinateurs miniatures étant tous relativement puissants, plusieurs modèles de la gamme peuvent être utilisés pour ce sous-système.
+
+Les cartes Bluetooth et WiFi, permettant respectivement la communication des données et des ordres avec les satellites ; et la création d’un point d’accès pour visualiser les données localement, ainsi qu’une connexion internet pour la synchronisation des données sur le serveur, et la récupération des corrections RTK depuis les serveurs Centipède. N’ayant pas toujours de réseau WiFi à proximité, la passerelle est également équipée d’une clé 4G, étendant ainsi la portée de synchronisation des données. 
+
+Inspirée du projet [OceanIsOpen](https://github.com/TamataOcean/OceanIsOpen), les briques logicielles comprennent un serveur PostgreSQL accueillant la base de données locale ; un serveur Node-RED assurant le transit des données et des ordres entre passerelle et satellites ; une IHM permettant le contrôle de ces derniers, et hébergée sur le serveur Node-RED; un serveur Grafana utilisé pour visualiser les données stockées sous forme de cartes et de graphiques ; et un client NTRIP permettant de récupérer les corrections RTCM3 du caster [Centipède](https://docs.centipede.fr/).
+
+Ce sous-système sera le plus énergivore, c’est pourquoi nous n’avons pas prévu de le faire fonctionner de manière autonome. Il est dépendant d’une source d’énergie qui peut être trouvée à bord d’une embarcation telle qu’un voilier de plaisance, une vedette de passagers ou un navire océanographique.
+
 ### Architecture système détaillée
 
-Le diagramme de flux de la figure suivante représente l’architecture du système satellites / passerelle. 
+Le diagramme des flux de la figure suivante représente l’architecture du système satellites / passerelle. 
 
 ![Digramme des flux détaillé du système](assets/flux_diagram_latest.png)

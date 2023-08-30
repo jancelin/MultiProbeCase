@@ -151,7 +151,7 @@
           "format": "time_series",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000) as \"elv-urm\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000) as \"elv-a01\",\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000) as \"elv-dist\",\n  (data ->>'elv')::numeric as elv\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000) as \"elv-dist\",\n  (data ->>'elv')::numeric as elv\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
           "refId": "B",
           "sql": {
             "columns": [
@@ -295,7 +295,7 @@
           "format": "time_series",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'urm')::numeric as urm,\n    (data ->>'a01')::numeric as a01,\n  (data ->>'dist')::numeric as dist,\n  (data ->>'temp')::numeric as temperature\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'dist')::numeric as dist,\n  (data ->>'temp')::numeric as temperature\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
           "refId": "B",
           "sql": {
             "columns": [
@@ -437,7 +437,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'lat')::numeric as lat,\n   (data ->>'lon')::numeric as lon\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n--  AND data ->>'dist' IS NOT NULL\nORDER BY 1,2",
+          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'lat')::numeric as lat,\n   (data ->>'lon')::numeric as lon\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n--  AND data ->>'dist' IS NOT NULL\nORDER BY 1,2\nLIMIT 100",
           "refId": "A",
           "sql": {
             "columns": [
@@ -471,7 +471,7 @@
       },
       "id": 22,
       "panels": [],
-      "title": "Cyclopée query",
+      "title": "Cyclopée Ananlyse",
       "type": "row"
     },
     {
@@ -502,7 +502,7 @@
             "lineStyle": {
               "fill": "solid"
             },
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
@@ -550,6 +550,30 @@
                 "value": "celsius"
               }
             ]
+          },
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "elv-dist_avg1min"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
           }
         ]
       },
@@ -590,8 +614,37 @@
           "format": "time_series",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000)- 0.109 as \"elv-urm\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000)- 0.109 as \"elv-a01\",\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 as \"elv-dist\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  --AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+          "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 as \"elv-dist\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  AND (data ->>'fix')::numeric = 4\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
           "refId": "B",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "hide": false,
+          "rawQuery": true,
+          "rawSql": "SELECT\n  date_trunc('hour', time) + date_part('minute', time)::int / 1 * interval '1 min' AS time,\n  data ->>'id' as metric ,\n  avg((data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086)  OVER (PARTITION BY sensor ORDER BY data ->>'id' ROWS 60 PRECEDING) as \"elv-dist_avg1min\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  AND (data ->>'fix')::numeric = 4\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+          "refId": "A",
           "sql": {
             "columns": [
               {
@@ -611,7 +664,8 @@
           }
         }
       ],
-      "title": "Cyclopée elevation less offset",
+      "title": "Cyclopée elv - tirant d'air  FIX RTK",
+      "transformations": [],
       "type": "timeseries"
     },
     {
@@ -713,6 +767,7 @@
           "filters": [],
           "format": "timeseries",
           "global_query_id": "",
+          "hide": false,
           "refId": "A",
           "root_selector": "",
           "source": "url",
@@ -720,7 +775,13 @@
           "url": "https://services.data.shom.fr/maregraphie/observation/json/189?sources=1&dtStart=${__from:date:YYYY-MM-DDTHH}:${__from:date:mm}:${__from:date:ss}&dtEnd=${__to:date:YYYY-MM-DDTHH}:${__to:date:mm}:${__to:date:ss}&interval=5&=&_=1678095706088",
           "url_options": {
             "data": "",
-            "method": "GET"
+            "method": "GET",
+            "params": [
+              {
+                "key": "key",
+                "value": "value"
+              }
+            ]
           }
         },
         {
@@ -732,7 +793,36 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n  time - interval'2 hour',\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000)- 0.109 - 46.941 + 3.447 as \"elv-urm-zeroHydro\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000)- 0.086 - 46.941 + 3.447 as \"elv-a01-zeroHydro\",\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 - 46.941 + 3.447 as \"elv-dist-zeroHydro\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  --AND (data ->>'a01')::numeric < 1500\nORDER BY 1,2",
+          "rawSql": "SELECT\n  date_trunc('hour', time- interval'2 hour') + date_part('minute', time)::int / 1 * interval '1 min' AS time,\n  data ->>'id' as metric ,\n  avg((data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 - 46.941 + 3.447)  OVER (PARTITION BY sensor ORDER BY data ->>'id' ROWS 60 PRECEDING) as \"elv-dist-zeroHydro_avg1min\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  AND (data ->>'fix')::numeric = 4\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+          "refId": "C",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "hide": true,
+          "rawQuery": true,
+          "rawSql": "SELECT\n  time - interval'2 hour',\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 - 46.941 + 3.447 as \"elv-dist-zeroHydro\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  AND (data ->>'fix')::numeric = 4\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
           "refId": "B",
           "sql": {
             "columns": [
@@ -753,7 +843,7 @@
           }
         }
       ],
-      "title": "cyclopée absolu zéro hydro + marégraphe AIX",
+      "title": "cyclopée absolu zéro hydro FIX RTK + marégraphe AIX",
       "type": "timeseries"
     },
     {
@@ -814,7 +904,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -847,7 +938,7 @@
             "h": 9,
             "w": 12,
             "x": 0,
-            "y": 20
+            "y": 31
           },
           "id": 14,
           "options": {
@@ -950,7 +1041,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -983,7 +1075,7 @@
             "h": 9,
             "w": 12,
             "x": 12,
-            "y": 20
+            "y": 31
           },
           "id": 15,
           "options": {
@@ -1086,7 +1178,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1119,7 +1212,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 29
+            "y": 40
           },
           "id": 16,
           "options": {
@@ -1222,7 +1315,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1255,7 +1349,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 29
+            "y": 40
           },
           "id": 17,
           "options": {
@@ -1616,7 +1710,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1823,9 +1918,731 @@
       ],
       "title": "OIO",
       "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 49
+      },
+      "id": 24,
+      "panels": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 5,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 3,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "meters"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "temperature"
+                },
+                "properties": [
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "celsius"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 14,
+            "w": 10,
+            "x": 0,
+            "y": 1
+          },
+          "id": 23,
+          "options": {
+            "legend": {
+              "calcs": [
+                "range",
+                "stdDev",
+                "lastNotNull"
+              ],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "timezone": [
+              "Europe/Paris"
+            ],
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "postgres",
+                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "hide": false,
+              "rawQuery": true,
+              "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000) as \"elv-urm\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000) as \"elv-a01\",\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000) as \"elv-dist\",\n  (data ->>'elv')::numeric as elv\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+              "refId": "B",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
+          ],
+          "title": "Cyclopée elevation",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 3,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "lengthmm"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "temperature"
+                },
+                "properties": [
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "celsius"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 2
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 14,
+            "w": 9,
+            "x": 10,
+            "y": 1
+          },
+          "id": 25,
+          "options": {
+            "legend": {
+              "calcs": [
+                "range",
+                "stdDev",
+                "lastNotNull"
+              ],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "timezone": [
+              "Europe/Paris"
+            ],
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "postgres",
+                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "hide": false,
+              "rawQuery": true,
+              "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'urm')::numeric as urm,\n    (data ->>'a01')::numeric as a01,\n  (data ->>'dist')::numeric as dist,\n  (data ->>'temp')::numeric as temperature\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+              "refId": "B",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
+          ],
+          "title": "Cyclopée Distance + T°C",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 14,
+            "w": 5,
+            "x": 19,
+            "y": 1
+          },
+          "id": 26,
+          "options": {
+            "basemap": {
+              "config": {},
+              "name": "Layer 0",
+              "type": "default"
+            },
+            "controls": {
+              "mouseWheelZoom": true,
+              "showAttribution": true,
+              "showDebug": false,
+              "showMeasure": true,
+              "showScale": true,
+              "showZoom": true
+            },
+            "layers": [
+              {
+                "config": {
+                  "showLegend": true,
+                  "style": {
+                    "color": {
+                      "fixed": "dark-green"
+                    },
+                    "opacity": 0.4,
+                    "rotation": {
+                      "fixed": 0,
+                      "max": 360,
+                      "min": -360,
+                      "mode": "mod"
+                    },
+                    "size": {
+                      "fixed": 4,
+                      "max": 15,
+                      "min": 2
+                    },
+                    "symbol": {
+                      "fixed": "img/icons/marker/circle.svg",
+                      "mode": "fixed"
+                    },
+                    "textConfig": {
+                      "fontSize": 12,
+                      "offsetX": 0,
+                      "offsetY": 0,
+                      "textAlign": "center",
+                      "textBaseline": "middle"
+                    }
+                  }
+                },
+                "location": {
+                  "mode": "auto"
+                },
+                "name": "MPC",
+                "tooltip": true,
+                "type": "markers"
+              }
+            ],
+            "tooltip": {
+              "mode": "details"
+            },
+            "view": {
+              "allLayers": true,
+              "id": "coords",
+              "lat": 46.144489,
+              "lon": -1.172416,
+              "shared": false,
+              "zoom": 12.17
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "postgres",
+                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+              },
+              "editorMode": "code",
+              "format": "table",
+              "rawQuery": true,
+              "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'lat')::numeric as lat,\n   (data ->>'lon')::numeric as lon\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n--  AND data ->>'dist' IS NOT NULL\nORDER BY 1,2",
+              "refId": "A",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
+          ],
+          "title": "Carte",
+          "type": "geomap"
+        },
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Mixed --"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 5,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 3,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "meters"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "temperature"
+                },
+                "properties": [
+                  {
+                    "id": "custom.axisPlacement",
+                    "value": "right"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "celsius"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 14,
+            "w": 10,
+            "x": 0,
+            "y": 15
+          },
+          "id": 27,
+          "options": {
+            "legend": {
+              "calcs": [
+                "range",
+                "stdDev",
+                "lastNotNull"
+              ],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "timezone": [
+              "Europe/Paris"
+            ],
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "postgres",
+                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+              },
+              "editorMode": "code",
+              "format": "time_series",
+              "hide": false,
+              "rawQuery": true,
+              "rawSql": "SELECT\n  time,\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000)- 0.109 as \"elv-urm\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000)- 0.109 as \"elv-a01\",\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 as \"elv-dist\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+              "refId": "B",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
+          ],
+          "title": "Cyclopée elevation less offset",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Mixed --"
+          },
+          "description": "data gnss - distance accoustique - offset capteurs - geoid raf18 + zéro hydro LR \n\nhttps://www.sonel.org/IMG/pdf/R10002_LaRochelle_20100729.pdf\n\nhttps://data.shom.fr/donnees/refmar/189#001=eyJjIjpbLTE2MjYwMy4wODY5MDE4MDY4LDU3OTE4MTcuMTI5NDg3OTMzXSwieiI6MTAsInIiOjAsImwiOlt7InR5cGUiOiJSRUZNQVIiLCJpZGVudGlmaWVyIjoiUkVGTUFSL09USEVSIiwib3BhY2l0eSI6MSwidmlzaWJpbGl0eSI6dHJ1ZX0seyJ0eXBlIjoiUkVGTUFSIiwiaWRlbnRpZmllciI6IlJFRk1BUi9ST05JTSIsIm9wYWNpdHkiOjEsInZpc2liaWxpdHkiOnRydWV9LHsidHlwZSI6IklOVEVSTkFMX0xBWUVSIiwiaWRlbnRpZmllciI6IkZEQ19HRUJDT19QWVItUE5HXzM4NTdfV01UUyIsIm9wYWNpdHkiOjEsInZpc2liaWxpdHkiOnRydWV9XX0=",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 8,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 3,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 14,
+            "w": 14,
+            "x": 10,
+            "y": 15
+          },
+          "id": 28,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "columns": [
+                {
+                  "selector": "timestamp",
+                  "text": "time",
+                  "type": "timestamp"
+                },
+                {
+                  "selector": "value",
+                  "text": "Maregraphe AIX",
+                  "type": "number"
+                }
+              ],
+              "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "e807d76f-f76e-4e13-823e-9eb2b4107d6a"
+              },
+              "filters": [],
+              "format": "timeseries",
+              "global_query_id": "",
+              "refId": "A",
+              "root_selector": "",
+              "source": "url",
+              "type": "json",
+              "url": "https://services.data.shom.fr/maregraphie/observation/json/189?sources=1&dtStart=${__from:date:YYYY-MM-DDTHH}:${__from:date:mm}:${__from:date:ss}&dtEnd=${__to:date:YYYY-MM-DDTHH}:${__to:date:mm}:${__to:date:ss}&interval=5&=&_=1678095706088",
+              "url_options": {
+                "data": "",
+                "method": "GET"
+              }
+            },
+            {
+              "datasource": {
+                "type": "postgres",
+                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+              },
+              "editorMode": "code",
+              "format": "table",
+              "hide": false,
+              "rawQuery": true,
+              "rawSql": "SELECT\n  time - interval'2 hour',\n  data ->>'id' as metric ,\n  (data ->>'elv')::numeric - ((data ->>'urm')::numeric/1000)- 0.109 - 46.941 + 3.447 as \"elv-urm-zeroHydro\",\n  (data ->>'elv')::numeric - ((data ->>'a01')::numeric/1000)- 0.086 - 46.941 + 3.447 as \"elv-a01-zeroHydro\",\n  (data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 - 46.941 + 3.447 as \"elv-dist-zeroHydro\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  --AND data ->>'dist' IS NOT NULL\n  --AND (data ->>'urm')::numeric > 1100\n  --AND (data ->>'urm')::numeric < 1500\n  --AND (data ->>'a01')::numeric > 1100\n  --AND (data ->>'a01')::numeric < 1500\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+              "refId": "B",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
+          ],
+          "title": "cyclopée absolu zéro hydro + marégraphe AIX",
+          "type": "timeseries"
+        }
+      ],
+      "title": "old",
+      "type": "row"
     }
   ],
-  "refresh": "",
+  "refresh": false,
   "schemaVersion": 38,
   "style": "dark",
   "tags": [],
@@ -1862,7 +2679,7 @@
     ]
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
@@ -1881,6 +2698,6 @@
   "timezone": "",
   "title": "MPC",
   "uid": "e45baf49-897e-49d6-8cab-2cef3a8a8fd9",
-  "version": 109,
+  "version": 127,
   "weekStart": ""
 }

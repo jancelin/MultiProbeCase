@@ -38,7 +38,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+        "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
       },
       "fieldConfig": {
         "defaults": {
@@ -145,7 +145,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "editorMode": "code",
           "format": "time_series",
@@ -178,7 +178,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+        "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
       },
       "fieldConfig": {
         "defaults": {
@@ -289,7 +289,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "editorMode": "code",
           "format": "time_series",
@@ -322,7 +322,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+        "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
       },
       "fieldConfig": {
         "defaults": {
@@ -432,7 +432,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "editorMode": "code",
           "format": "table",
@@ -608,7 +608,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "editorMode": "code",
           "format": "time_series",
@@ -637,7 +637,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "editorMode": "code",
           "format": "table",
@@ -762,7 +762,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "e807d76f-f76e-4e13-823e-9eb2b4107d6a"
+            "uid": "b085d405-231e-4538-a884-fe30d4a02268"
           },
           "filters": [],
           "format": "timeseries",
@@ -787,7 +787,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "editorMode": "code",
           "format": "table",
@@ -816,7 +816,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "editorMode": "code",
           "format": "table",
@@ -859,7 +859,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -963,7 +963,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -996,7 +996,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -1100,7 +1100,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -1133,7 +1133,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -1237,7 +1237,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -1270,7 +1270,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -1374,7 +1374,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -1421,7 +1421,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -1524,7 +1524,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -1557,7 +1557,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -1641,7 +1641,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -1691,7 +1691,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+        "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
       },
       "fieldConfig": {
         "defaults": {
@@ -1746,7 +1746,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "editorMode": "code",
           "format": "table",
@@ -1801,7 +1801,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -1885,7 +1885,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -1932,7 +1932,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -2039,7 +2039,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -2072,7 +2072,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -2183,7 +2183,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -2216,7 +2216,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+            "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
           },
           "fieldConfig": {
             "defaults": {
@@ -2326,7 +2326,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "table",
@@ -2465,7 +2465,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "time_series",
@@ -2589,7 +2589,7 @@
               ],
               "datasource": {
                 "type": "yesoreyeram-infinity-datasource",
-                "uid": "e807d76f-f76e-4e13-823e-9eb2b4107d6a"
+                "uid": "b085d405-231e-4538-a884-fe30d4a02268"
               },
               "filters": [],
               "format": "timeseries",
@@ -2607,7 +2607,7 @@
             {
               "datasource": {
                 "type": "postgres",
-                "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+                "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
               },
               "editorMode": "code",
               "format": "table",
@@ -2660,7 +2660,7 @@
         },
         "datasource": {
           "type": "postgres",
-          "uid": "c150fe7b-082f-4051-b1e1-2b52ff4591d1"
+          "uid": "a9a1f9df-d816-4959-a8a6-7cd22c5a67a6"
         },
         "definition": "SELECT\n distinct data ->>'id' as metric\nFROM\n  cyclopee.sensor \n where time > (now() - interval '3 days')\nGROUP BY data\nORDER BY metric ASC",
         "hide": 0,

@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
+  "id": 5,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -59,6 +59,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineStyle": {
               "fill": "solid"
@@ -199,6 +200,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineStyle": {
               "fill": "solid"
@@ -427,7 +429,7 @@
           "zoom": 12.17
         }
       },
-      "pluginVersion": "10.0.0",
+      "pluginVersion": "10.1.1",
       "targets": [
         {
           "datasource": {
@@ -498,6 +500,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineStyle": {
               "fill": "solid"
@@ -693,6 +696,7 @@
               "tooltip": false,
               "viz": false
             },
+            "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
             "pointSize": 5,
@@ -756,7 +760,7 @@
             },
             {
               "selector": "value",
-              "text": "Maregraphe AIX",
+              "text": "Maregraphe la Pallice",
               "type": "number"
             }
           ],
@@ -772,7 +776,7 @@
           "root_selector": "",
           "source": "url",
           "type": "json",
-          "url": "https://services.data.shom.fr/maregraphie/observation/json/189?sources=1&dtStart=${__from:date:YYYY-MM-DDTHH}:${__from:date:mm}:${__from:date:ss}&dtEnd=${__to:date:YYYY-MM-DDTHH}:${__to:date:mm}:${__to:date:ss}&interval=5&=&_=1678095706088",
+          "url": "https://services.data.shom.fr/maregraphie/observation/json/34?sources=1&dtStart=${__from:date:YYYY-MM-DDTHH}:${__from:date:mm}:${__from:date:ss}&dtEnd=${__to:date:YYYY-MM-DDTHH}:${__to:date:mm}:${__to:date:ss}&interval=1&=&_=1678095706088",
           "url_options": {
             "data": "",
             "method": "GET",
@@ -793,7 +797,7 @@
           "format": "table",
           "hide": false,
           "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('hour', time- interval'2 hour') + date_part('minute', time)::int / 1 * interval '1 min' AS time,\n  data ->>'id' as metric ,\n  avg((data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 - 46.941 + 3.447)  OVER (PARTITION BY sensor ORDER BY data ->>'id' ROWS 60 PRECEDING) as \"elv-dist-zeroHydro_avg1min\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time) AND \n  data ->>'id' IN ($satellites)\n  AND (data ->>'fix')::numeric = 4\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
+          "rawSql": "SELECT\n  date_trunc('hour', time- interval'2 hour') + date_part('minute', time)::int / 1 * interval '1 min' AS time,\n  data ->>'id' as metric ,\n  avg((data ->>'elv')::numeric - ((data ->>'dist')::numeric/1000)- 0.086 - 46.941 + 3.447)  OVER (PARTITION BY sensor ORDER BY data ->>'id' ROWS 60 PRECEDING) as \"elv-dist-zeroHydro_avg1min\"\nFROM\n  cyclopee.sensor \nWHERE\n  $__timeFilter(time - interval'2 hour') AND \n  data ->>'id' IN ($satellites)\n  AND (data ->>'fix')::numeric = 4\n  AND (data ->>'dist')::numeric < 5000\nORDER BY 1,2",
           "refId": "C",
           "sql": {
             "columns": [
@@ -843,7 +847,7 @@
           }
         }
       ],
-      "title": "cyclopée absolu zéro hydro FIX RTK + marégraphe AIX",
+      "title": "cyclopée absolu zéro hydro FIX RTK + marégraphe La Pallice",
       "type": "timeseries"
     },
     {
@@ -904,8 +908,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1041,8 +1044,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1178,8 +1180,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1315,8 +1316,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1741,7 +1741,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "10.0.0",
+      "pluginVersion": "10.1.1",
       "targets": [
         {
           "datasource": {
@@ -1978,8 +1978,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2118,8 +2117,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2235,8 +2233,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2404,8 +2401,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2542,8 +2538,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2642,7 +2637,7 @@
       "type": "row"
     }
   ],
-  "refresh": false,
+  "refresh": "",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [],
@@ -2679,7 +2674,7 @@
     ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-3h",
     "to": "now"
   },
   "timepicker": {
@@ -2698,6 +2693,6 @@
   "timezone": "",
   "title": "MPC",
   "uid": "e45baf49-897e-49d6-8cab-2cef3a8a8fd9",
-  "version": 127,
+  "version": 7,
   "weekStart": ""
 }

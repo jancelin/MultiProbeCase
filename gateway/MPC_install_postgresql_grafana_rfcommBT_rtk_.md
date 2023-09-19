@@ -141,7 +141,11 @@ done
 ### create /etc/systemd/system/rfcomm.service to enable
 ### the Bluetooth serial port from systemctl
 
+```
   sudo cat <<EOF | sudo tee /etc/systemd/system/rfcomm.service > /dev/null
+```
+
+```
   [Unit]
   Description=RFCOMM service
   After=bluetooth.service
@@ -158,6 +162,7 @@ done
   sudo systemctl enable rfcomm
 ### start the rfcomm service
   sudo systemctl restart rfcomm
+```
 
 ```
 sudo rfcomm bind 0 98:D3:B1:FD:C3:2C
